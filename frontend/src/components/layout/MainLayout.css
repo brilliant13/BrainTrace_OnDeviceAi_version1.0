@@ -1,0 +1,100 @@
+/* src/components/layout/MainLayout.css */
+.main-container {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #ffffff;
+  color: #333333;
+}
+
+.layout {
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid #e0e0e0;
+}
+
+.project-layout {
+  width: 50px;
+  min-width: 50px;
+  background-color: #f0f8ff;
+  border-right: 1px solid #e0e0e0;
+}
+
+.source-layout {
+  width: 250px;
+  min-width: 200px;
+  max-width: 300px;
+  background-color: #ffffff;
+  border-right: 1px solid #e0e0e0;
+  resize: horizontal;
+}
+
+.chat-layout {
+  flex: 1;
+  min-width: 400px;
+  background-color: #ffffff;
+  border-right: 1px solid #e0e0e0;
+}
+
+.memo-layout {
+  width: 350px;
+  min-width: 300px;
+  max-width: 500px;
+  background-color: #ffffff;
+  overflow: auto;
+  resize: horizontal;
+}
+
+/* 추가 헤더 스타일 */
+.header-bar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  font-weight: bold;
+}
+
+.header-title {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.header-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+.header-button:hover {
+  opacity: 1;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
