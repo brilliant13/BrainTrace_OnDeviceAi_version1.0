@@ -122,7 +122,7 @@ function MainLayout() {
         <Panel 
           ref={memoPanelRef}
           defaultSize={memoCollapsed ? 5 : 25}
-          minSize={memoCollapsed ? 5 : 15}
+          minSize={memoCollapsed ? 5 : 20}
           maxSize={memoCollapsed ? 5 : 40}
           className={memoCollapsed ? 'panel-collapsed' : ''}
           onResize={handleMemoResize}
