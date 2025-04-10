@@ -8,89 +8,142 @@
   color: #333333;
 }
 
-.layout {
+/* 고정 프로젝트 패널 */
+.project-layout {
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
   height: 100%;
+  background-color: #f0f8ff;
+  border-right: 1px solid #e0e0e0;
+  overflow: hidden;
+}
+
+/* 리사이즈 가능한 패널 컨테이너 */
+.panels-container {
+  flex: 1;
+  height: 100%;
+}
+
+/* 내부 패널 스타일 */
+.layout-inner {
+  height: 100%;
+  width: 100%;
   overflow: hidden;
   border-right: 1px solid #e0e0e0;
 }
 
-.project-layout {
-  width: 50px;
-  min-width: 50px;
-  background-color: #f0f8ff;
-  border-right: 1px solid #e0e0e0;
+/* 접힌 패널 스타일 */
+.panel-collapsed {
+  max-width: 45px !important;
+  min-width: 45px !important;
 }
 
-.source-layout {
-  width: 250px;
-  min-width: 200px;
-  max-width: 300px;
-  background-color: #ffffff;
-  border-right: 1px solid #e0e0e0;
-  resize: horizontal;
-}
-/* 접힘 상태 */
-.layout.source-layout.collapsed {
-  width: 40px;
-  min-width: 40px;
+/* 패널 내부 컴포넌트 스타일 */
+.panel-container {
+  width: 100%;
+  height: 100%;
 }
 
-
-
-.chat-layout {
-  flex: 1;
-  min-width: 400px;
-  background-color: #ffffff;
-  border-right: 1px solid #e0e0e0;
+/* 접힌 패널 컴포넌트 스타일 */
+.panel-container.collapsed {
+  width: 45px;
+  min-width: 45px;
 }
 
-.memo-layout {
-  width: 350px;
-  min-width: 300px;
-  max-width: 500px;
-  background-color: #ffffff;
-  overflow: auto;
-  resize: horizontal;
+/* 리사이즈 핸들 */
+.resize-handle {
+  width: 1px;
+  background-color: #e0e0e0;
+  cursor: col-resize;
+  position: relative;
 }
 
-/* 접힘 상태 */
-.layout.memo-layout.collapsed {
-  width: 40px;
-  min-width: 40px;
+/* 리사이즈 핸들 hover 상태 */
+.resize-handle:hover {
+  background-color: #bbbbbb;
 }
 
-/* 추가 헤더 스타일 */
-.header-bar {
+/* 리사이즈 핸들 내부 선 */
+.handle-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 100%;
+  background-color: #e0e0e0;
+}
+
+/* 패널 헤더 스타일 */
+.panel-header {
   display: flex;
   align-items: center;
-  height: 40px;
-  padding: 0 16px;
-  background-color: #ffffff;
+  height: 45px;
+  padding: 10px 16px;
   border-bottom: 1px solid #e0e0e0;
-  font-weight: bold;
 }
 
+/* 소스 패널 내용 영역 */
+.source-inner .panel-content {
+  height: calc(100% - 45px); /* 헤더 높이 제외 */
+  overflow: auto;
+}
+
+/* 접힌 소스 패널 스타일 */
+.source-inner .panel-container.collapsed .panel-header {
+  justify-content: center;
+}
+
+/* 메모 패널 스타일 */
+.memo-inner .header-bar {
+  height: 45px;
+  padding: 10px 16px;
+}
+
+/* 접힌 메모 패널 스타일 */
+.memo-inner .panel-container.collapsed .header-bar {
+  justify-content: center;
+}
+
+/* 헤더 제목 스타일 */
 .header-title {
   font-weight: bold;
-  font-size: 14px;
+  font-size: 16px;
 }
 
+/* 헤더 액션 스타일 */
 .header-actions {
-  margin-left: auto;
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.header-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  opacity: 0.7;
+/* 액션 버튼 스타일 */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.header-button:hover {
-  opacity: 1;
+.add-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #eaeaea;
+  border-radius: 4px;
+  background-color: white;
+  color: #666;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-button:hover {
+  background-color: #f5f5f5;
+  border-color: #ddd;
 }
 
 /* 스크롤바 스타일 */

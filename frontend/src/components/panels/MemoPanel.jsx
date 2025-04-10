@@ -41,91 +41,6 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
       return <p key={index}>{part}</p>;
     });
   };
-
-  // return (
-
-  //   // <div className="panel-container">
-  //   <div className={`panel-container ${collapsed ? 'collapsed' : ''}`}>
-  //     {/* 헤더 영역 */}
-  //     <div className="header-bar">
-  //     <span className="header-title">Memo</span>
-  //       <div className="header-actions2" >
-
-  //         <img
-  //           src={graphOnIcon}
-  //           alt="graph View"
-  //           style={{ width: '20px', height: '20px', marginLeft: '10px', marginTop: '5px', cursor: 'pointer' }}
-  //         // onClick={() => setCollapsed(prev => !prev)}
-  //         />
-  //       </div>
-
-
-  //       <div className="header-actions">
-  //         {/* <button className="header-button">🔗</button> */}
-  //         <img
-  //           src={toggleIcon}
-  //           alt="Toggle View"
-  //           style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-  //         // onClick={() => setCollapsed(prev => !prev)}
-  //         />
-  //       </div>
-  //     </div>
-  //     <div className="panel-content">
-  //       <div className="memo-container">
-  //         <div className="graph-area">
-  //           <div className="graph-visualization">
-  //             {nodes.map(node => {
-  //               let nodeClassName = "node";
-  //               let style = { left: `${node.x}%`, top: `${node.y}%` };
-
-  //               if (node.type === 'main') {
-  //                 nodeClassName += " main-node";
-  //               } else if (node.type === 'sub') {
-  //                 nodeClassName += " sub-node";
-  //               } else if (node.type === 'small') {
-  //                 nodeClassName += " small-node";
-  //               }
-
-  //               return (
-  //                 <div
-  //                   key={node.id}
-  //                   className={nodeClassName}
-  //                   style={style}
-  //                 >
-  //                   {node.label}
-  //                 </div>
-  //               );
-  //             })}
-  //           </div>
-  //         </div>
-
-  //         <div className="memo-toolbar">
-  //           <div className="format-tools">
-  //             <span className="format-item">Normal text</span>
-  //             <span className="format-separator">|</span>
-  //             <button className="toolbar-button">B</button>
-  //             <button className="toolbar-button">I</button>
-  //             <button className="toolbar-button">U</button>
-  //             <button className="toolbar-button">S</button>
-  //             <button className="toolbar-button">🔗</button>
-  //             <button className="toolbar-button">📌</button>
-  //           </div>
-  //         </div>
-
-  //         <div className="memo-content">
-  //           {renderContent()}
-  //         </div>
-
-  //         <div className="memo-footer">
-  //           <span className="word-count">
-  //             {content ? content.split(/\s+/).length : 0} words
-  //           </span>
-  //           <button className="save-button">Save</button>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
   return (
     <div className={`panel-container ${collapsed ? 'collapsed' : ''}`}>
       {/* 헤더 영역 */}
@@ -138,6 +53,8 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
           height: '45px',
           // padding: '12px 16px',
           padding: '10px 16px',
+          // border-bottom: 1px solid #eaeaea;
+          borderBottom: '1px solid #eaeaea',
 
         }}
       >
