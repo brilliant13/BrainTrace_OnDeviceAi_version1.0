@@ -1,4 +1,3 @@
-# neo4j/utils.py 또는 neo4j/run_neo4j.py
 import os
 import subprocess
 import logging

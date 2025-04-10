@@ -1,9 +1,6 @@
 from neo4j import GraphDatabase
 import logging
 import json
-import subprocess
-import os
-import platform
 
 NEO4J_URI = "bolt://localhost:7687"
 NEO4J_AUTH = ("neo4j", "YOUR_PASSWORD")  # 실제 비밀번호로 교체
@@ -16,21 +13,19 @@ class Neo4jHandler:
     def close(self):
         self.driver.close()
 
-    def insert_nodes_and_edges(self, nodes, edges, embeddings):
+    #노드와 엣지를 저장
+    def insert_nodes_and_edges(self, nodes, edges):
         try:
             with self.driver.session() as session:
-                for i, node in enumerate(nodes):
-                    embedding_list = embeddings[i].tolist()
-                    embedding_json = json.dumps(embedding_list)
+                for node in nodes:
                     session.run(
                         """
                         MERGE (n:Node {name: $name})
-                        SET n.label = $label, n.description = $description, n.embedding = $embedding
+                        SET n.label = $label, n.description = $description
                         """,
                         name=node["name"],
                         label=node["label"],
-                        description=node["description"],
-                        embedding=embedding_json
+                        description=node["description"]
                     )
                 for edge in edges:
                     session.run(
