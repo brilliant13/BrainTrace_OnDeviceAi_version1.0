@@ -26,7 +26,7 @@
 //             </div>
 //           </div>
 //         </div>
-        
+
 //         <div className="chat-input-container">
 //           <div className="chat-controls">
 //             <button className="control-button">Regenerate response</button>
@@ -51,7 +51,22 @@ function ChatPanel({ activeProject }) {
 
   return (
     <div className="panel-container">
-      <h2>Chat</h2>
+      <div className="panel-header">
+        {/* <h2 style={{  cdisplay: collapsed ? 'none' : 'block' }}>Source</h2> */}
+        <span
+          className="header-title"
+          style={{
+            fontSize: '16px',
+
+          }}
+        >
+          Chat
+        </span>
+      </div>
+
+
+      {/* <h2>Chat</h2> */}
+
       <div className="panel-content chat-content">
         <div className="chat-header">
           <div className="message-title">{title}</div>
@@ -76,7 +91,7 @@ function ChatPanel({ activeProject }) {
             </div>
           </div>
         </div>
-        
+
         <div className="chat-input-container">
           <div className="chat-controls">
             <button className="control-button">Regenerate response</button>

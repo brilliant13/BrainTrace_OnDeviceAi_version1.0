@@ -29,6 +29,13 @@
   border-right: 1px solid #e0e0e0;
   resize: horizontal;
 }
+/* 접힘 상태 */
+.layout.source-layout.collapsed {
+  width: 40px;
+  min-width: 40px;
+}
+
+
 
 .chat-layout {
   flex: 1;
@@ -44,6 +51,12 @@
   background-color: #ffffff;
   overflow: auto;
   resize: horizontal;
+}
+
+/* 접힘 상태 */
+.layout.memo-layout.collapsed {
+  width: 40px;
+  min-width: 40px;
 }
 
 /* 추가 헤더 스타일 */
