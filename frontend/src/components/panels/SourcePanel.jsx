@@ -1,10 +1,15 @@
 // src/components/panels/SourcePanel.jsx
-import React, { useState } from 'react';
-import './Panels.css';
+import React, { useState, useRef, useEffect } from 'react';
+import './styles/Common.css';
+import './styles/SourcePanel.css';
+import './styles/PanelToggle.css';
+import './styles/Scrollbar.css';
 import projectData from '../../data/projectData';
 import FileView from './FileView';
 
 import toggleIcon from '../../assets/icons/toggle-view.png';
+import addFolderIcon from '../../assets/icons/add-folder.png';
+import newFileIcon from '../../assets/icons/new-file.png';
 
 function SourcePanel({ activeProject, collapsed, setCollapsed }) {
   const project = projectData.find(p => p.id === activeProject) || projectData[0];
@@ -14,6 +19,27 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
   const [showAddFileInput, setShowAddFileInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [newFileName, setNewFileName] = useState("");
+
+  // 패널 너비 상태 추가
+  const [panelWidth, setPanelWidth] = useState(0);
+  const panelRef = useRef(null);
+
+  // 아이콘 모드인지 확인 (패널이 340px 보다 작을 때)
+  const isIconMode = panelWidth > 0 && panelWidth < 193;
+
+  // 패널 너비 감지
+  useEffect(() => {
+    if (panelRef.current && !collapsed) {
+      const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+          setPanelWidth(entry.contentRect.width);
+        }
+      });
+
+      resizeObserver.observe(panelRef.current);
+      return () => resizeObserver.disconnect();
+    }
+  }, [collapsed]);
 
   const handleAddFolder = (e) => {
     e.preventDefault();
@@ -30,24 +56,24 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
   };
 
   return (
-    <div className={`panel-container modern-panel ${collapsed ? 'collapsed' : ''}`}>
+    <div
+      className={`panel-container modern-panel ${collapsed ? 'collapsed' : ''}`}
+      ref={panelRef}
+    >
       <div className="panel-header"
         style={{
           justifyContent: collapsed ? 'center' : 'space-between',
           padding: '10px 16px',
         }}>
-        {/* <h2 style={{ display: collapsed ? 'none' : 'block' }}>Source</h2> */}
         <span
-              className="header-title"
-              style={{
-                 display: collapsed ? 'none' : 'block',
-                fontSize: '16px',
-                // fontWeight: '600',
-                // color: '#333',
-              }}
-            >
-              Source
-            </span>
+          className="header-title"
+          style={{
+            display: collapsed ? 'none' : 'block',
+            fontSize: '16px',
+          }}
+        >
+          Source
+        </span>
 
         <img
           src={toggleIcon}
@@ -60,12 +86,50 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
       {!collapsed && (
         <>
           {/* 버튼 */}
-          <div className="action-buttons">
+          {/* <div className="action-buttons">
             <button className="add-button" onClick={() => setShowAddFolderInput(true)}>
-              <span className="add-icon">+</span> 폴더 추가
+              {isIconMode ? (
+                <img src={addFolderIcon} alt="폴더 추가" className="button-icon" />
+              ) : (
+                <>
+                  <span className="add-icon">+</span> 폴더 추가
+                </>
+              )}
             </button>
             <button className="add-button" onClick={() => setShowAddFileInput(true)}>
-              <span className="add-icon">+</span> 소스 추가
+              {isIconMode ? (
+                <img src={newFileIcon} alt="소스 추가" className="button-icon" />
+              ) : (
+                <>
+                  <span className="add-icon">+</span> 소스 추가
+                </>
+              )}
+            </button>
+          </div> */}
+          <div className="action-buttons">
+            <button
+              className={`add-button ${isIconMode ? 'icon-only' : ''}`}
+              onClick={() => setShowAddFolderInput(true)}
+            >
+              {isIconMode ? (
+                <img src={addFolderIcon} alt="폴더 추가" className="button-icon" />
+              ) : (
+                <>
+                  <span className="add-icon">+</span> 폴더 추가
+                </>
+              )}
+            </button>
+            <button
+              className={`add-button ${isIconMode ? 'icon-only' : ''}`}
+              onClick={() => setShowAddFileInput(true)}
+            >
+              {isIconMode ? (
+                <img src={newFileIcon} alt="소스 추가" className="button-icon" />
+              ) : (
+                <>
+                  <span className="add-icon">+</span> 소스 추가
+                </>
+              )}
             </button>
           </div>
 
