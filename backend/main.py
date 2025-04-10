@@ -5,9 +5,17 @@ import logging
 import uvicorn
 from fastapi import FastAPI
 from neo4j_db.utils import run_neo4j  # ✅ Neo4j 실행 함수
-
+from routers import brainGraph
 # 로깅 설정
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, 
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    force=True
+)
+
+# 로깅 필터 설정 (Uvicorn 로그 레벨 조정)
+logging.getLogger("uvicorn").setLevel(logging.INFO)
+logging.getLogger("uvicorn.access").setLevel(logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,15 +42,12 @@ async def lifespan(app: FastAPI):
             logging.error("Neo4j 종료 중 오류 발생: %s", str(e))
 
 app = FastAPI(title="BrainTrace API", lifespan=lifespan)
-
+# API 라우터를 등록합니다.
+app.include_router(brainGraph.router)
 # Neo4j 프로세스 객체
 neo4j_process = None
-
-@app.get("/")
-async def root():
-    return {"message": "BrainTrace API에 오신 것을 환영합니다!"}
 
 # ✅ FastAPI 앱 실행
 if __name__ == "__main__":
     logging.info("🚀 FastAPI 서버 실행 중... http://127.0.0.1:8000")
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False, log_level="info")
