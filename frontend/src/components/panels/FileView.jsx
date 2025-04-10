@@ -1,5 +1,10 @@
 // src/components/panels/FileView.jsx
 import React, { useState } from 'react';
+// import './Panels.css';
+
+import './styles/Common.css';
+import './styles/SourcePanel.css'; // 파일 탐색기 관련 스타일이 여기 있음
+import './styles/Scrollbar.css';
 
 function FileIcon({ fileName }) {
   // 파일 타입에 따른 아이콘 결정

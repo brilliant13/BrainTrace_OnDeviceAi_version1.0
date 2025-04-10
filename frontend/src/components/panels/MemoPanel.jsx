@@ -1,6 +1,11 @@
 // src/components/panels/MemoPanel.jsx
 import React from 'react';
-import './Panels.css';
+// import './Panels.css';
+import './styles/Common.css';
+import './styles/MemoPanel.css';
+import './styles/PanelToggle.css';
+import './styles/Scrollbar.css';
+
 import projectData from '../../data/projectData';
 
 import toggleIcon from '../../assets/icons/toggle-view.png';

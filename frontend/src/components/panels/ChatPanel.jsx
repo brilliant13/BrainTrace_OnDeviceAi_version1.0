@@ -1,6 +1,10 @@
 // src/components/panels/ChatPanel.jsx
 import React from 'react';
-import './Panels.css';
+// import './Panels.css';
+import './styles/Common.css';
+import './styles/ChatPanel.css';
+import './styles/Scrollbar.css';
+
 import projectData from '../../data/projectData';
 
 function ChatPanel({ activeProject }) {

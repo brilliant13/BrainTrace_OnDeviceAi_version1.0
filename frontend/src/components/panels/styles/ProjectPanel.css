@@ -1,0 +1,67 @@
+/* ProjectPanel.css - 프로젝트 패널 및 사이드바 관련 스타일 */
+
+.sidebar-container {
+    background-color: #f0f8ff;
+    padding: 0;
+    height: 100%;
+  }
+  
+  .project-message {
+    color: #666;
+    font-size: 14px;
+    padding: 16px;
+  }
+  
+  /* 사이드바 아이콘 스타일 */
+  .sidebar-icons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 16px;
+    gap: 16px;
+  }
+  
+  .sidebar-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.2s ease;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .sidebar-icon:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+  
+  .sidebar-icon.active {
+    background-color: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  }
+  
+  .add-icon {
+    margin-top: auto;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: rgba(99, 102, 241, 0.1) !important;
+    color: #6366f1;
+  }
+  
+  .add-icon:hover {
+    background-color: rgba(99, 102, 241, 0.2) !important;
+  }
+  
+  /* 반응형 조정 */
+  @media (max-width: 992px) {
+    .layout.project-layout {
+      width: 45px;
+      min-width: 45px;
+    }
+  }

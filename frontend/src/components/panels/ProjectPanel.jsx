@@ -1,6 +1,10 @@
 // src/components/panels/ProjectPanel.jsx
 import React from 'react';
-import './Panels.css';
+// import './Panels.css';
+import './styles/Common.css';
+import './styles/ProjectPanel.css';
+import './styles/Scrollbar.css';
+
 import projectData from '../../data/projectData';
 
 function ProjectPanel({ activeProject, onProjectChange }) {
