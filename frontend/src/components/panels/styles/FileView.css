@@ -10,24 +10,35 @@
 }
 
 .folder-drag-over {
-  background-color: rgba(0, 123, 255, 0.1);
-  border: 2px dashed #007bff;
-  border-radius: 4px;
+  background-color: #ffffff;
+  /* 완전한 흰색 */
+
+  /* 거의 검정색 테두리 */
+  border-radius: 6px;
 }
 
 .folder-drop-zone {
   margin: 8px;
   padding: 16px;
-  border: 2px dashed #ccc;
-  border-radius: 4px;
+  /* 진한 회색 테두리 */
+  border-radius: 6px;
   text-align: center;
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: #fff;
+  /* 흰 배경 */
   transition: all 0.3s ease;
 }
 
 .folder-drop-zone.drag-over {
-  border-color: #007bff;
-  background-color: rgba(0, 123, 255, 0.1);
+  border-color: #111;
+  /* 거의 검정 */
+  background-color: #fafafa;
+  /* 살짝 톤 다운된 흰색 */
+}
+
+.root-drag-over {
+  background-color: #fff;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .drop-zone-message {
@@ -75,11 +86,41 @@
   align-items: center;
   height: 100%;
   color: #666;
-} 
+}
 
 .root-drag-over {
-  background-color: #f0f8ff;
-  border: 2px dashed #3b82f6;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  background-color: #fff;
+  border-radius: 8px;
+  position: relative;
+}
+
+.upload-hint-icon {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #888;
+  font-size: 24px;
+  opacity: 0.4;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.drop-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2px dashed #aaa;
+  border-radius: 8px;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.drop-icon {
+  font-size: 36px;
+  opacity: 0.6;
 }

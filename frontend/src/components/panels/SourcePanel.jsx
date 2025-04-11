@@ -121,17 +121,29 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
         <>
           <div className="action-buttons">
             <button
-              className={`pill-button`}
+              className={`pill-button ${isIconMode ? 'icon-only' : ''}`}
               onClick={() => setShowAddFolderInput(true)}
             >
-              <span className="plus-icon">＋</span> 폴더
+              {isIconMode ? (
+                <img src={addFolderIcon} alt="폴더 추가" className="button-icon" />
+              ) : (
+                <>
+                  <span className="plus-icon">＋</span> 폴더
+                </>
+              )}
             </button>
 
             <button
-              className={`pill-button`}
+              className={`pill-button ${isIconMode ? 'icon-only' : ''}`}
               onClick={() => setShowUploadModal(true)}
             >
-              <span className="plus-icon">＋</span> 소스
+              {isIconMode ? (
+                <img src={newFileIcon} alt="소스 추가" className="button-icon" />
+              ) : (
+                <>
+                  <span className="plus-icon">＋</span> 소스
+                </>
+              )}
             </button>
           </div>
 
