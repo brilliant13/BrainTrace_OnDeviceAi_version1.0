@@ -76,3 +76,10 @@
   height: 100%;
   color: #666;
 } 
+
+.root-drag-over {
+  background-color: #f0f8ff;
+  border: 2px dashed #3b82f6;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}

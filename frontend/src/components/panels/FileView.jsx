@@ -1,14 +1,11 @@
 // src/components/panels/FileView.jsx
 import React, { useState } from 'react';
-// import './Panels.css';
-
 import './styles/Common.css';
-import './styles/SourcePanel.css'; // 파일 탐색기 관련 스타일이 여기 있음
+import './styles/SourcePanel.css';
 import './styles/Scrollbar.css';
 import './styles/FileView.css';
 
 function FileIcon({ fileName }) {
-  // 파일 타입에 따른 아이콘 결정
   const getFileIcon = () => {
     if (fileName.endsWith('.pdf')) return '📕';
     if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.svg')) return '🖼️';
@@ -28,7 +25,7 @@ function FileIcon({ fileName }) {
   return <span className="file-icon">{getFileIcon()}</span>;
 }
 
-function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToFolder  }) {
+function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToFolder }) {
   const [isOpen, setIsOpen] = useState(depth === 0);
   const [isDragOver, setIsDragOver] = useState(false);
   const [dragEnterCount, setDragEnterCount] = useState(0);
@@ -38,19 +35,13 @@ function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToF
     setIsOpen(!isOpen);
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
-  };
-
   const handleDragEnter = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragEnterCount(count => count + 1);
     setIsDragOver(true);
   };
-  
+
   const handleDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -63,55 +54,50 @@ function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToF
       return newCount;
     });
   };
+
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
     setDragEnterCount(0);
-  
-    const files = Array.from(e.dataTransfer.files);
-  
-    if (files.length > 0) {
-      console.log('Dropped files into folder:', item.name, files);
-      onDropFileToFolder?.(item.name, files);
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length > 0) {
+      onDropFileToFolder?.(item.name, droppedFiles);
     }
   };
-  
 
   return (
-    <div 
+    <div
       className={`folder-container ${isDragOver ? 'folder-drag-over' : ''}`}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
-      <div 
+      <div
         className={`file-item folder-item ${isDragOver ? 'drag-over' : ''}`}
-        style={{ 
-          paddingLeft: `${depth * 16}px`,
-          position: 'relative',
-        }}
+        style={{ paddingLeft: `${depth * 16}px` }}
         onClick={toggleFolder}
       >
         <span className="file-icon">{isOpen ? '📂' : '📁'}</span>
         <span className="file-name">{item.name}</span>
       </div>
-      
+
       {isOpen && (
         <div className="folder-contents">
           {item.children && item.children.map((child, index) => (
             child.type === 'folder' ? (
-              <FolderView 
-                key={index} 
-                item={child} 
-                depth={depth + 1} 
+              <FolderView
+                key={index}
+                item={child}
+                depth={depth + 1}
                 selectedFile={selectedFile}
                 onSelectFile={onSelectFile}
                 onDropFileToFolder={onDropFileToFolder}
               />
             ) : (
-              <div 
+              <div
                 key={index}
                 className={`file-item ${selectedFile === `${item.name}/${child.name}` ? 'selected' : ''}`}
                 style={{ paddingLeft: `${(depth + 1) * 16}px` }}
@@ -130,6 +116,7 @@ function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToF
 
 function FileView({ files, setFiles }) {
   const [selectedFile, setSelectedFile] = useState(null);
+  const [isDraggingOverRoot, setIsDraggingOverRoot] = useState(false);
 
   const handleDropFileToFolder = (folderName, droppedFiles) => {
     const updated = files.map(folder => {
@@ -150,18 +137,64 @@ function FileView({ files, setFiles }) {
     setFiles(updated);
   };
 
+  const handleRootDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverRoot(true);
+  };
+
+  const handleRootDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverRoot(false);
+  };
+
+  const handleRootDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverRoot(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length === 0) return;
+
+    const newTopLevelFiles = droppedFiles.map(file => ({
+      name: file.name,
+      type: 'file',
+    }));
+
+    setFiles(prev => [...prev, ...newTopLevelFiles]);
+  };
+
   return (
-    <div className="file-explorer modern-explorer">
+    <div
+      className={`file-explorer modern-explorer ${isDraggingOverRoot ? 'root-drag-over' : ''}`}
+      onDragEnter={handleRootDragEnter}
+      onDragLeave={handleRootDragLeave}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleRootDrop}
+    >
       {files.length > 0 ? (
-        files.map((item, index) => (
-          <FolderView
-            key={index}
-            item={item}
-            selectedFile={selectedFile}
-            onSelectFile={setSelectedFile}
-            onDropFileToFolder={handleDropFileToFolder}
-          />
-        ))
+        files.map((item, index) =>
+          item.type === 'folder' ? (
+            <FolderView
+              key={index}
+              item={item}
+              selectedFile={selectedFile}
+              onSelectFile={setSelectedFile}
+              onDropFileToFolder={handleDropFileToFolder}
+            />
+          ) : (
+            <div
+              key={index}
+              className={`file-item ${selectedFile === item.name ? 'selected' : ''}`}
+              style={{ paddingLeft: `8px` }}
+              onClick={() => setSelectedFile(item.name)}
+            >
+              <FileIcon fileName={item.name} />
+              <span className="file-name">{item.name}</span>
+            </div>
+          )
+        )
       ) : (
         <div className="empty-state">
           <p>파일이 없습니다.</p>
@@ -170,6 +203,5 @@ function FileView({ files, setFiles }) {
     </div>
   );
 }
-
 
 export default FileView;

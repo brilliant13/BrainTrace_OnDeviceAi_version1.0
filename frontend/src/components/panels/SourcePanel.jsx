@@ -88,27 +88,6 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
 
       {!collapsed && (
         <>
-          {/* 버튼 */}
-          {/* <div className="action-buttons">
-            <button className="add-button" onClick={() => setShowAddFolderInput(true)}>
-              {isIconMode ? (
-                <img src={addFolderIcon} alt="폴더 추가" className="button-icon" />
-              ) : (
-                <>
-                  <span className="add-icon">+</span> 폴더 추가
-                </>
-              )}
-            </button>
-            <button className="add-button" onClick={() => setShowAddFileInput(true)}>
-              {isIconMode ? (
-                <img src={newFileIcon} alt="소스 추가" className="button-icon" />
-              ) : (
-                <>
-                  <span className="add-icon">+</span> 소스 추가
-                </>
-              )}
-            </button>
-          </div> */}
           <div className="action-buttons">
             <button
               className={`add-button ${isIconMode ? 'icon-only' : ''}`}
