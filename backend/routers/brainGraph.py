@@ -7,7 +7,7 @@ import logging
 router = APIRouter(
     prefix="/brainGraph",
     tags=["brainGraph"],
-    responses={404: {"description": "Not found"}},
+    responses={404: {"description": "Not found"}}
 )
 
 @router.post("/process_text", 

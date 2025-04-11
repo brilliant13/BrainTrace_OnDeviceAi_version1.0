@@ -6,6 +6,10 @@ import uvicorn
 from fastapi import FastAPI
 from neo4j_db.utils import run_neo4j  # ✅ Neo4j 실행 함수
 from routers import brainGraph
+from routers import userRouter  # 사용자 관리 라우터 추가
+from routers import brainRouter  # 브레인 관리 라우터 추가
+from routers import folderRouter  # 폴더 관리 라우터 추가
+from routers import memoRouter  # 메모 관리 라우터 추가
 # 로깅 설정
 logging.basicConfig(
     level=logging.INFO, 
@@ -41,9 +45,20 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logging.error("Neo4j 종료 중 오류 발생: %s", str(e))
 
-app = FastAPI(title="BrainTrace API", lifespan=lifespan)
+app = FastAPI(
+    title="BrainTrace API", 
+    description="지식 그래프 기반 질의응답 시스템 API",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    lifespan=lifespan
+)
 # API 라우터를 등록합니다.
 app.include_router(brainGraph.router)
+app.include_router(userRouter.router)  # 사용자 관리 라우터 등록
+app.include_router(brainRouter.router)  # 브레인 관리 라우터 등록
+app.include_router(folderRouter.router)  # 폴더 관리 라우터 등록
+app.include_router(memoRouter.router)  # 메모 관리 라우터 등록
 # Neo4j 프로세스 객체
 neo4j_process = None
 
