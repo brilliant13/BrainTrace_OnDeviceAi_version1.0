@@ -810,4 +810,58 @@ class SQLiteHandler:
             ]
         except Exception as e:
             logging.error("폴더 메모 제목 목록 조회 오류: %s", str(e))
+            return []
+
+    def get_default_memos(self) -> List[dict]:
+        """폴더가 없는 모든 메모 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT memo_id, memo_title, memo_text, memo_date, is_source, folder_id FROM Memo WHERE folder_id IS NULL ORDER BY memo_date DESC"
+            )
+            memos = cursor.fetchall()
+            
+            conn.close()
+            
+            return [
+                {
+                    "memo_id": memo[0], 
+                    "memo_title": memo[1],
+                    "memo_text": memo[2],
+                    "memo_date": memo[3],
+                    "is_source": bool(memo[4]),
+                    "folder_id": memo[5]
+                } 
+                for memo in memos
+            ]
+        except Exception as e:
+            logging.error("폴더 없는 메모 목록 조회 오류: %s", str(e))
+            return []
+
+    def get_default_memo_titles(self) -> List[dict]:
+        """폴더가 없는 모든 메모의 제목만 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT memo_id, memo_title, memo_date, is_source FROM Memo WHERE folder_id IS NULL ORDER BY memo_date DESC"
+            )
+            memos = cursor.fetchall()
+            
+            conn.close()
+            
+            return [
+                {
+                    "memo_id": memo[0], 
+                    "memo_title": memo[1],
+                    "memo_date": memo[2],
+                    "is_source": bool(memo[3])
+                } 
+                for memo in memos
+            ]
+        except Exception as e:
+            logging.error("폴더 없는 메모 제목 목록 조회 오류: %s", str(e))
             return [] 

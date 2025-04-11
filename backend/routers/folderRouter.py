@@ -43,7 +43,7 @@ class MemoResponse(BaseModel):
     memo_text: str = Field(..., description="메모 내용", example="파이썬은 들여쓰기가 중요한 언어입니다.")
     memo_date: str = Field(..., description="메모 작성/수정일", example="2023-06-15 14:30:45")
     is_source: bool = Field(..., description="소스 메모 여부", example=False)
-    folder_id: int = Field(..., description="메모가 속한 폴더 ID", example=1)
+    folder_id: Optional[int] = Field(None, description="메모가 속한 폴더 ID", example=1)
 
 class MemoTitleResponse(BaseModel):
     memo_id: int = Field(..., description="메모 ID", example=1)
@@ -259,4 +259,24 @@ async def delete_folder_with_memos(folder_id: int):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logging.error("폴더와 메모 삭제 오류: %s", str(e))
-        raise HTTPException(status_code=500, detail="내부 서버 오류") 
+        raise HTTPException(status_code=500, detail="내부 서버 오류")
+
+@router.get("/default/getMemos", response_model=List[MemoResponse],
+           summary="폴더가 없는 메모 목록 조회",
+           description="폴더에 속하지 않은 모든 메모 목록을 반환합니다.")
+async def get_default_memos():
+    """
+    폴더에 속하지 않은 모든 메모를 반환합니다.
+    """
+    memos = sqlite_handler.get_default_memos()
+    return memos
+
+@router.get("/default/getMemoTitles", response_model=List[MemoTitleResponse],
+           summary="폴더가 없는 메모 제목 목록 조회",
+           description="폴더에 속하지 않은 모든 메모의 제목 목록만 반환합니다.")
+async def get_default_memo_titles():
+    """
+    폴더에 속하지 않은 모든 메모의 제목을 반환합니다.
+    """
+    memo_titles = sqlite_handler.get_default_memo_titles()
+    return memo_titles 
