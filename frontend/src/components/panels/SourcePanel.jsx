@@ -41,53 +41,53 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
 
   const handleAddFolder = (e) => {
     e.preventDefault();
-  
+
     const newFolder = {
       name: newFolderName,
       type: 'folder',
       children: []
     };
-  
+
     setFiles(prevFiles => {
       const updatedFiles = [...prevFiles, newFolder];
-  
+
       // projectData의 해당 프로젝트에도 동기화
       const projectIndex = projectData.findIndex(p => p.id === activeProject);
       if (projectIndex !== -1) {
         projectData[projectIndex].files = updatedFiles;
       }
-  
+
       return updatedFiles;
     });
-  
+
     setShowAddFolderInput(false);
     setNewFolderName("");
   };
-  
+
 
   const handleAddFile = (e) => {
     e.preventDefault();
-  
+
     const newFile = {
       name: newFileName,
       type: 'file'
     };
-  
+
     setFiles(prevFiles => {
       const updatedFiles = [...prevFiles, newFile];
-  
+
       const projectIndex = projectData.findIndex(p => p.id === activeProject);
       if (projectIndex !== -1) {
         projectData[projectIndex].files = updatedFiles;
       }
-  
+
       return updatedFiles;
     });
-  
+
     setShowAddFileInput(false);
     setNewFileName("");
   };
-  
+
 
   return (
     <div
@@ -121,30 +121,21 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
         <>
           <div className="action-buttons">
             <button
-              className={`add-button ${isIconMode ? 'icon-only' : ''}`}
+              className={`pill-button`}
               onClick={() => setShowAddFolderInput(true)}
             >
-              {isIconMode ? (
-                <img src={addFolderIcon} alt="폴더 추가" className="button-icon" />
-              ) : (
-                <>
-                  <span className="add-icon">+</span> 폴더 추가
-                </>
-              )}
+              <span className="plus-icon">＋</span> 폴더
             </button>
+
             <button
-              className={`add-button ${isIconMode ? 'icon-only' : ''}`}
+              className={`pill-button`}
               onClick={() => setShowUploadModal(true)}
             >
-              {isIconMode ? (
-                <img src={newFileIcon} alt="소스 추가" className="button-icon" />
-              ) : (
-                <>
-                  <span className="add-icon">+</span> 소스 추가
-                </>
-              )}
+              <span className="plus-icon">＋</span> 소스
             </button>
           </div>
+
+
 
           {/* 폴더 추가 폼 */}
           {showAddFolderInput && (
