@@ -13,7 +13,10 @@ import newFileIcon from '../../assets/icons/new-file.png';
 
 function SourcePanel({ activeProject, collapsed, setCollapsed }) {
   const project = projectData.find(p => p.id === activeProject) || projectData[0];
-  const files = project.files || [];
+  //const files = project.files || [];
+  const [files, setFiles] = useState(project.files || []);
+
+  
 
   const [showAddFolderInput, setShowAddFolderInput] = useState(false);
   const [showAddFileInput, setShowAddFileInput] = useState(false);
@@ -165,7 +168,7 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
 
           {/* 파일 트리 */}
           <div className="panel-content">
-            <FileView files={files} />
+            <FileView files={files} setFiles={setFiles}  />
           </div>
         </>
       )}

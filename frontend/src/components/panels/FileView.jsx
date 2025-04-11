@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import './styles/Common.css';
 import './styles/SourcePanel.css'; // 파일 탐색기 관련 스타일이 여기 있음
 import './styles/Scrollbar.css';
+import './styles/FileView.css';
 
 function FileIcon({ fileName }) {
   // 파일 타입에 따른 아이콘 결정
@@ -27,28 +28,79 @@ function FileIcon({ fileName }) {
   return <span className="file-icon">{getFileIcon()}</span>;
 }
 
-function FolderView({ item, depth = 0, selectedFile, onSelectFile }) {
-  const [isOpen, setIsOpen] = useState(depth === 0); // 최상위 폴더는 기본으로 열기
-  
+function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToFolder  }) {
+  const [isOpen, setIsOpen] = useState(depth === 0);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dragEnterCount, setDragEnterCount] = useState(0);
+
   const toggleFolder = (e) => {
     e.stopPropagation();
     setIsOpen(!isOpen);
   };
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragEnterCount(count => count + 1);
+    setIsDragOver(true);
+  };
+  
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragEnterCount(count => {
+      const newCount = count - 1;
+      if (newCount <= 0) {
+        setIsDragOver(false);
+        return 0;
+      }
+      return newCount;
+    });
+  };
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    setDragEnterCount(0);
+  
+    const files = Array.from(e.dataTransfer.files);
+  
+    if (files.length > 0) {
+      console.log('Dropped files into folder:', item.name, files);
+      onDropFileToFolder?.(item.name, files);
+    }
+  };
+  
+
   return (
-    <div className="folder-container">
+    <div 
+      className={`folder-container ${isDragOver ? 'folder-drag-over' : ''}`}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleDrop}
+    >
       <div 
-        className="file-item" 
-        style={{ paddingLeft: `${depth * 16}px` }}
+        className={`file-item folder-item ${isDragOver ? 'drag-over' : ''}`}
+        style={{ 
+          paddingLeft: `${depth * 16}px`,
+          position: 'relative',
+        }}
         onClick={toggleFolder}
       >
         <span className="file-icon">{isOpen ? '📂' : '📁'}</span>
         <span className="file-name">{item.name}</span>
       </div>
       
-      {isOpen && item.children && (
+      {isOpen && (
         <div className="folder-contents">
-          {item.children.map((child, index) => (
+          {item.children && item.children.map((child, index) => (
             child.type === 'folder' ? (
               <FolderView 
                 key={index} 
@@ -56,6 +108,7 @@ function FolderView({ item, depth = 0, selectedFile, onSelectFile }) {
                 depth={depth + 1} 
                 selectedFile={selectedFile}
                 onSelectFile={onSelectFile}
+                onDropFileToFolder={onDropFileToFolder}
               />
             ) : (
               <div 
@@ -75,18 +128,38 @@ function FolderView({ item, depth = 0, selectedFile, onSelectFile }) {
   );
 }
 
-function FileView({ files }) {
+function FileView({ files, setFiles }) {
   const [selectedFile, setSelectedFile] = useState(null);
-  
+
+  const handleDropFileToFolder = (folderName, droppedFiles) => {
+    const updated = files.map(folder => {
+      if (folder.name === folderName) {
+        return {
+          ...folder,
+          children: [
+            ...(folder.children || []),
+            ...droppedFiles.map(file => ({
+              name: file.name,
+              type: 'file',
+            })),
+          ],
+        };
+      }
+      return folder;
+    });
+    setFiles(updated);
+  };
+
   return (
     <div className="file-explorer modern-explorer">
       {files.length > 0 ? (
         files.map((item, index) => (
-          <FolderView 
-            key={index} 
-            item={item} 
+          <FolderView
+            key={index}
+            item={item}
             selectedFile={selectedFile}
             onSelectFile={setSelectedFile}
+            onDropFileToFolder={handleDropFileToFolder}
           />
         ))
       ) : (
@@ -97,5 +170,6 @@ function FileView({ files }) {
     </div>
   );
 }
+
 
 export default FileView;
