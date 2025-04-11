@@ -14,12 +14,12 @@ class Neo4jHandler:
     def close(self):
         self.driver.close()
 
-    def insert_nodes_and_edges(self, nodes, edges):
+    def insert_nodes_and_edges(self, nodes, edges, brain_id):
         """
         노드와 엣지를 Neo4j에 저장합니다.
         쓰기 트랜잭션은 session.write_transaction()을 사용하여 한 번에 처리합니다.
         """
-        def _insert(tx, nodes, edges):
+        def _insert(tx, nodes, edges, brain_id):
             # 노드 저장
             for node in nodes:
                 # descriptions를 JSON 문자열로 변환 (한글 깨짐 방지를 위해 ensure_ascii=False)
@@ -33,14 +33,16 @@ class Neo4jHandler:
                 
                 tx.run(
                     """
-                    MERGE (n:Node {name: $name})
+                    MERGE (n:Node {name: $name, brain_id: $brain_id})
                     ON CREATE SET 
                         n.label = $label, 
                         n.descriptions = $new_descriptions,
-                        n.source_id = $source_id
+                        n.source_id = $source_id,
+                        n.brain_id = $brain_id
                     ON MATCH SET 
                         n.label = $label, 
                         n.source_id = $source_id,
+                        n.brain_id = $brain_id,
                         n.descriptions = CASE 
                             WHEN n.descriptions IS NULL THEN $new_descriptions 
                             ELSE n.descriptions + [item IN $new_descriptions WHERE NOT item IN n.descriptions] 
@@ -49,23 +51,25 @@ class Neo4jHandler:
                     name=node["name"],
                     label=node["label"],
                     source_id=node.get("source_id", ""),
-                    new_descriptions=new_descriptions
+                    new_descriptions=new_descriptions,
+                    brain_id=brain_id
                 )
             # 엣지 저장
             for edge in edges:
                 tx.run(
                     """
-                    MATCH (a:Node {name: $source}), (b:Node {name: $target})
-                    MERGE (a)-[r:REL {relation: $relation}]->(b)
+                    MATCH (a:Node {name: $source, brain_id: $brain_id}), (b:Node {name: $target, brain_id: $brain_id})
+                    MERGE (a)-[r:REL {relation: $relation, brain_id: $brain_id}]->(b)
                     """,
                     source=edge["source"],
                     target=edge["target"],
-                    relation=edge["relation"]
+                    relation=edge["relation"],
+                    brain_id=brain_id
                 )
 
         try:
             with self.driver.session() as session:
-                session.write_transaction(_insert, nodes, edges)
+                session.execute_write(_insert, nodes, edges, brain_id)
                 logging.info("✅ Neo4j 노드와 엣지 삽입 및 트랜잭션 커밋 완료")
         except Exception as e:
             logging.error(f"❌ Neo4j 쓰기 트랜잭션 오류: {str(e)}")
@@ -92,7 +96,7 @@ class Neo4jHandler:
             logging.error(f"❌ Neo4j 읽기 오류: {str(e)}")
         return nodes
 
-    def query_schema_by_node_names(self, node_names):
+    def query_schema_by_node_names(self, node_names, brain_id):
         """
         입력된 노드 이름들을 기준으로 주변 노드 및 관계(최대 2단계 깊이)를 조회합니다.
         """
@@ -100,7 +104,7 @@ class Neo4jHandler:
             logging.error("유효하지 않은 node_names: %s", node_names)
             return None
         
-        logging.info("Neo4j 스키마 조회 시작 (노드 이름 목록: %s)", node_names)
+        logging.info("Neo4j 스키마 조회 시작 (노드 이름 목록: %s, brain_id: %s)", node_names, brain_id)
         
         try:
             # 두 개의 별도 쿼리로 분리: 1단계 관계와 2단계 관계
@@ -108,9 +112,9 @@ class Neo4jHandler:
                 # 1단계: 직접 연결된 노드 및 관계
                 query1 = """
                 MATCH (n:Node)
-                WHERE n.name IN $names
+                WHERE n.name IN $names AND n.brain_id = $brain_id
                 OPTIONAL MATCH (n)-[r]-(m:Node)
-                WHERE m IS NOT NULL
+                WHERE m IS NOT NULL AND m.brain_id = $brain_id
                 RETURN 
                   collect(DISTINCT n) AS start_nodes,
                   collect(DISTINCT m) AS direct_nodes,
@@ -120,17 +124,18 @@ class Neo4jHandler:
                 # 2단계: 간접 연결된 노드
                 query2 = """
                 MATCH (n:Node)-[r1]-(m:Node)-[r2]-(p:Node)
-                WHERE n.name IN $names AND p <> n
+                WHERE n.name IN $names AND p <> n 
+                AND n.brain_id = $brain_id AND m.brain_id = $brain_id AND p.brain_id = $brain_id
                 RETURN 
                   collect(DISTINCT p) AS indirect_nodes,
                   collect(DISTINCT r2) AS indirect_relationships
                 """
                 
                 # 쿼리 실행
-                result1 = session.run(query1, names=node_names)
+                result1 = session.run(query1, names=node_names, brain_id=brain_id)
                 record1 = result1.single()
                 
-                result2 = session.run(query2, names=node_names)
+                result2 = session.run(query2, names=node_names, brain_id=brain_id)
                 record2 = result2.single()
                 
                 if not record1:

@@ -38,7 +38,7 @@ async def process_text_endpoint(request_data: ProcessTextRequest):
 
     # Step 2: Neo4j에 노드와 엣지 저장 
     neo4j_handler = Neo4jHandler()
-    neo4j_handler.insert_nodes_and_edges(nodes, edges)
+    neo4j_handler.insert_nodes_and_edges(nodes, edges, brain_id)
     logging.info("Neo4j에 노드와 엣지 삽입 완료")
 
     # Step 3: 노드 정보를 벡터 DB에 임베딩
@@ -96,7 +96,7 @@ async def answer_endpoint(request_data: AnswerRequest):
         
         # Step 4: 유사한 노드들의 2단계 깊이 스키마 조회
         neo4j_handler = Neo4jHandler()
-        result = neo4j_handler.query_schema_by_node_names(similar_node_names)
+        result = neo4j_handler.query_schema_by_node_names(similar_node_names, brain_id)
         if not result:
             raise Exception("스키마 조회 결과가 없습니다.")
         
