@@ -423,6 +423,49 @@ class SQLiteHandler:
             logging.error("폴더 삭제 오류: %s", str(e))
             raise RuntimeError(f"폴더 삭제 오류: {str(e)}")
     
+    def delete_folder_with_memos(self, folder_id: int) -> dict:
+        """폴더와 그 안의 모든 메모 삭제"""
+        try:
+            # 폴더가 존재하는지 확인
+            folder = self.get_folder(folder_id)
+            if not folder:
+                raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+
+            # 메모 삭제
+            cursor.execute("DELETE FROM Memo WHERE folder_id = ?", (folder_id,))
+            deleted_memos_count = cursor.rowcount
+
+            # 폴더 삭제
+            cursor.execute("DELETE FROM Folder WHERE folder_id = ?", (folder_id,))
+            folder_deleted = cursor.rowcount > 0
+
+            conn.commit()
+            conn.close()
+
+            if folder_deleted:
+                logging.info("폴더와 메모 삭제 완료: folder_id=%s, deleted_memos=%s", folder_id, deleted_memos_count)
+                return {
+                    "folder_id": folder_id,
+                    "deleted_memos_count": deleted_memos_count,
+                    "success": True
+                }
+            else:
+                logging.warning("폴더와 메모 삭제 실패: folder_id=%s", folder_id)
+                return {
+                    "folder_id": folder_id,
+                    "deleted_memos_count": 0,
+                    "success": False
+                }
+        except ValueError as e:
+            logging.error("폴더와 메모 삭제 실패: %s", str(e))
+            raise
+        except Exception as e:
+            logging.error("폴더와 메모 삭제 오류: %s", str(e))
+            raise RuntimeError(f"폴더와 메모 삭제 오류: {str(e)}")
+    
     def update_folder(self, folder_id: int, folder_name: str = None, is_default: bool = None) -> bool:
         """폴더 정보 업데이트"""
         try:
