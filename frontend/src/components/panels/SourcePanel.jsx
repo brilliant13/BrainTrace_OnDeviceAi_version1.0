@@ -6,6 +6,7 @@ import './styles/PanelToggle.css';
 import './styles/Scrollbar.css';
 import projectData from '../../data/projectData';
 import FileView from './FileView';
+import SourceUploadModal from './SourceUploadModal'; // ✅ 모달 컴포넌트 import
 
 import toggleIcon from '../../assets/icons/toggle-view.png';
 import addFolderIcon from '../../assets/icons/add-folder.png';
@@ -13,24 +14,19 @@ import newFileIcon from '../../assets/icons/new-file.png';
 
 function SourcePanel({ activeProject, collapsed, setCollapsed }) {
   const project = projectData.find(p => p.id === activeProject) || projectData[0];
-  //const files = project.files || [];
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [files, setFiles] = useState(project.files || []);
-
-  
 
   const [showAddFolderInput, setShowAddFolderInput] = useState(false);
   const [showAddFileInput, setShowAddFileInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [newFileName, setNewFileName] = useState("");
 
-  // 패널 너비 상태 추가
   const [panelWidth, setPanelWidth] = useState(0);
   const panelRef = useRef(null);
 
-  // 아이콘 모드인지 확인 (패널이 340px 보다 작을 때)
   const isIconMode = panelWidth > 0 && panelWidth < 193;
 
-  // 패널 너비 감지
   useEffect(() => {
     if (panelRef.current && !collapsed) {
       const resizeObserver = new ResizeObserver(entries => {
@@ -38,7 +34,6 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
           setPanelWidth(entry.contentRect.width);
         }
       });
-
       resizeObserver.observe(panelRef.current);
       return () => resizeObserver.disconnect();
     }
@@ -46,17 +41,53 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
 
   const handleAddFolder = (e) => {
     e.preventDefault();
-    // 실제 구현에서는 폴더 추가 로직
+  
+    const newFolder = {
+      name: newFolderName,
+      type: 'folder',
+      children: []
+    };
+  
+    setFiles(prevFiles => {
+      const updatedFiles = [...prevFiles, newFolder];
+  
+      // projectData의 해당 프로젝트에도 동기화
+      const projectIndex = projectData.findIndex(p => p.id === activeProject);
+      if (projectIndex !== -1) {
+        projectData[projectIndex].files = updatedFiles;
+      }
+  
+      return updatedFiles;
+    });
+  
     setShowAddFolderInput(false);
     setNewFolderName("");
   };
+  
 
   const handleAddFile = (e) => {
     e.preventDefault();
-    // 실제 구현에서는 파일 추가 로직
+  
+    const newFile = {
+      name: newFileName,
+      type: 'file'
+    };
+  
+    setFiles(prevFiles => {
+      const updatedFiles = [...prevFiles, newFile];
+  
+      const projectIndex = projectData.findIndex(p => p.id === activeProject);
+      if (projectIndex !== -1) {
+        projectData[projectIndex].files = updatedFiles;
+      }
+  
+      return updatedFiles;
+    });
+  
     setShowAddFileInput(false);
     setNewFileName("");
   };
+  
 
   return (
     <div
@@ -103,7 +134,7 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
             </button>
             <button
               className={`add-button ${isIconMode ? 'icon-only' : ''}`}
-              onClick={() => setShowAddFileInput(true)}
+              onClick={() => setShowUploadModal(true)}
             >
               {isIconMode ? (
                 <img src={newFileIcon} alt="소스 추가" className="button-icon" />
@@ -117,18 +148,21 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
 
           {/* 폴더 추가 폼 */}
           {showAddFolderInput && (
-            <form className="add-form" onSubmit={handleAddFolder}>
+            <form className="add-form fancy-form" onSubmit={handleAddFolder}>
               <input
                 type="text"
-                placeholder="폴더 이름"
+                placeholder="새 폴더 이름"
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 autoFocus
               />
-              <button type="submit">추가</button>
-              <button type="button" onClick={() => setShowAddFolderInput(false)}>취소</button>
+              <div className="form-buttons">
+                <button type="submit" className="primary">추가</button>
+                <button type="button" className="secondary" onClick={() => setShowAddFolderInput(false)}>취소</button>
+              </div>
             </form>
           )}
+
 
           {/* 파일 추가 폼 */}
           {showAddFileInput && (
@@ -147,10 +181,23 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
 
           {/* 파일 트리 */}
           <div className="panel-content">
-            <FileView files={files} setFiles={setFiles}  />
+            <FileView files={files} setFiles={setFiles} />
           </div>
         </>
       )}
+
+      {/* ✅ 업로드 모달 */}
+      <SourceUploadModal
+        visible={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUpload={(uploadedFiles) => {
+          const newFileEntries = uploadedFiles.map(file => ({
+            name: file.name,
+            type: 'file',
+          }));
+          setFiles(prev => [...prev, ...newFileEntries]);
+        }}
+      />
     </div>
   );
 }
