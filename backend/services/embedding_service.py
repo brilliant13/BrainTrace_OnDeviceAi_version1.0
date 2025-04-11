@@ -103,9 +103,12 @@ def update_index_and_get_embeddings(nodes: List[Dict], brain_id: str) -> Dict[st
                     continue
                     
                 description = desc["description"]
-                # 임베딩을 위한 텍스트 포맷: "label - name: description"
-                embedding_text = f"{label} - {name}: {description}"
-                
+                # 임베딩을 위한 텍스트 포맷
+                embedding_text = f"{name}는 {label}이며, {description}"
+                print("###############################################")
+                logging.info(f"[임베딩 텍스트] {embedding_text}")
+                print("###############################################")
+
                 try:
                     # 임베딩 생성 및 Qdrant 저장
                     embedding = encode_text(embedding_text)
@@ -160,7 +163,7 @@ def encode_text(text: str) -> List[float]:
         logging.error("텍스트 임베딩 생성 실패: %s", str(e))
         raise RuntimeError(f"텍스트 임베딩 생성 실패: {str(e)}")
 
-def search_similar_nodes(embedding: List[float], brain_id: str, limit: int = 5, threshold: float = 0.6) -> List[Dict]:
+def search_similar_nodes(embedding: List[float], brain_id: str, limit: int = 5, threshold: float = 0.5) -> List[Dict]:
     """벡터 데이터베이스에서 유사한 노드를 검색합니다.
     
     이 함수는:
