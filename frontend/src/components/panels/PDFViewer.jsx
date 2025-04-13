@@ -91,7 +91,7 @@ const PDFViewer = ({ file, containerWidth }) => {
         />
       )}
 
-      {/* 🔍 확대 버튼 & 비율 표시 */}
+      {/* 확대/축소 버튼 플로팅 */}
       <div style={{
         position: 'absolute',
         top: 12,
@@ -100,13 +100,27 @@ const PDFViewer = ({ file, containerWidth }) => {
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        backgroundColor: '#fff',
+        backgroundColor: '#ffffffcc',
         borderRadius: '6px',
         padding: '6px 10px',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
         fontSize: '14px',
         fontWeight: 500
       }}>
+        <button
+          onClick={() => setScale(prev => Math.max(prev - 0.2, 0.5))}
+          style={{
+            background: '#4a4a4a',
+            border: 'none',
+            color: 'white',
+            padding: '4px 10px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          축소
+        </button>
         <button
           onClick={() => setScale(prev => Math.min(prev + 0.2, 3))}
           style={{
@@ -119,9 +133,11 @@ const PDFViewer = ({ file, containerWidth }) => {
             fontSize: '14px'
           }}
         >
-          🔍 확대
+          확대
         </button>
-        <span style={{ color: '#333' }}>{Math.round(scale * 100)}%</span>
+        <span style={{ color: '#333', minWidth: '40px', textAlign: 'center' }}>
+          {Math.round(scale * 100)}%
+        </span>
       </div>
 
       <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
