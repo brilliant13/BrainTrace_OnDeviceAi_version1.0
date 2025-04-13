@@ -268,3 +268,30 @@ button.add-button.icon-only:active {
 .plus-icon {
   font-size: 16px;
 }
+
+/* SourcePanel.css 또는 공통 CSS에 추가 */
+.back-button {
+  margin: 10px;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.expanded-panel {
+  transition: width 0.3s ease;
+  width: 360px;
+  /* PDF 열렸을 때 너비 */
+}
+
+.pdf-viewer-wrapper {
+  overflow-y: auto;
+  height: 100%;
+  padding: 8px;
+}
+
+.pdf-viewer-wrapper canvas {
+  transition: transform 0.2s ease;
+}

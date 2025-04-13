@@ -12,8 +12,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "pdfjs-dist": "^4.8.69",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-pdf": "^9.2.1",
     "react-resizable-panels": "^2.1.7"
   },
   "devDependencies": {
