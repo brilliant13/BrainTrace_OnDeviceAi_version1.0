@@ -93,7 +93,7 @@ const PDFViewer = ({ file, containerWidth }) => {
 
       {/* 확대/축소 버튼 플로팅 */}
       <div style={{
-        position: 'absolute',
+        position: 'sticky',
         top: 12,
         right: 12,
         zIndex: 20,
@@ -105,7 +105,11 @@ const PDFViewer = ({ file, containerWidth }) => {
         padding: '6px 10px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
         fontSize: '14px',
-        fontWeight: 500
+        fontWeight: 500,
+        justifyContent: 'flex-end',
+        marginLeft: 'auto',
+        marginBottom: '12px',
+        width: 'fit-content',
       }}>
         <button
           onClick={() => setScale(prev => Math.max(prev - 0.2, 0.5))}
