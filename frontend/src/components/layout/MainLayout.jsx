@@ -103,8 +103,8 @@ function MainLayout() {
         <Panel
           ref={sourcePanelRef}
           defaultSize={sourceCollapsed ? 5 : 20}
-          minSize={sourceCollapsed ? 5 : 15}
-          maxSize={sourceCollapsed ? 5 : 100}
+          minSize={sourceCollapsed ? 5 : 10}
+          maxSize={sourceCollapsed ? 5 : 120}
           className={sourceCollapsed ? 'panel-collapsed' : ''}
           onResize={handleSourceResize}
         >
@@ -134,8 +134,8 @@ function MainLayout() {
         <Panel
           ref={memoPanelRef}
           defaultSize={memoCollapsed ? 5 : 25}
-          minSize={memoCollapsed ? 5 : 20}
-          maxSize={memoCollapsed ? 5 : 100}
+          minSize={memoCollapsed ? 5 : 10}
+          maxSize={memoCollapsed ? 5 : 120}
           className={memoCollapsed ? 'panel-collapsed' : ''}
           onResize={handleMemoResize}
         >

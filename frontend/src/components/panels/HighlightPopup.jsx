@@ -1,7 +1,6 @@
-
 import React from 'react';
 
-const colors = ['#fffd7a', '#ffac80', '#a1ffb7', '#a5d8ff', '#e599f7'];
+const colors = ['#fff7a3', '#ffd8c2', '#c9ffd9', '#cfe9ff', '#f2ccff']; // 연한 색상
 
 const HighlightPopup = ({ position, onSelectColor, onCopyText }) => {
   const style = {
