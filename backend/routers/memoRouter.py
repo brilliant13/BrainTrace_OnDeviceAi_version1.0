@@ -202,4 +202,77 @@ async def set_memo_as_not_source(memo_id: int):
         return updated_memo
     except Exception as e:
         logging.error("메모 비소스 설정 오류: %s", str(e))
+        raise HTTPException(status_code=500, detail="내부 서버 오류")
+
+@router.put("/changeFolder/{target_folder_id}/{memo_id}", response_model=MemoResponse,
+           summary="메모의 폴더 변경",
+           description="메모를 다른 폴더로 이동합니다.")
+async def change_memo_folder(target_folder_id: int, memo_id: int):
+    """
+    메모를 다른 폴더로 이동합니다:
+    
+    - **target_folder_id**: 이동할 대상 폴더의 ID
+    - **memo_id**: 이동할 메모의 ID
+    """
+    # 메모 존재 여부 확인
+    memo = sqlite_handler.get_memo(memo_id)
+    if not memo:
+        raise HTTPException(status_code=404, detail="메모를 찾을 수 없습니다")
+    
+    # 대상 폴더 존재 여부 확인
+    if target_folder_id is not None:  # None인 경우는 폴더에서 제거하는 경우
+        folder = sqlite_handler.get_folder(target_folder_id)
+        if not folder:
+            raise HTTPException(status_code=404, detail="대상 폴더를 찾을 수 없습니다")
+    
+    try:
+        # 메모의 folder_id 업데이트
+        updated = sqlite_handler.update_memo(
+            memo_id,
+            memo_title=None,  # 기존 값 유지
+            memo_text=None,   # 기존 값 유지
+            is_source=None,   # 기존 값 유지
+            folder_id=target_folder_id
+        )
+        
+        if not updated:
+            raise HTTPException(status_code=400, detail="폴더 변경 실패")
+            
+        updated_memo = sqlite_handler.get_memo(memo_id)
+        return updated_memo
+    except Exception as e:
+        logging.error("메모 폴더 변경 오류: %s", str(e))
+        raise HTTPException(status_code=500, detail="내부 서버 오류")
+
+@router.put("/MoveOutFolder/{memo_id}", response_model=MemoResponse,
+           summary="메모를 폴더에서 제거",
+           description="메모를 모든 폴더에서 제거하여 독립적인 메모로 만듭니다.")
+async def move_memo_out_of_folder(memo_id: int):
+    """
+    메모를 폴더에서 제거합니다:
+    
+    - **memo_id**: 폴더에서 제거할 메모의 ID
+    """
+    # 메모 존재 여부 확인
+    memo = sqlite_handler.get_memo(memo_id)
+    if not memo:
+        raise HTTPException(status_code=404, detail="메모를 찾을 수 없습니다")
+    
+    try:
+        # 메모의 folder_id를 null로 설정
+        updated = sqlite_handler.update_memo(
+            memo_id,
+            memo_title=None,  # 기존 값 유지
+            memo_text=None,   # 기존 값 유지
+            is_source=None,   # 기존 값 유지
+            folder_id=None    # folder_id를 null로 설정
+        )
+        
+        if not updated:
+            raise HTTPException(status_code=400, detail="메모 폴더 제거 실패")
+            
+        updated_memo = sqlite_handler.get_memo(memo_id)
+        return updated_memo
+    except Exception as e:
+        logging.error("메모 폴더 제거 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="내부 서버 오류") 
