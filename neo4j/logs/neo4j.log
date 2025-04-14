@@ -3348,3 +3348,33 @@ Caused by: java.net.BindException: Address already in use: bind
 2025-04-09 09:26:14.113+0000 INFO  name: system
 2025-04-09 09:26:14.115+0000 INFO  creationDate: 2025-03-14T13:46:03.267Z
 2025-04-09 09:26:14.116+0000 INFO  Started.
+2025-04-13 16:06:05.489+0000 INFO  Logging config in use: File '/Users/woongjung/mumu/version1.0/neo4j/conf/user-logs.xml'
+2025-04-13 16:06:05.495+0000 INFO  Starting...
+2025-04-13 16:06:06.159+0000 INFO  This instance is ServerId{c0d9df05} (c0d9df05-f401-49cd-b97f-023fa0a5ad4a)
+2025-04-13 16:06:06.767+0000 INFO  ======== Neo4j 2025.02.0 ========
+2025-04-13 16:06:08.140+0000 INFO  Anonymous Usage Data is being sent to Neo4j, see https://neo4j.com/docs/usage-data/
+2025-04-13 16:06:08.158+0000 INFO  Bolt enabled on localhost:7687.
+2025-04-13 16:06:08.476+0000 INFO  HTTP enabled on localhost:7474.
+2025-04-13 16:06:08.477+0000 INFO  Remote interface available at http://localhost:7474/
+2025-04-13 16:06:08.478+0000 INFO  id: 6DB934CC5E76993496912D852679596040063C0D871BF9F0FD3CA5D9A30BCA9E
+2025-04-13 16:06:08.478+0000 INFO  name: system
+2025-04-13 16:06:08.478+0000 INFO  creationDate: 2025-03-14T13:46:03.267Z
+2025-04-13 16:06:08.478+0000 INFO  Started.
+2025-04-13 16:20:41.563+0000 INFO  Neo4j Server shutdown initiated by request
+2025-04-13 16:20:41.566+0000 INFO  Stopping...
+2025-04-13 16:20:52.477+0000 INFO  Stopped.
+2025-04-13 16:22:42.026+0000 INFO  Logging config in use: File '/Users/woongjung/mumu/version1.0/neo4j/conf/user-logs.xml'
+2025-04-13 16:22:42.032+0000 INFO  Starting...
+2025-04-13 16:22:42.660+0000 INFO  This instance is ServerId{c0d9df05} (c0d9df05-f401-49cd-b97f-023fa0a5ad4a)
+2025-04-13 16:22:43.228+0000 INFO  ======== Neo4j 2025.02.0 ========
+2025-04-13 16:22:44.421+0000 INFO  Anonymous Usage Data is being sent to Neo4j, see https://neo4j.com/docs/usage-data/
+2025-04-13 16:22:44.442+0000 INFO  Bolt enabled on localhost:7687.
+2025-04-13 16:22:44.759+0000 INFO  HTTP enabled on localhost:7474.
+2025-04-13 16:22:44.759+0000 INFO  Remote interface available at http://localhost:7474/
+2025-04-13 16:22:44.760+0000 INFO  id: 6DB934CC5E76993496912D852679596040063C0D871BF9F0FD3CA5D9A30BCA9E
+2025-04-13 16:22:44.760+0000 INFO  name: system
+2025-04-13 16:22:44.760+0000 INFO  creationDate: 2025-03-14T13:46:03.267Z
+2025-04-13 16:22:44.761+0000 INFO  Started.
+2025-04-14 00:16:06.252+0000 INFO  Neo4j Server shutdown initiated by request
+2025-04-14 00:16:06.264+0000 INFO  Stopping...
+2025-04-14 00:16:17.737+0000 INFO  Stopped.
