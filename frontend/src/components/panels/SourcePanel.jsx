@@ -121,6 +121,7 @@ function SourcePanel({ activeProject, collapsed, setCollapsed, setIsPDFOpen, onB
               </div>
             ) : (
               <FileView
+                activeProject={project}  // ✅ 전체 project 객체를 넘김
                 files={files}
                 setFiles={setFiles}
                 onOpenPDF={(file) => {

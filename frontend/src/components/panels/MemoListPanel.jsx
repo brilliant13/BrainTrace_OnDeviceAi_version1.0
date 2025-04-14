@@ -1,3 +1,4 @@
+// src/components/panels/MemoListPanel.jsx
 import React from 'react';
 import './styles/MemoList.css';
 
@@ -17,6 +18,17 @@ function MemoListPanel({ memos, selectedId, highlightedId, onSelect, onAdd, onDe
                     <div
                         key={`${memo.id}-${highlightedId === memo.id ? 'highlight' : ''}`}
                         className={`memo-item ${selectedId === memo.id ? 'active' : ''} ${highlightedId === memo.id ? 'highlighted' : ''}`}
+                        draggable // ✅ 드래그 가능하게 설정
+                        onDragStart={(e) => {
+                            const memoText = memo.content || '';
+                            const filename = `${memo.title || '메모'}.txt`;
+                            const dragData = {
+                                type: 'memo',
+                                name: filename,
+                                content: memoText,
+                            };
+                            e.dataTransfer.setData('application/json', JSON.stringify(dragData));
+                        }}
                     >
                         <div className="memo-item-content" onClick={() => onSelect(memo.id)}>
                             <div className="memo-title">{memo.title || '제목 없음'}</div>
@@ -31,11 +43,9 @@ function MemoListPanel({ memos, selectedId, highlightedId, onSelect, onAdd, onDe
                         <button className="delete-button" onClick={() => onDelete(memo.id)}>🗑</button>
                     </div>
                 ))}
-
             </div>
         </div>
     );
 }
-
 
 export default MemoListPanel;
