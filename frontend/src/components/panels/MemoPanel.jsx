@@ -12,14 +12,15 @@ import toggleIcon from '../../assets/icons/toggle-view.png';
 import graphOnIcon from '../../assets/icons/graph-on.png';
 import graphOffIcon from '../../assets/icons/graph-off.png';
 
-const MEMO_STORAGE_KEY = 'brainTrace-memos';
+function MemoPanel({ activeProject, collapsed, setCollapsed }) {
+  const projectId = activeProject;
+  const MEMO_STORAGE_KEY = `brainTrace-memos-${projectId}`;
 
-function MemoPanel({ collapsed, setCollapsed }) {
   const [showGraph, setShowGraph] = useState(true);
-
   const [memos, setMemos] = useState([]);
   const [selectedMemoId, setSelectedMemoId] = useState(null);
   const [highlightedMemoId, setHighlightedMemoId] = useState(null);
+
   const nodes = [
     { id: "main", label: "노드", type: "main", x: 50, y: 50 },
     { id: "sub1", label: "A", type: "sub", x: 30, y: 30 },
@@ -33,14 +34,12 @@ function MemoPanel({ collapsed, setCollapsed }) {
       setMemos(loaded);
     } else {
       const initial = [
-        { id: 1, title: '새 메모 1', content: '' },
-        { id: 2, title: '새 메모 2', content: '' }
       ];
       setMemos(initial);
       localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(initial));
     }
     setSelectedMemoId(null); // 메모 리스트 먼저 보이도록
-  }, []);
+  }, [MEMO_STORAGE_KEY]);
 
   const selectedMemo = memos.find(m => m.id === selectedMemoId);
 
@@ -50,14 +49,14 @@ function MemoPanel({ collapsed, setCollapsed }) {
     const updated = [newMemo, ...memos];
     setMemos(updated);
     localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updated));
-    setHighlightedMemoId(newId); // ✅ 추가된 메모 강조
+    setHighlightedMemoId(newId);
     setSelectedMemoId(null);
-    // 1초 뒤에 에디터로 전환
     setTimeout(() => {
       setSelectedMemoId(newId);
       setHighlightedMemoId(null);
     }, 1000);
   };
+
   const handleDeleteMemo = (id) => {
     const updated = memos.filter((memo) => memo.id !== id);
     setMemos(updated);

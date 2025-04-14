@@ -114,7 +114,8 @@ function SourcePanel({ activeProject, collapsed, setCollapsed, setIsPDFOpen, onB
                   setIsPDFOpen(false);
                   if (onBackFromPDF) onBackFromPDF(); // 패널 크기 초기화
 
-                }} style={{ marginBottom: '8px' }}>
+                }}
+                  className="pdf-back-button">
                   ← 뒤로가기
                 </button>
                 <PDFViewer file={openedPDF} containerWidth={panelWidth} />

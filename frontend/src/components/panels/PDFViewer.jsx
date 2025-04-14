@@ -80,7 +80,7 @@ const PDFViewer = ({ file, containerWidth }) => {
   return (
     <div
       onMouseUp={onTextSelection}
-      style={{ width: '100%', height: '100%', overflow: 'auto', position: 'relative' }}
+      style={{ width: '100%', height: '100%', position: 'relative' }}
       ref={viewerRef}
     >
       {popup && (
