@@ -1,5 +1,5 @@
 // src/components/panels/FileView.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './styles/Common.css';
 import './styles/SourcePanel.css';
 import './styles/Scrollbar.css';
@@ -60,6 +60,18 @@ function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToF
     setIsDragOver(false);
     setDragEnterCount(0);
 
+    const memoData = e.dataTransfer.getData('application/json');
+    if (memoData) {
+      try {
+        const memo = JSON.parse(memoData);
+        const newFile = new File([memo.content], memo.name, { type: 'text/plain' });
+        onDropFileToFolder?.(item.name, [newFile]);
+        return;
+      } catch (err) {
+        console.error('드래그된 메모 파싱 오류:', err);
+      }
+    }
+
     const droppedFiles = Array.from(e.dataTransfer.files);
     if (droppedFiles.length > 0) {
       onDropFileToFolder?.(item.name, droppedFiles);
@@ -113,7 +125,6 @@ function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToF
                       onOpenPDF(fileMap[child.name]);
                     }
                   }}
-
                 >
                   <FileIcon fileName={child.name} />
                   <span className="file-name">{child.name}</span>
@@ -126,9 +137,14 @@ function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToF
   );
 }
 
-function FileView({ files, setFiles, onOpenPDF, fileMap, setFileMap }) {
+function FileView({ activeProject, files, setFiles, onOpenPDF, fileMap, setFileMap }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDraggingOverRoot, setIsDraggingOverRoot] = useState(false);
+
+  useEffect(() => {
+    const newFiles = activeProject?.files || [];
+    setFiles(newFiles);
+  }, [activeProject, setFiles]);
 
   const handleDropFileToFolder = (folderName, droppedFiles) => {
     const updated = files.map((folder) => {
@@ -146,40 +162,20 @@ function FileView({ files, setFiles, onOpenPDF, fileMap, setFileMap }) {
       }
       return folder;
     });
-    // ✅ fileMap 업데이트
     const newMap = {};
     droppedFiles.forEach(file => {
       newMap[file.name] = file;
     });
     setFileMap(prev => ({ ...prev, ...newMap }));
-
     setFiles(updated);
   };
+
   const handleClickFile = (file) => {
-    console.log('📁 클릭된 파일:', file);
-
     setSelectedFile(file.name);
-
-    if (!file.name.endsWith('.pdf')) {
-      console.log('❌ PDF 파일이 아님:', file.name);
-      return;
-    }
-
-    if (!onOpenPDF) {
-      console.log('❌ onOpenPDF 함수가 없음');
-      return;
-    }
-
-    if (!fileMap?.[file.name]) {
-      console.log('❌ fileMap에 해당 파일 없음:', file.name);
-      console.log('현재 fileMap 상태:', fileMap);
-      return;
-    }
-
-    console.log('✅ PDF 열기 시도:', file.name);
+    if (!file.name.endsWith('.pdf')) return;
+    if (!onOpenPDF || !fileMap?.[file.name]) return;
     onOpenPDF(fileMap[file.name]);
   };
-
 
   const handleRootDragEnter = (e) => {
     e.preventDefault();
@@ -198,6 +194,22 @@ function FileView({ files, setFiles, onOpenPDF, fileMap, setFileMap }) {
     e.stopPropagation();
     setIsDraggingOverRoot(false);
 
+    const memoJson = e.dataTransfer.getData('application/json');
+    if (memoJson) {
+      try {
+        const memoData = JSON.parse(memoJson);
+        if (memoData?.type === 'memo') {
+          const { name, content } = memoData;
+          const file = new File([content], name, { type: 'text/plain' });
+          setFiles(prev => [...prev, { name, type: 'file' }]);
+          setFileMap(prev => ({ ...prev, [name]: file }));
+          return;
+        }
+      } catch (err) {
+        console.error('메모 드롭 처리 중 오류:', err);
+      }
+    }
+
     const droppedFiles = Array.from(e.dataTransfer.files);
     if (droppedFiles.length === 0) return;
 
@@ -205,13 +217,11 @@ function FileView({ files, setFiles, onOpenPDF, fileMap, setFileMap }) {
       name: file.name,
       type: 'file',
     }));
-    // ✅ 파일 객체 저장
     const newMap = {};
     droppedFiles.forEach(file => {
       newMap[file.name] = file;
     });
     setFileMap(prev => ({ ...prev, ...newMap }));
-
     setFiles((prev) => [...prev, ...newTopLevelFiles]);
   };
 
@@ -245,8 +255,6 @@ function FileView({ files, setFiles, onOpenPDF, fileMap, setFileMap }) {
               key={index}
               className={`file-item ${selectedFile === item.name ? 'selected' : ''}`}
               style={{ paddingLeft: `8px` }}
-              //onClick={() => setSelectedFile(item.name)}
-
               onClick={() => handleClickFile(item)}
             >
               <FileIcon fileName={item.name} />

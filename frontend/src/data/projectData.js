@@ -17,14 +17,8 @@ const projectData = [
         name: "컴퓨터공학",
         type: "folder",
         children: [
-          {
-            name: "pdf",
-            type: "folder",
-            children: [
-              { name: "Week 1 - 팀워터의 구조.pdf", type: "file" },
-              { name: "DB 설계 ERD.png", type: "file" }
-            ]
-          }
+          { name: "Week 1 - 팀워터의 구조.pdf", type: "file" },
+          { name: "DB 설계 ERD.png", type: "file" }
         ]
       },
       {
