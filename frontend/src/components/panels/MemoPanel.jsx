@@ -1,72 +1,74 @@
-// src/components/panels/MemoPanel.jsx
-import React, { useState } from 'react'; // useState 추가
+import React, { useState, useEffect } from 'react';
 import './styles/Common.css';
 import './styles/MemoPanel.css';
 import './styles/PanelToggle.css';
 import './styles/Scrollbar.css';
+
 import GraphView from './GraphView';
 import MemoEditor from './MemoEditor';
-
-import projectData from '../../data/projectData';
+import MemoListPanel from './MemoListPanel';
 
 import toggleIcon from '../../assets/icons/toggle-view.png';
 import graphOnIcon from '../../assets/icons/graph-on.png';
 import graphOffIcon from '../../assets/icons/graph-off.png';
-import memoOnIcon from '../../assets/icons/memo-on.png';
-import memoOffIcon from '../../assets/icons/memo-off.png';
 
-function MemoPanel({ activeProject, collapsed, setCollapsed }) {
-  const project = projectData.find(p => p.id === activeProject) || projectData[0];
-  const { title, content } = project.memo || { title: '', content: '' };
-  const nodes = project.nodes || [];
+const MEMO_STORAGE_KEY = 'brainTrace-memos';
 
-  // 그래프 표시 여부를 제어하는 상태 추가
+function MemoPanel({ collapsed, setCollapsed }) {
   const [showGraph, setShowGraph] = useState(true);
-  // 그래프 토글 함수
-  const toggleGraph = () => {
-    setShowGraph(!showGraph);
+
+  const [memos, setMemos] = useState([]);
+  const [selectedMemoId, setSelectedMemoId] = useState(null);
+  const [highlightedMemoId, setHighlightedMemoId] = useState(null);
+  const nodes = [
+    { id: "main", label: "노드", type: "main", x: 50, y: 50 },
+    { id: "sub1", label: "A", type: "sub", x: 30, y: 30 },
+    { id: "sub2", label: "B", type: "sub", x: 70, y: 30 }
+  ];
+
+  useEffect(() => {
+    const saved = localStorage.getItem(MEMO_STORAGE_KEY);
+    if (saved) {
+      const loaded = JSON.parse(saved);
+      setMemos(loaded);
+    } else {
+      const initial = [
+        { id: 1, title: '새 메모 1', content: '' },
+        { id: 2, title: '새 메모 2', content: '' }
+      ];
+      setMemos(initial);
+      localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(initial));
+    }
+    setSelectedMemoId(null); // 메모 리스트 먼저 보이도록
+  }, []);
+
+  const selectedMemo = memos.find(m => m.id === selectedMemoId);
+
+  const handleAddMemo = () => {
+    const newId = Date.now();
+    const newMemo = { id: newId, title: `새 메모 ${memos.length + 1}`, content: '' };
+    const updated = [newMemo, ...memos];
+    setMemos(updated);
+    localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updated));
+    setHighlightedMemoId(newId); // ✅ 추가된 메모 강조
+    setSelectedMemoId(null);
+    // 1초 뒤에 에디터로 전환
+    setTimeout(() => {
+      setSelectedMemoId(newId);
+      setHighlightedMemoId(null);
+    }, 1000);
+  };
+  const handleDeleteMemo = (id) => {
+    const updated = memos.filter((memo) => memo.id !== id);
+    setMemos(updated);
+    localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updated));
+    if (selectedMemoId === id) {
+      setSelectedMemoId(null);
+    }
   };
 
-  // 메모 표시 여부를 제어하는 상태 추가
-  const [showMemo, setShowMemo] = useState(true);
-  // 메모 토글 함수
-  const toggleMemo = () => {
-    setShowMemo(!showMemo);
-  };
-
-
-
-  // 마크다운 형식 콘텐츠를 간단히 변환
-  const renderContent = () => {
-    if (!content) return null;
-
-    const parts = content.split('\n\n');
-
-    return parts.map((part, index) => {
-      // 제목 (# 으로 시작하는 줄)
-      if (part.startsWith('# ')) {
-        return <h3 key={index}>{part.substring(2)}</h3>;
-      }
-      // 부제목 (## 으로 시작하는 줄)
-      else if (part.startsWith('## ')) {
-        return <h4 key={index}>{part.substring(3)}</h4>;
-      }
-      // 코드 블록
-      else if (part.startsWith('```') && part.endsWith('```')) {
-        const code = part.substring(part.indexOf('\n') + 1, part.lastIndexOf('```'));
-        return (
-          <div key={index} className="code-block">
-            <pre>{code}</pre>
-          </div>
-        );
-      }
-      // 일반 텍스트
-      return <p key={index}>{part}</p>;
-    });
-  };
   return (
     <div className={`panel-container ${collapsed ? 'collapsed' : ''}`}>
-      {/* 헤더 영역 */}
       <div
         className="header-bar"
         style={{
@@ -74,82 +76,60 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
           justifyContent: collapsed ? 'center' : 'space-between',
           alignItems: 'center',
           height: '45px',
-          // padding: '12px 16px',
           padding: '10px 16px',
-          // border-bottom: 1px solid #eaeaea;
           borderBottom: '1px solid #eaeaea',
-
         }}
       >
-        {/* Memo 제목 + Graph 아이콘 (접힘 상태일 땐 숨김) */}
         {!collapsed && (
-          <div
-            className="header-actions2"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <span
-              className="header-title"
-              style={{
-                fontSize: '16px',
-                // fontWeight: '600',
-                // color: '#333',
-              }}
-            >
-              Memo
-            </span>
+          <div className="header-actions2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className="header-title" style={{ fontSize: '16px' }}>Memo</span>
             <img
               src={showGraph ? graphOnIcon : graphOffIcon}
               alt="Graph View"
-              style={{
-                width: '20px',
-                height: '20px',
-                cursor: 'pointer',
-              }}
-              onClick={toggleGraph} // 토글 함수 연결
-            />
-            <img
-              src={showMemo ? memoOnIcon : memoOffIcon}
-              alt="Memo View"
-              style={{
-                width: '20px',
-                height: '20px',
-                cursor: 'pointer',
-              }}
-              onClick={toggleMemo} // 토글 함수 연결
+              style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+              onClick={() => setShowGraph(prev => !prev)}
             />
           </div>
         )}
-
-        {/* 토글 아이콘은 항상 표시 */}
         <div className="header-actions">
           <img
             src={toggleIcon}
             alt="Toggle View"
-            style={{
-              width: '20px',
-              height: '20px',
-              cursor: 'pointer',
-            }}
+            style={{ width: '20px', height: '20px', cursor: 'pointer' }}
             onClick={() => setCollapsed(prev => !prev)}
           />
         </div>
       </div>
 
-      {/* 접힘 상태일 때 내용 숨김 */}
       {!collapsed && (
         <div className="panel-content">
+          {showGraph && <GraphView nodes={nodes} />}
 
-          <div className="memo-container">
-            {/* 그래프 영역 - 조건부 렌더링 */}
-            {showGraph && <GraphView nodes={nodes} />}
-
-            {/* 메모 영역 - 조건부 렌더링 */}
-            {showMemo && <MemoEditor content={content} />}
-
+          <div className="memo-body" style={{ marginTop: '16px' }}>
+            {selectedMemoId == null ? (
+              <MemoListPanel
+                memos={memos}
+                selectedId={selectedMemoId}
+                highlightedId={highlightedMemoId}
+                onSelect={setSelectedMemoId}
+                onAdd={handleAddMemo}
+                onDelete={handleDeleteMemo}
+              />
+            ) : (
+              <div>
+                <MemoEditor
+                  memo={selectedMemo}
+                  onSaveAndClose={(updatedMemo) => {
+                    const updatedList = memos.map(m =>
+                      m.id === updatedMemo.id ? updatedMemo : m
+                    );
+                    setMemos(updatedList);
+                    localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updatedList));
+                    setSelectedMemoId(null);
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
