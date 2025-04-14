@@ -244,24 +244,3 @@
   height: auto;
   max-height: 100%;
 }
-
-/* 메모 추가 시 하이라이팅 효과 */
-.memo-item.highlighted {
-  animation: highlightSky 1s ease-in-out;
-  background-color: #e0f7ff;
-  /* 밝은 하늘색 */
-}
-
-@keyframes highlightSky {
-  0% {
-    background-color: #e0f7ff;
-  }
-
-  50% {
-    background-color: #caf0ff;
-  }
-
-  100% {
-    background-color: #e0f7ff;
-  }
-}
