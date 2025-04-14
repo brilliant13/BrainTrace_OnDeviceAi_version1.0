@@ -1,11 +1,11 @@
 // src/components/panels/MemoPanel.jsx
-import React, { memo, useState } from 'react'; // useState 추가
-// import './Panels.css';
+import React, { useState } from 'react'; // useState 추가
 import './styles/Common.css';
 import './styles/MemoPanel.css';
 import './styles/PanelToggle.css';
 import './styles/Scrollbar.css';
-
+import GraphView from './GraphView';
+import MemoEditor from './MemoEditor';
 
 import projectData from '../../data/projectData';
 
@@ -111,8 +111,8 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
               }}
               onClick={toggleGraph} // 토글 함수 연결
             />
-             <img
-              src={showMemo? memoOnIcon : memoOffIcon}
+            <img
+              src={showMemo ? memoOnIcon : memoOffIcon}
               alt="Memo View"
               style={{
                 width: '20px',
@@ -144,64 +144,12 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
         <div className="panel-content">
 
           <div className="memo-container">
-            {/* 그래프 영역 */}
- 
             {/* 그래프 영역 - 조건부 렌더링 */}
-            {showGraph && (
-              <div className="graph-area">
-                <div className="graph-visualization">
-                  {nodes.map(node => {
-                    let nodeClassName = "node";
-                    let style = { left: `${node.x}%`, top: `${node.y}%` };
+            {showGraph && <GraphView nodes={nodes} />}
 
-                    if (node.type === 'main') nodeClassName += " main-node";
-                    else if (node.type === 'sub') nodeClassName += " sub-node";
-                    else if (node.type === 'small') nodeClassName += " small-node";
+            {/* 메모 영역 - 조건부 렌더링 */}
+            {showMemo && <MemoEditor content={content} />}
 
-                    return (
-                      <div
-                        key={node.id}
-                        className={nodeClassName}
-                        style={style}
-                      >
-                        {node.label}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-              {/* 메모 영역 - 조건부 렌더링 */}
-              {showMemo && (
-              <div className="memo-area">
-                {/* 툴바 */}
-                <div className="memo-toolbar">
-                  <div className="format-tools">
-                    <span className="format-item">Normal text</span>
-                    <span className="format-separator">|</span>
-                    <button className="toolbar-button">B</button>
-                    <button className="toolbar-button">I</button>
-                    <button className="toolbar-button">U</button>
-                    <button className="toolbar-button">S</button>
-                    <button className="toolbar-button">🔗</button>
-                    <button className="toolbar-button">📌</button>
-                  </div>
-                </div>
-
-                {/* 메모 본문 */}
-                <div className="memo-content">
-                  {renderContent()}
-                </div>
-
-                {/* 하단 */}
-                <div className="memo-footer">
-                  <span className="word-count">
-                    {content ? content.split(/\s+/).length : 0} words
-                  </span>
-                  <button className="save-button">Save</button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
