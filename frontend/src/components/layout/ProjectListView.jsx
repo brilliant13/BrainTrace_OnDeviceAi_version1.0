@@ -13,7 +13,7 @@ function ProjectListView() {
             <AppHeader />
             <div className="project-list-view">
                 <div className="project-header">
-                    <h1 className="page-highlight">당신의 두뇌 저장소</h1>
+                    <h1 className="page-highlight">당신의 두뇌 저장소...</h1>
                 </div>
                 <div className="project-grid">
                     {projectData.map(project => (
