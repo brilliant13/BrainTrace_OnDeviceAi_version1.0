@@ -1,13 +1,11 @@
 // src/components/panels/FileView.jsx
 import React, { useState } from 'react';
-// import './Panels.css';
-
 import './styles/Common.css';
-import './styles/SourcePanel.css'; // 파일 탐색기 관련 스타일이 여기 있음
+import './styles/SourcePanel.css';
 import './styles/Scrollbar.css';
+import './styles/FileView.css';
 
 function FileIcon({ fileName }) {
-  // 파일 타입에 따른 아이콘 결정
   const getFileIcon = () => {
     if (fileName.endsWith('.pdf')) return '📕';
     if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.svg')) return '🖼️';
@@ -23,72 +21,239 @@ function FileIcon({ fileName }) {
     if (fileName.endsWith('.fig')) return '🖌️';
     return '📄';
   };
-
   return <span className="file-icon">{getFileIcon()}</span>;
 }
 
-function FolderView({ item, depth = 0, selectedFile, onSelectFile }) {
-  const [isOpen, setIsOpen] = useState(depth === 0); // 최상위 폴더는 기본으로 열기
-  
+function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToFolder, onOpenPDF, fileMap }) {
+  const [isOpen, setIsOpen] = useState(depth === 0);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [dragEnterCount, setDragEnterCount] = useState(0);
+
   const toggleFolder = (e) => {
     e.stopPropagation();
     setIsOpen(!isOpen);
   };
 
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragEnterCount((count) => count + 1);
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragEnterCount((count) => {
+      const newCount = count - 1;
+      if (newCount <= 0) {
+        setIsDragOver(false);
+        return 0;
+      }
+      return newCount;
+    });
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    setDragEnterCount(0);
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length > 0) {
+      onDropFileToFolder?.(item.name, droppedFiles);
+    }
+  };
+
   return (
-    <div className="folder-container">
-      <div 
-        className="file-item" 
+    <div
+      className={`folder-container ${isDragOver ? 'folder-drag-over' : ''}`}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleDrop}
+    >
+      {isDragOver && (
+        <div className="drop-overlay">
+          <div className="drop-icon">📥</div>
+        </div>
+      )}
+      <div
+        className={`file-item folder-item ${isDragOver ? 'drag-over' : ''}`}
         style={{ paddingLeft: `${depth * 16}px` }}
         onClick={toggleFolder}
       >
         <span className="file-icon">{isOpen ? '📂' : '📁'}</span>
         <span className="file-name">{item.name}</span>
       </div>
-      
-      {isOpen && item.children && (
+
+      {isOpen && (
         <div className="folder-contents">
-          {item.children.map((child, index) => (
-            child.type === 'folder' ? (
-              <FolderView 
-                key={index} 
-                item={child} 
-                depth={depth + 1} 
-                selectedFile={selectedFile}
-                onSelectFile={onSelectFile}
-              />
-            ) : (
-              <div 
-                key={index}
-                className={`file-item ${selectedFile === `${item.name}/${child.name}` ? 'selected' : ''}`}
-                style={{ paddingLeft: `${(depth + 1) * 16}px` }}
-                onClick={() => onSelectFile(`${item.name}/${child.name}`)}
-              >
-                <FileIcon fileName={child.name} />
-                <span className="file-name">{child.name}</span>
-              </div>
-            )
-          ))}
+          {item.children &&
+            item.children.map((child, index) =>
+              child.type === 'folder' ? (
+                <FolderView
+                  key={index}
+                  item={child}
+                  depth={depth + 1}
+                  selectedFile={selectedFile}
+                  onSelectFile={onSelectFile}
+                  onDropFileToFolder={onDropFileToFolder}
+                />
+              ) : (
+                <div
+                  key={index}
+                  className={`file-item ${selectedFile === `${item.name}/${child.name}` ? 'selected' : ''}`}
+                  style={{ paddingLeft: `${(depth + 1) * 16}px` }}
+                  onClick={() => {
+                    const path = `${item.name}/${child.name}`;
+                    onSelectFile(path);
+                    if (child.name.endsWith('.pdf') && fileMap?.[child.name]) {
+                      onOpenPDF(fileMap[child.name]);
+                    }
+                  }}
+
+                >
+                  <FileIcon fileName={child.name} />
+                  <span className="file-name">{child.name}</span>
+                </div>
+              )
+            )}
         </div>
       )}
     </div>
   );
 }
 
-function FileView({ files }) {
+function FileView({ files, setFiles, onOpenPDF, fileMap, setFileMap }) {
   const [selectedFile, setSelectedFile] = useState(null);
-  
+  const [isDraggingOverRoot, setIsDraggingOverRoot] = useState(false);
+
+  const handleDropFileToFolder = (folderName, droppedFiles) => {
+    const updated = files.map((folder) => {
+      if (folder.name === folderName) {
+        return {
+          ...folder,
+          children: [
+            ...(folder.children || []),
+            ...droppedFiles.map((file) => ({
+              name: file.name,
+              type: 'file',
+            })),
+          ],
+        };
+      }
+      return folder;
+    });
+    // ✅ fileMap 업데이트
+    const newMap = {};
+    droppedFiles.forEach(file => {
+      newMap[file.name] = file;
+    });
+    setFileMap(prev => ({ ...prev, ...newMap }));
+
+    setFiles(updated);
+  };
+  const handleClickFile = (file) => {
+    console.log('📁 클릭된 파일:', file);
+
+    setSelectedFile(file.name);
+
+    if (!file.name.endsWith('.pdf')) {
+      console.log('❌ PDF 파일이 아님:', file.name);
+      return;
+    }
+
+    if (!onOpenPDF) {
+      console.log('❌ onOpenPDF 함수가 없음');
+      return;
+    }
+
+    if (!fileMap?.[file.name]) {
+      console.log('❌ fileMap에 해당 파일 없음:', file.name);
+      console.log('현재 fileMap 상태:', fileMap);
+      return;
+    }
+
+    console.log('✅ PDF 열기 시도:', file.name);
+    onOpenPDF(fileMap[file.name]);
+  };
+
+
+  const handleRootDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverRoot(true);
+  };
+
+  const handleRootDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverRoot(false);
+  };
+
+  const handleRootDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingOverRoot(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length === 0) return;
+
+    const newTopLevelFiles = droppedFiles.map((file) => ({
+      name: file.name,
+      type: 'file',
+    }));
+    // ✅ 파일 객체 저장
+    const newMap = {};
+    droppedFiles.forEach(file => {
+      newMap[file.name] = file;
+    });
+    setFileMap(prev => ({ ...prev, ...newMap }));
+
+    setFiles((prev) => [...prev, ...newTopLevelFiles]);
+  };
+
   return (
-    <div className="file-explorer modern-explorer">
+    <div
+      className={`file-explorer modern-explorer ${isDraggingOverRoot ? 'root-drag-over' : ''}`}
+      onDragEnter={handleRootDragEnter}
+      onDragLeave={handleRootDragLeave}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleRootDrop}
+    >
+      {isDraggingOverRoot && (
+        <div className="drop-overlay">
+          <div className="drop-icon">📥</div>
+        </div>
+      )}
       {files.length > 0 ? (
-        files.map((item, index) => (
-          <FolderView 
-            key={index} 
-            item={item} 
-            selectedFile={selectedFile}
-            onSelectFile={setSelectedFile}
-          />
-        ))
+        files.map((item, index) =>
+          item.type === 'folder' ? (
+            <FolderView
+              key={index}
+              item={item}
+              selectedFile={selectedFile}
+              onSelectFile={setSelectedFile}
+              onDropFileToFolder={handleDropFileToFolder}
+              onOpenPDF={onOpenPDF}
+              fileMap={fileMap}
+            />
+          ) : (
+            <div
+              key={index}
+              className={`file-item ${selectedFile === item.name ? 'selected' : ''}`}
+              style={{ paddingLeft: `8px` }}
+              //onClick={() => setSelectedFile(item.name)}
+
+              onClick={() => handleClickFile(item)}
+            >
+              <FileIcon fileName={item.name} />
+              <span className="file-name">{item.name}</span>
+            </div>
+          )
+        )
       ) : (
         <div className="empty-state">
           <p>파일이 없습니다.</p>
