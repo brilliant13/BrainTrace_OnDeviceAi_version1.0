@@ -38,7 +38,7 @@ function MemoListPanel({ memos, selectedId, highlightedId, onSelect, onAdd, onDe
                                     : '내용 없음'}
                                 ...
                             </div>
-                            <div className="memo-date">🕒 {new Date(memo.id).toLocaleDateString()}</div>
+                            <div className="memo-date">{new Date(memo.id).toLocaleDateString()}</div>
                         </div>
                         <button className="delete-button" onClick={() => onDelete(memo.id)}>🗑</button>
                     </div>
