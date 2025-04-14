@@ -201,6 +201,50 @@ class Neo4jHandler:
             logging.error(f"❌ Neo4j 엣지 조회 실패: {str(e)}")
             raise RuntimeError(f"Neo4j 엣지 조회 실패: {str(e)}")
 
+    def get_brain_graph(self, brain_id: str) -> Dict[str, List]:
+        """특정 브레인의 노드와 엣지 정보 조회"""
+        logging.info(f"Neo4j get_brain_graph 시작 - brain_id: {brain_id}")
+        try:
+            with self.driver.session() as session:
+                # 노드 조회
+                logging.info("노드 조회 쿼리 실행")
+                nodes_result = session.run("""
+                    MATCH (n)
+                    WHERE n.brain_id = $brain_id
+                    RETURN DISTINCT n.name as name
+                    """, brain_id=brain_id)
+                
+                nodes = [{"name": record["name"]} for record in nodes_result]
+                logging.info(f"조회된 노드 수: {len(nodes)}")
+
+                # 엣지(관계) 조회
+                logging.info("엣지 조회 쿼리 실행")
+                edges_result = session.run("""
+                    MATCH (source)-[r]->(target)
+                    WHERE source.brain_id = $brain_id AND target.brain_id = $brain_id
+                    RETURN DISTINCT source.name as source, target.name as target, type(r) as relation
+                    """, brain_id=brain_id)
+                
+                links = [
+                    {
+                        "source": record["source"],
+                        "target": record["target"],
+                        "relation": record["relation"]
+                    }
+                    for record in edges_result
+                ]
+                logging.info(f"조회된 엣지 수: {len(links)}")
+
+                result = {
+                    "nodes": nodes,
+                    "links": links
+                }
+                logging.info(f"반환할 데이터: {result}")
+                return result
+        except Exception as e:
+            logging.error("Neo4j 그래프 조회 오류: %s", str(e))
+            raise RuntimeError(f"그래프 조회 오류: {str(e)}") 
+        
     def delete_brain(self, brain_id: str) -> None:
         try:
             query = """

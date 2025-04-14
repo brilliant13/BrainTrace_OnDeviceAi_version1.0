@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from models.request_models import ProcessTextRequest, AnswerRequest
+from models.request_models import ProcessTextRequest, AnswerRequest, GraphResponse
 from services import ai_service, embedding_service
 from neo4j_db.Neo4jHandler import Neo4jHandler
 import logging
@@ -9,6 +9,35 @@ router = APIRouter(
     tags=["brainGraph"],
     responses={404: {"description": "Not found"}}
 )
+
+@router.get("/getNodeEdge/{brain_id}", response_model=GraphResponse,
+           summary="브레인의 그래프 데이터 조회",
+           description="특정 브레인의 모든 노드와 엣지(관계) 정보를 반환합니다.")
+async def get_brain_graph(brain_id: str):
+    """
+    특정 브레인의 그래프 데이터를 반환합니다:
+    
+    - **brain_id**: 그래프를 조회할 브레인 ID
+    
+    반환값:
+    - **nodes**: 노드 목록 (각 노드는 name 속성을 가짐)
+    - **links**: 엣지 목록 (각 엣지는 source, target, relation 속성을 가짐)
+    """
+    logging.info(f"getNodeEdge 엔드포인트 호출됨 - brain_id: {brain_id}")
+    try:
+        neo4j_handler = Neo4jHandler()
+        logging.info("Neo4j 핸들러 생성됨")
+        
+        graph_data = neo4j_handler.get_brain_graph(brain_id)
+        logging.info(f"Neo4j에서 받은 데이터: nodes={len(graph_data['nodes'])}, links={len(graph_data['links'])}")
+        
+        if not graph_data['nodes'] and not graph_data['links']:
+            logging.warning(f"brain_id {brain_id}에 대한 데이터가 없습니다")
+        
+        return graph_data
+    except Exception as e:
+        logging.error("그래프 데이터 조회 오류: %s", str(e))
+        raise HTTPException(status_code=500, detail=f"그래프 데이터 조회 중 오류가 발생했습니다: {str(e)}") 
 
 @router.post("/process_text", 
     summary="텍스트 처리 및 그래프 생성",
