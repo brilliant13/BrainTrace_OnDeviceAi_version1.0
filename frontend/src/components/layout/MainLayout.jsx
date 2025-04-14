@@ -13,6 +13,9 @@ import SourcePanel from '../panels/SourcePanel';
 import ChatPanel from '../panels/ChatPanel';
 import MemoPanel from '../panels/MemoPanel';
 
+import { useParams } from 'react-router-dom';
+import projectData from '../../data/projectData';
+
 // 리사이즈 핸들 컴포넌트
 function ResizeHandle() {
   return (
@@ -23,17 +26,17 @@ function ResizeHandle() {
 }
 
 function MainLayout() {
+  const { projectId } = useParams(); // ✅ 현재 URL에서 projectId 가져오기
+
+  // 존재하는 프로젝트인지 확인
+  const selectedProject = projectData.find(p => p.id === Number(projectId));
+  if (!selectedProject) {
+    return <div>해당 프로젝트를 찾을 수 없습니다.</div>;
+  }
 
   const DEFAULT_SOURCE_PANEL_SIZE = 20;
-
-  const handleBackFromPDF = () => {
-    setIsPDFOpen(false);
-    if (sourcePanelRef.current) {
-      sourcePanelRef.current.resize(DEFAULT_SOURCE_PANEL_SIZE);
-    }
-  };
   // 활성화된 프로젝트 ID 상태 관리
-  const [activeProject, setActiveProject] = useState(1);
+  const [activeProject, setActiveProject] = useState(projectId);
 
   // 소스 패널과 메모 패널의 접힘 상태 관리
   const [sourceCollapsed, setSourceCollapsed] = useState(false);
@@ -47,7 +50,14 @@ function MainLayout() {
   const [sourcePanelSize, setSourcePanelSize] = useState(20);
   const [memoPanelSize, setMemoPanelSize] = useState(25);
 
-  const [isPDFOpen, setIsPDFOpen] = useState(false); // ✅ 추가
+  const [isPDFOpen, setIsPDFOpen] = useState(false);
+
+  const handleBackFromPDF = () => {
+    setIsPDFOpen(false);
+    if (sourcePanelRef.current) {
+      sourcePanelRef.current.resize(DEFAULT_SOURCE_PANEL_SIZE);
+    }
+  };
   // 프로젝트 변경 핸들러
   const handleProjectChange = (projectId) => {
     setActiveProject(projectId);

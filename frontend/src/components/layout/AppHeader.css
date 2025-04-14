@@ -1,0 +1,23 @@
+.app-header {
+    display: flex;
+    align-items: center;
+    padding: 20px 40px;
+    background-color: white;
+    border-bottom: 1px solid #ddd;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.app-logo {
+    height: 32px;
+    margin-right: 12px;
+}
+
+.app-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: #222;
+}
