@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite\" \"sleep 2 && npm run electron\"",
+    "dev": "concurrently \"vite\" \"npm run electron\"",
     "build": "vite build",
     "electron": "electron ./electron/main.js",
     "start": "npm run build && npm run electron",
