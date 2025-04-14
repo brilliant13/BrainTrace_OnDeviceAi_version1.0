@@ -11,12 +11,15 @@ import MemoListPanel from './MemoListPanel';
 import toggleIcon from '../../assets/icons/toggle-view.png';
 import graphOnIcon from '../../assets/icons/graph-on.png';
 import graphOffIcon from '../../assets/icons/graph-off.png';
+import memoOnIcon from '../../assets/icons/memo-on.png';
+import memoOffIcon from '../../assets/icons/memo-off.png';
 
 function MemoPanel({ activeProject, collapsed, setCollapsed }) {
   const projectId = activeProject;
   const MEMO_STORAGE_KEY = `brainTrace-memos-${projectId}`;
 
   const [showGraph, setShowGraph] = useState(true);
+  const [showMemo, setShowMemo] = useState(true);
   const [memos, setMemos] = useState([]);
   const [selectedMemoId, setSelectedMemoId] = useState(null);
   const [highlightedMemoId, setHighlightedMemoId] = useState(null);
@@ -33,12 +36,11 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
       const loaded = JSON.parse(saved);
       setMemos(loaded);
     } else {
-      const initial = [
-      ];
+      const initial = [];
       setMemos(initial);
       localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(initial));
     }
-    setSelectedMemoId(null); // 메모 리스트 먼저 보이도록
+    setSelectedMemoId(null);
   }, [MEMO_STORAGE_KEY]);
 
   const selectedMemo = memos.find(m => m.id === selectedMemoId);
@@ -88,6 +90,12 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
               style={{ width: '20px', height: '20px', cursor: 'pointer' }}
               onClick={() => setShowGraph(prev => !prev)}
             />
+            <img
+              src={showMemo ? memoOnIcon : memoOffIcon}
+              alt="Memo View"
+              style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+              onClick={() => setShowMemo(prev => !prev)}
+            />
           </div>
         )}
         <div className="header-actions">
@@ -104,32 +112,34 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
         <div className="panel-content">
           {showGraph && <GraphView nodes={nodes} />}
 
-          <div className="memo-body" style={{ marginTop: '16px' }}>
-            {selectedMemoId == null ? (
-              <MemoListPanel
-                memos={memos}
-                selectedId={selectedMemoId}
-                highlightedId={highlightedMemoId}
-                onSelect={setSelectedMemoId}
-                onAdd={handleAddMemo}
-                onDelete={handleDeleteMemo}
-              />
-            ) : (
-              <div>
-                <MemoEditor
-                  memo={selectedMemo}
-                  onSaveAndClose={(updatedMemo) => {
-                    const updatedList = memos.map(m =>
-                      m.id === updatedMemo.id ? updatedMemo : m
-                    );
-                    setMemos(updatedList);
-                    localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updatedList));
-                    setSelectedMemoId(null);
-                  }}
+          {showMemo && (
+            <div className="memo-body" style={{ marginTop: '16px' }}>
+              {selectedMemoId == null ? (
+                <MemoListPanel
+                  memos={memos}
+                  selectedId={selectedMemoId}
+                  highlightedId={highlightedMemoId}
+                  onSelect={setSelectedMemoId}
+                  onAdd={handleAddMemo}
+                  onDelete={handleDeleteMemo}
                 />
-              </div>
-            )}
-          </div>
+              ) : (
+                <div>
+                  <MemoEditor
+                    memo={selectedMemo}
+                    onSaveAndClose={(updatedMemo) => {
+                      const updatedList = memos.map(m =>
+                        m.id === updatedMemo.id ? updatedMemo : m
+                      );
+                      setMemos(updatedList);
+                      localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updatedList));
+                      setSelectedMemoId(null);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
