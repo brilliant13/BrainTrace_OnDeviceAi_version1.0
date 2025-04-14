@@ -669,8 +669,8 @@ class SQLiteHandler:
             if not memo:
                 raise ValueError(f"존재하지 않는 메모 ID: {memo_id}")
             
-            # folder_id가 주어진 경우 폴더 존재 여부 확인
-            if folder_id is not None:
+            # folder_id가 주어진 경우에만 폴더 존재 여부 확인
+            if folder_id is not None and folder_id != "null":
                 folder = self.get_folder(folder_id)
                 if not folder:
                     raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
@@ -694,7 +694,10 @@ class SQLiteHandler:
                 update_fields.append("is_source = ?")
                 params.append(1 if is_source else 0)
 
-            if folder_id is not None:
+            # folder_id가 None이거나 "null"이면 NULL로 설정
+            if folder_id is None or folder_id == "null":
+                update_fields.append("folder_id = NULL")
+            elif folder_id is not None:
                 update_fields.append("folder_id = ?")
                 params.append(folder_id)
                 
