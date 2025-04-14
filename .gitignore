@@ -1,0 +1,4 @@
+neo4j/data/
+neo4j/logs/
+neo4j/transactions/
+*.db
