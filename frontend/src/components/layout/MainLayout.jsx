@@ -1,9 +1,8 @@
-// src/components/layout/MainLayout.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Panel, 
-  PanelGroup, 
-  PanelResizeHandle 
+import {
+  Panel,
+  PanelGroup,
+  PanelResizeHandle
 } from 'react-resizable-panels';
 import './MainLayout.css';
 
@@ -12,6 +11,9 @@ import ProjectPanel from '../panels/ProjectPanel';
 import SourcePanel from '../panels/SourcePanel';
 import ChatPanel from '../panels/ChatPanel';
 import MemoPanel from '../panels/MemoPanel';
+
+import { useParams, useNavigate } from 'react-router-dom';
+import projectData from '../../data/projectData';
 
 // 리사이즈 핸들 컴포넌트
 function ResizeHandle() {
@@ -23,50 +25,61 @@ function ResizeHandle() {
 }
 
 function MainLayout() {
-  // 활성화된 프로젝트 ID 상태 관리
-  const [activeProject, setActiveProject] = useState(1);
-  
-  // 소스 패널과 메모 패널의 접힘 상태 관리
+  const { projectId } = useParams();
+  const navigate = useNavigate();
+
+  // 존재하는 프로젝트인지 확인
+  const selectedProject = projectData.find(p => p.id === Number(projectId));
+  useEffect(() => {
+    if (!selectedProject) {
+      navigate('/'); // 잘못된 projectId일 경우 홈으로 리디렉션
+    }
+  }, [selectedProject, navigate]);
+
+  const DEFAULT_SOURCE_PANEL_SIZE = 20;
+  const [activeProject, setActiveProject] = useState(projectId);
   const [sourceCollapsed, setSourceCollapsed] = useState(false);
   const [memoCollapsed, setMemoCollapsed] = useState(false);
-  
-  // 패널 크기 관리를 위한 ref
   const sourcePanelRef = useRef(null);
   const memoPanelRef = useRef(null);
-  
-  // 패널 크기 저장
   const [sourcePanelSize, setSourcePanelSize] = useState(20);
   const [memoPanelSize, setMemoPanelSize] = useState(25);
-  
-  // 프로젝트 변경 핸들러
+  const [isPDFOpen, setIsPDFOpen] = useState(false);
+
+  const handleBackFromPDF = () => {
+    setIsPDFOpen(false);
+    if (sourcePanelRef.current) {
+      sourcePanelRef.current.resize(DEFAULT_SOURCE_PANEL_SIZE);
+    }
+  };
+
   const handleProjectChange = (projectId) => {
     setActiveProject(projectId);
+    navigate(`/project/${projectId}`);
   };
-  
-  // 패널 크기 변경 핸들러
+
   const handleSourceResize = (size) => {
     if (!sourceCollapsed) {
       setSourcePanelSize(size);
     }
   };
-  
+
   const handleMemoResize = (size) => {
     if (!memoCollapsed) {
       setMemoPanelSize(size);
     }
   };
-  
-  // 패널이 접히거나 펼쳐질 때 크기 조정
+
   useEffect(() => {
     if (sourcePanelRef.current) {
-      if (sourceCollapsed) {
-        sourcePanelRef.current.resize(5);
+      if (isPDFOpen) {
+        sourcePanelRef.current.resize(35);
       } else {
         sourcePanelRef.current.resize(sourcePanelSize);
       }
     }
-  }, [sourceCollapsed, sourcePanelSize]);
-  
+  }, [isPDFOpen, sourceCollapsed]);
+
   useEffect(() => {
     if (memoPanelRef.current) {
       if (memoCollapsed) {
@@ -79,57 +92,54 @@ function MainLayout() {
 
   return (
     <div className="main-container">
-      {/* 프로젝트 패널 (고정 크기) */}
       <div className="layout project-layout">
         <ProjectPanel
-          activeProject={activeProject}
+          activeProject={Number(activeProject)}
           onProjectChange={handleProjectChange}
         />
       </div>
-      
-      {/* 리사이즈 가능한 패널 그룹 */}
+
       <PanelGroup direction="horizontal" className="panels-container">
-        {/* 소스 패널 */}
-        <Panel 
+        <Panel
           ref={sourcePanelRef}
-          defaultSize={sourceCollapsed ? 5 : 20} 
-          minSize={sourceCollapsed ? 5 : 15}
-          maxSize={sourceCollapsed ? 5 : 30}
+          defaultSize={sourceCollapsed ? 5 : 20}
+          minSize={sourceCollapsed ? 5 : 10}
+          maxSize={sourceCollapsed ? 5 : 120}
           className={sourceCollapsed ? 'panel-collapsed' : ''}
           onResize={handleSourceResize}
         >
           <div className="layout-inner source-inner">
-            <SourcePanel 
-              activeProject={activeProject} 
+            <SourcePanel
+              activeProject={Number(activeProject)}
               collapsed={sourceCollapsed}
               setCollapsed={setSourceCollapsed}
+              setIsPDFOpen={setIsPDFOpen}
+              onBackFromPDF={handleBackFromPDF}
             />
           </div>
         </Panel>
-        
+
         <ResizeHandle />
-        
-        {/* 채팅 패널 */}
+
         <Panel defaultSize={50} minSize={30}>
           <div className="layout-inner chat-inner">
-            <ChatPanel activeProject={activeProject} />
+            <ChatPanel activeProject={Number(activeProject)} />
           </div>
         </Panel>
-        
+
         <ResizeHandle />
-        
-        {/* 메모 패널 */}
-        <Panel 
+
+        <Panel
           ref={memoPanelRef}
           defaultSize={memoCollapsed ? 5 : 25}
-          minSize={memoCollapsed ? 5 : 20}
-          maxSize={memoCollapsed ? 5 : 40}
+          minSize={memoCollapsed ? 5 : 10}
+          maxSize={memoCollapsed ? 5 : 120}
           className={memoCollapsed ? 'panel-collapsed' : ''}
           onResize={handleMemoResize}
         >
           <div className="layout-inner memo-inner">
-            <MemoPanel 
-              activeProject={activeProject} 
+            <MemoPanel
+              activeProject={Number(activeProject)}
               collapsed={memoCollapsed}
               setCollapsed={setMemoCollapsed}
             />

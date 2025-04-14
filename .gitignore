@@ -1,4 +1,3 @@
-neo4j/data/
-neo4j/logs/
-neo4j/transactions/
 *.db
+/neo4j/
+/sqlite_db/

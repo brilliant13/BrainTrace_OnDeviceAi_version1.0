@@ -1,4 +1,3 @@
-// src/components/panels/SourcePanel.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import './styles/Common.css';
 import './styles/SourcePanel.css';
@@ -6,78 +5,57 @@ import './styles/PanelToggle.css';
 import './styles/Scrollbar.css';
 import projectData from '../../data/projectData';
 import FileView from './FileView';
+import PDFViewer from './PDFViewer';
+import SourceUploadModal from './SourceUploadModal';
 
 import toggleIcon from '../../assets/icons/toggle-view.png';
 import addFolderIcon from '../../assets/icons/add-folder.png';
 import newFileIcon from '../../assets/icons/new-file.png';
 
-function SourcePanel({ activeProject, collapsed, setCollapsed }) {
+function SourcePanel({ activeProject, collapsed, setCollapsed, setIsPDFOpen, onBackFromPDF }) {
   const project = projectData.find(p => p.id === activeProject) || projectData[0];
-  const files = project.files || [];
-
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [files, setFiles] = useState(project.files || []);
+  const [openedPDF, setOpenedPDF] = useState(null);
+  const [fileMap, setFileMap] = useState({});
   const [showAddFolderInput, setShowAddFolderInput] = useState(false);
-  const [showAddFileInput, setShowAddFileInput] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
-  const [newFileName, setNewFileName] = useState("");
+  const [newFolderName, setNewFolderName] = useState('');
 
-  // 패널 너비 상태 추가
-  const [panelWidth, setPanelWidth] = useState(0);
   const panelRef = useRef(null);
-
-  // 아이콘 모드인지 확인 (패널이 340px 보다 작을 때)
+  const [panelWidth, setPanelWidth] = useState(0);
   const isIconMode = panelWidth > 0 && panelWidth < 193;
 
-  // 패널 너비 감지
   useEffect(() => {
     if (panelRef.current && !collapsed) {
-      const resizeObserver = new ResizeObserver(entries => {
-        for (let entry of entries) {
-          setPanelWidth(entry.contentRect.width);
-        }
+      const observer = new ResizeObserver(([entry]) => {
+        setPanelWidth(entry.contentRect.width);
       });
-
-      resizeObserver.observe(panelRef.current);
-      return () => resizeObserver.disconnect();
+      observer.observe(panelRef.current);
+      return () => observer.disconnect();
     }
   }, [collapsed]);
 
   const handleAddFolder = (e) => {
     e.preventDefault();
-    // 실제 구현에서는 폴더 추가 로직
+    const newFolder = { name: newFolderName, type: 'folder', children: [] };
+    const updatedFiles = [...files, newFolder];
+    setFiles(updatedFiles);
+    project.files = updatedFiles;
     setShowAddFolderInput(false);
-    setNewFolderName("");
-  };
-
-  const handleAddFile = (e) => {
-    e.preventDefault();
-    // 실제 구현에서는 파일 추가 로직
-    setShowAddFileInput(false);
-    setNewFileName("");
+    setNewFolderName('');
   };
 
   return (
     <div
       className={`panel-container modern-panel ${collapsed ? 'collapsed' : ''}`}
       ref={panelRef}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
     >
-      <div className="panel-header"
-        style={{
-          justifyContent: collapsed ? 'center' : 'space-between',
-          padding: '10px 16px',
-        }}>
-        <span
-          className="header-title"
-          style={{
-            display: collapsed ? 'none' : 'block',
-            fontSize: '16px',
-          }}
-        >
-          Source
-        </span>
-
+      <div className="panel-header" style={{ justifyContent: collapsed ? 'center' : 'space-between' }}>
+        <span className="header-title" style={{ display: collapsed ? 'none' : 'block' }}>Source</span>
         <img
           src={toggleIcon}
-          alt="Toggle View"
+          alt="Toggle"
           style={{ width: '20px', height: '20px', cursor: 'pointer' }}
           onClick={() => setCollapsed(prev => !prev)}
         />
@@ -85,90 +63,91 @@ function SourcePanel({ activeProject, collapsed, setCollapsed }) {
 
       {!collapsed && (
         <>
-          {/* 버튼 */}
-          {/* <div className="action-buttons">
-            <button className="add-button" onClick={() => setShowAddFolderInput(true)}>
-              {isIconMode ? (
-                <img src={addFolderIcon} alt="폴더 추가" className="button-icon" />
-              ) : (
-                <>
-                  <span className="add-icon">+</span> 폴더 추가
-                </>
-              )}
-            </button>
-            <button className="add-button" onClick={() => setShowAddFileInput(true)}>
-              {isIconMode ? (
-                <img src={newFileIcon} alt="소스 추가" className="button-icon" />
-              ) : (
-                <>
-                  <span className="add-icon">+</span> 소스 추가
-                </>
-              )}
-            </button>
-          </div> */}
-          <div className="action-buttons">
-            <button
-              className={`add-button ${isIconMode ? 'icon-only' : ''}`}
-              onClick={() => setShowAddFolderInput(true)}
-            >
-              {isIconMode ? (
-                <img src={addFolderIcon} alt="폴더 추가" className="button-icon" />
-              ) : (
-                <>
-                  <span className="add-icon">+</span> 폴더 추가
-                </>
-              )}
-            </button>
-            <button
-              className={`add-button ${isIconMode ? 'icon-only' : ''}`}
-              onClick={() => setShowAddFileInput(true)}
-            >
-              {isIconMode ? (
-                <img src={newFileIcon} alt="소스 추가" className="button-icon" />
-              ) : (
-                <>
-                  <span className="add-icon">+</span> 소스 추가
-                </>
-              )}
-            </button>
-          </div>
+          {!openedPDF && (
+            <>
+              <div className="action-buttons">
+                <button
+                  className={`pill-button ${isIconMode ? 'icon-only' : ''}`}
+                  onClick={() => setShowAddFolderInput(true)}
+                >
+                  {isIconMode
+                    ? <img src={addFolderIcon} alt="폴더 추가" className="button-icon" />
+                    : <><span className="plus-icon">＋</span> 폴더</>}
+                </button>
+                <button
+                  className={`pill-button ${isIconMode ? 'icon-only' : ''}`}
+                  onClick={() => setShowUploadModal(true)}
+                >
+                  {isIconMode
+                    ? <img src={newFileIcon} alt="소스 추가" className="button-icon" />
+                    : <><span className="plus-icon">＋</span> 소스</>}
+                </button>
+              </div>
 
-          {/* 폴더 추가 폼 */}
-          {showAddFolderInput && (
-            <form className="add-form" onSubmit={handleAddFolder}>
-              <input
-                type="text"
-                placeholder="폴더 이름"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                autoFocus
-              />
-              <button type="submit">추가</button>
-              <button type="button" onClick={() => setShowAddFolderInput(false)}>취소</button>
-            </form>
+              {showAddFolderInput && (
+                <form className="add-form fancy-form" onSubmit={handleAddFolder}>
+                  <input
+                    type="text"
+                    placeholder="새 폴더 이름"
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    autoFocus
+                  />
+                  <div className="form-buttons">
+                    <button type="submit" className="primary">추가</button>
+                    <button
+                      type="button"
+                      className="secondary"
+                      onClick={() => setShowAddFolderInput(false)}
+                    >취소</button>
+                  </div>
+                </form>
+              )}
+            </>
           )}
 
-          {/* 파일 추가 폼 */}
-          {showAddFileInput && (
-            <form className="add-form" onSubmit={handleAddFile}>
-              <input
-                type="text"
-                placeholder="파일 이름"
-                value={newFileName}
-                onChange={(e) => setNewFileName(e.target.value)}
-                autoFocus
-              />
-              <button type="submit">추가</button>
-              <button type="button" onClick={() => setShowAddFileInput(false)}>취소</button>
-            </form>
-          )}
+          <div className="panel-content" style={{ flexGrow: 1, overflow: 'auto' }}>
+            {openedPDF ? (
+              <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
+                <button onClick={() => {
+                  setOpenedPDF(null);
+                  setIsPDFOpen(false);
+                  if (onBackFromPDF) onBackFromPDF(); // 패널 크기 초기화
 
-          {/* 파일 트리 */}
-          <div className="panel-content">
-            <FileView files={files} />
+                }}
+                  className="pdf-back-button">
+                  ← 뒤로가기
+                </button>
+                <PDFViewer file={openedPDF} containerWidth={panelWidth} />
+              </div>
+            ) : (
+              <FileView
+                activeProject={project}  // ✅ 전체 project 객체를 넘김
+                files={files}
+                setFiles={setFiles}
+                onOpenPDF={(file) => {
+                  setOpenedPDF(file);
+                  setIsPDFOpen(true);
+                }}
+                fileMap={fileMap}
+                setFileMap={setFileMap}
+              />
+            )}
           </div>
         </>
       )}
+
+
+      <SourceUploadModal
+        visible={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUpload={(uploadedFiles) => {
+          const newEntries = uploadedFiles.map(file => ({ name: file.name, type: 'file' }));
+          const newMap = Object.fromEntries(uploadedFiles.map(file => [file.name, file]));
+          setFileMap(prev => ({ ...prev, ...newMap }));
+          setFiles(prev => [...prev, ...newEntries]);
+        }}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite\" \"sleep 2 && npm run electron\"",
+    "dev": "concurrently \"vite\" \"npm run electron\"",
     "build": "vite build",
     "electron": "electron ./electron/main.js",
     "start": "npm run build && npm run electron",
@@ -12,9 +12,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "pdfjs-dist": "^4.8.69",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-resizable-panels": "^2.1.7"
+
+    "react-pdf": "^9.2.1",
+    "react-resizable-panels": "^2.1.7",
+    "react-router-dom": "^7.5.0",
+    "react-force-graph-2d": "^1.27.1"
+
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
