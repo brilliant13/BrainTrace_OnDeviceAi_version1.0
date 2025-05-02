@@ -4236,3 +4236,107 @@ Caused by: java.net.BindException: Address already in use: bind
 2025-04-14 11:06:31.113+0000 INFO  name: system
 2025-04-14 11:06:31.113+0000 INFO  creationDate: 2025-03-14T13:46:03.267Z
 2025-04-14 11:06:31.115+0000 INFO  Started.
+2025-05-02 08:45:30.860+0000 INFO  Logging config in use: File 'C:\MuMu\neo4j\conf\user-logs.xml'
+2025-05-02 08:45:30.888+0000 INFO  Starting...
+2025-05-02 08:45:32.514+0000 INFO  This instance is ServerId{c4ea7b80} (c4ea7b80-1eec-4f9c-890b-f3a6bf22a4d5)
+2025-05-02 08:45:33.964+0000 INFO  ======== Neo4j 2025.03.0 ========
+2025-05-02 08:47:27.078+0000 INFO  Anonymous Usage Data is being sent to Neo4j, see https://neo4j.com/docs/usage-data/
+2025-05-02 08:47:39.424+0000 ERROR Failed to start Neo4j on localhost:7474.
+java.lang.RuntimeException: Error starting Neo4j database server at C:\MuMu\neo4j\data\databases
+	at org.neo4j.graphdb.facade.DatabaseManagementServiceFactory.startDatabaseServer(DatabaseManagementServiceFactory.java:293) ~[neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.graphdb.facade.DatabaseManagementServiceFactory.build(DatabaseManagementServiceFactory.java:228) ~[neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.server.CommunityBootstrapper.createNeo(CommunityBootstrapper.java:38) ~[neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.server.NeoBootstrapper.start(NeoBootstrapper.java:190) [neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.server.NeoBootstrapper.start(NeoBootstrapper.java:100) [neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.server.Neo4jCommunity.main(Neo4jCommunity.java:30) [neo4j-2025.03.0.jar:2025.03.0]
+Caused by: org.neo4j.kernel.lifecycle.LifecycleException: Component 'org.neo4j.dbms.database.DefaultSystemGraphInitializer@5dcf0772' was successfully initialized, but failed to start. Please see the attached cause exception "Last available CheckpointInfo[oldestNotVisibleTransactionLogPosition=LogPosition{logVersion=0, byteOffset=24663}, transactionLogPosition=LogPosition{logVersion=0, byteOffset=24663}, storeId=StoreId{creationTime=1741959963267, random=8149302671118931437, storageEngineName='record', formatName='aligned', majorVersion=1, minorVersion=1}, checkpointEntryPosition=LogPosition{logVersion=0, byteOffset=20080}, channelPositionAfterCheckpoint=LogPosition{logVersion=0, byteOffset=20312}, checkpointFilePostReadPosition=LogPosition{logVersion=0, byteOffset=20312}, kernelVersion=KernelVersion{V5_25,version=20}, kernelVersionByte=20, transactionId=TransactionId[id=46, appendIndex=46, kernelVersion=KernelVersion{V5_25,version=20}, checksum=128755585, commitTimestamp=1741959964059, consensusIndex=-1], appendIndex=46, reason=Checkpoint triggered by "Database shutdown" @ txId: 46, append index: 46, consensusIndexInCheckpoint=true] checkpoint does not point to a valid location in transaction logs.".
+	at org.neo4j.kernel.lifecycle.LifeSupport$LifecycleInstance.start(LifeSupport.java:364) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.lifecycle.LifeSupport.start(LifeSupport.java:91) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+	at org.neo4j.graphdb.facade.DatabaseManagementServiceFactory.startDatabaseServer(DatabaseManagementServiceFactory.java:284) ~[neo4j-2025.03.0.jar:2025.03.0]
+	... 5 more
+	Suppressed: org.neo4j.kernel.lifecycle.LifecycleException: Component 'org.neo4j.dbms.database.DatabaseLifecycles$AllDatabaseStopper@395197cb' failed to stop. Please see the attached cause exception "null".
+		at org.neo4j.kernel.lifecycle.LifeSupport$LifecycleInstance.stop(LifeSupport.java:378) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+		at org.neo4j.kernel.lifecycle.LifeSupport.stopInstances(LifeSupport.java:211) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+		at org.neo4j.kernel.lifecycle.LifeSupport.stop(LifeSupport.java:119) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+		at org.neo4j.kernel.lifecycle.LifeSupport.start(LifeSupport.java:96) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+		at org.neo4j.graphdb.facade.DatabaseManagementServiceFactory.startDatabaseServer(DatabaseManagementServiceFactory.java:284) ~[neo4j-2025.03.0.jar:2025.03.0]
+		at org.neo4j.graphdb.facade.DatabaseManagementServiceFactory.build(DatabaseManagementServiceFactory.java:228) ~[neo4j-2025.03.0.jar:2025.03.0]
+		at org.neo4j.server.CommunityBootstrapper.createNeo(CommunityBootstrapper.java:38) ~[neo4j-2025.03.0.jar:2025.03.0]
+		at org.neo4j.server.NeoBootstrapper.start(NeoBootstrapper.java:190) [neo4j-2025.03.0.jar:2025.03.0]
+		at org.neo4j.server.NeoBootstrapper.start(NeoBootstrapper.java:100) [neo4j-2025.03.0.jar:2025.03.0]
+		at org.neo4j.server.Neo4jCommunity.main(Neo4jCommunity.java:30) [neo4j-2025.03.0.jar:2025.03.0]
+	Caused by: org.neo4j.dbms.systemgraph.SystemDatabaseProvider$SystemDatabaseUnavailableException
+		at org.neo4j.dbms.systemgraph.SystemDatabaseProvider.query(SystemDatabaseProvider.java:74) ~[neo4j-dbms-2025.03.0.jar:2025.03.0]
+		at org.neo4j.dbms.systemgraph.SystemDatabaseProvider.query(SystemDatabaseProvider.java:50) ~[neo4j-dbms-2025.03.0.jar:2025.03.0]
+		at org.neo4j.dbms.database.CommunityDatabaseObjectRepositoryModelProvider.withModel(CommunityDatabaseObjectRepositoryModelProvider.java:37) ~[neo4j-dbms-2025.03.0.jar:2025.03.0]
+		at org.neo4j.kernel.database.ModelBasedDatabaseIdRepository.getByName(ModelBasedDatabaseIdRepository.java:40) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+		at org.neo4j.kernel.database.MapCachingDatabaseIdRepository.lambda$getByName$0(MapCachingDatabaseIdRepository.java:48) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+		at java.util.concurrent.ConcurrentHashMap.computeIfAbsent(ConcurrentHashMap.java:1708) ~[?:?]
+		at org.neo4j.kernel.database.MapCachingDatabaseIdRepository.getByName(MapCachingDatabaseIdRepository.java:47) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+		at org.neo4j.kernel.database.DatabaseIdRepository.getByName(DatabaseIdRepository.java:55) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+		at org.neo4j.dbms.database.DatabaseRepository.getDatabaseContext(DatabaseRepository.java:54) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+		at org.neo4j.dbms.database.DatabaseLifecycles.defaultContext(DatabaseLifecycles.java:76) ~[neo4j-2025.03.0.jar:2025.03.0]
+		at org.neo4j.dbms.database.DatabaseLifecycles$AllDatabaseStopper.stop(DatabaseLifecycles.java:152) ~[neo4j-2025.03.0.jar:2025.03.0]
+		at org.neo4j.kernel.lifecycle.LifeSupport$LifecycleInstance.stop(LifeSupport.java:374) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+		... 9 more
+Caused by: org.neo4j.graphdb.DatabaseShutdownException: This database is shutdown.
+	at org.neo4j.kernel.availability.DatabaseAvailabilityGuard.assertDatabaseAvailable(DatabaseAvailabilityGuard.java:159) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.factory.GraphDatabaseFacade.beginKernelTransaction(GraphDatabaseFacade.java:164) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.factory.GraphDatabaseFacade.beginTransactionInternal(GraphDatabaseFacade.java:130) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.factory.GraphDatabaseFacade.beginTransaction(GraphDatabaseFacade.java:95) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.factory.GraphDatabaseTransactions.beginTransaction(GraphDatabaseTransactions.java:113) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.factory.GraphDatabaseTransactions.beginTransaction(GraphDatabaseTransactions.java:107) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.factory.GraphDatabaseTransactions.beginTransaction(GraphDatabaseTransactions.java:102) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.factory.GraphDatabaseTransactions.beginTx(GraphDatabaseTransactions.java:93) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.dbms.database.SystemGraphComponents.initializeSystemGraph(SystemGraphComponents.java:84) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.dbms.database.DefaultSystemGraphInitializer.initializeSystemGraph(DefaultSystemGraphInitializer.java:38) ~[neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.dbms.database.SystemGraphInitializer.start(SystemGraphInitializer.java:27) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.lifecycle.LifeSupport$LifecycleInstance.start(LifeSupport.java:347) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.lifecycle.LifeSupport.start(LifeSupport.java:91) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+	at org.neo4j.graphdb.facade.DatabaseManagementServiceFactory.startDatabaseServer(DatabaseManagementServiceFactory.java:284) ~[neo4j-2025.03.0.jar:2025.03.0]
+	... 5 more
+Caused by: java.lang.RuntimeException: java.lang.RuntimeException: Error reading transaction logs, recovery not possible. To force the database to start anyway, you can specify 'internal.dbms.tx_log.fail_on_corrupted_log_files=false'. This will try to recover as much as possible and then truncate the corrupt part of the transaction log. Doing this means your database integrity might be compromised, please consider restoring from a consistent backup instead.
+	at org.neo4j.kernel.impl.transaction.log.files.checkpoint.DetachedLogTailScanner.findLogTail(DetachedLogTailScanner.java:145) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.transaction.log.files.checkpoint.DetachedLogTailScanner.getTailMetadata(DetachedLogTailScanner.java:572) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.transaction.log.files.checkpoint.CheckpointLogFile.getTailMetadata(CheckpointLogFile.java:301) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.transaction.log.files.TransactionLogFiles.getTailMetadata(TransactionLogFiles.java:92) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.database.Database.getLogTail(Database.java:669) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.database.Database.specificStart(Database.java:426) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.database.AbstractDatabase.start(AbstractDatabase.java:161) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.dbms.database.DatabaseLifecycles.startDatabase(DatabaseLifecycles.java:123) ~[neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.dbms.database.DatabaseLifecycles$SystemDatabaseStarter.start(DatabaseLifecycles.java:145) ~[neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.lifecycle.LifeSupport$LifecycleInstance.start(LifeSupport.java:347) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.lifecycle.LifeSupport.start(LifeSupport.java:91) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+	at org.neo4j.graphdb.facade.DatabaseManagementServiceFactory.startDatabaseServer(DatabaseManagementServiceFactory.java:284) ~[neo4j-2025.03.0.jar:2025.03.0]
+	... 5 more
+Caused by: java.lang.RuntimeException: Error reading transaction logs, recovery not possible. To force the database to start anyway, you can specify 'internal.dbms.tx_log.fail_on_corrupted_log_files=false'. This will try to recover as much as possible and then truncate the corrupt part of the transaction log. Doing this means your database integrity might be compromised, please consider restoring from a consistent backup instead.
+	at org.neo4j.kernel.impl.transaction.log.files.checkpoint.DetachedLogTailScanner.throwUnableToCleanRecover(DetachedLogTailScanner.java:512) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.transaction.log.files.checkpoint.DetachedLogTailScanner.findLogTail(DetachedLogTailScanner.java:129) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.transaction.log.files.checkpoint.DetachedLogTailScanner.getTailMetadata(DetachedLogTailScanner.java:572) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.transaction.log.files.checkpoint.CheckpointLogFile.getTailMetadata(CheckpointLogFile.java:301) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.transaction.log.files.TransactionLogFiles.getTailMetadata(TransactionLogFiles.java:92) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.database.Database.getLogTail(Database.java:669) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.database.Database.specificStart(Database.java:426) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.database.AbstractDatabase.start(AbstractDatabase.java:161) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.dbms.database.DatabaseLifecycles.startDatabase(DatabaseLifecycles.java:123) ~[neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.dbms.database.DatabaseLifecycles$SystemDatabaseStarter.start(DatabaseLifecycles.java:145) ~[neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.lifecycle.LifeSupport$LifecycleInstance.start(LifeSupport.java:347) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.lifecycle.LifeSupport.start(LifeSupport.java:91) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+	at org.neo4j.graphdb.facade.DatabaseManagementServiceFactory.startDatabaseServer(DatabaseManagementServiceFactory.java:284) ~[neo4j-2025.03.0.jar:2025.03.0]
+	... 5 more
+Caused by: java.lang.RuntimeException: Last available CheckpointInfo[oldestNotVisibleTransactionLogPosition=LogPosition{logVersion=0, byteOffset=24663}, transactionLogPosition=LogPosition{logVersion=0, byteOffset=24663}, storeId=StoreId{creationTime=1741959963267, random=8149302671118931437, storageEngineName='record', formatName='aligned', majorVersion=1, minorVersion=1}, checkpointEntryPosition=LogPosition{logVersion=0, byteOffset=20080}, channelPositionAfterCheckpoint=LogPosition{logVersion=0, byteOffset=20312}, checkpointFilePostReadPosition=LogPosition{logVersion=0, byteOffset=20312}, kernelVersion=KernelVersion{V5_25,version=20}, kernelVersionByte=20, transactionId=TransactionId[id=46, appendIndex=46, kernelVersion=KernelVersion{V5_25,version=20}, checksum=128755585, commitTimestamp=1741959964059, consensusIndex=-1], appendIndex=46, reason=Checkpoint triggered by "Database shutdown" @ txId: 46, append index: 46, consensusIndexInCheckpoint=true] checkpoint does not point to a valid location in transaction logs.
+	at org.neo4j.kernel.impl.transaction.log.files.checkpoint.DetachedLogTailScanner.findLogTail(DetachedLogTailScanner.java:129) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.transaction.log.files.checkpoint.DetachedLogTailScanner.getTailMetadata(DetachedLogTailScanner.java:572) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.transaction.log.files.checkpoint.CheckpointLogFile.getTailMetadata(CheckpointLogFile.java:301) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.impl.transaction.log.files.TransactionLogFiles.getTailMetadata(TransactionLogFiles.java:92) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.database.Database.getLogTail(Database.java:669) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.database.Database.specificStart(Database.java:426) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.database.AbstractDatabase.start(AbstractDatabase.java:161) ~[neo4j-kernel-2025.03.0.jar:2025.03.0]
+	at org.neo4j.dbms.database.DatabaseLifecycles.startDatabase(DatabaseLifecycles.java:123) ~[neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.dbms.database.DatabaseLifecycles$SystemDatabaseStarter.start(DatabaseLifecycles.java:145) ~[neo4j-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.lifecycle.LifeSupport$LifecycleInstance.start(LifeSupport.java:347) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+	at org.neo4j.kernel.lifecycle.LifeSupport.start(LifeSupport.java:91) ~[neo4j-common-2025.03.0.jar:2025.03.0]
+	at org.neo4j.graphdb.facade.DatabaseManagementServiceFactory.startDatabaseServer(DatabaseManagementServiceFactory.java:284) ~[neo4j-2025.03.0.jar:2025.03.0]
+	... 5 more
+2025-05-02 08:47:39.484+0000 INFO  Neo4j Server shutdown initiated by request
+2025-05-02 08:47:39.484+0000 INFO  Stopped.

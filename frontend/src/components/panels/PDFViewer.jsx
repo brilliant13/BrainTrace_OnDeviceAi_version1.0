@@ -3,6 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import HighlightPopup from './HighlightPopup';
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min?url';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
@@ -15,7 +16,7 @@ const PDFViewer = ({ file, containerWidth }) => {
 
   useEffect(() => {
     if (containerWidth > 0) {
-      const newScale = Math.max(containerWidth / 800, 1); // 최소 1
+      const newScale = Math.max(containerWidth / 800, 1);
       setScale(newScale);
     }
   }, [containerWidth]);
@@ -78,20 +79,8 @@ const PDFViewer = ({ file, containerWidth }) => {
   };
 
   return (
-    <div
-      onMouseUp={onTextSelection}
-      style={{ width: '100%', height: '100%', position: 'relative' }}
-      ref={viewerRef}
-    >
-      {popup && (
-        <HighlightPopup
-          position={popup.position}
-          onSelectColor={addHighlight}
-          onCopyText={copyText}
-        />
-      )}
-
-      {/* 확대/축소 버튼 플로팅 */}
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* 플로팅 컨트롤 */}
       <div style={{
         position: 'sticky',
         top: 12,
@@ -113,72 +102,69 @@ const PDFViewer = ({ file, containerWidth }) => {
       }}>
         <button
           onClick={() => setScale(prev => Math.max(prev - 0.2, 0.5))}
-          style={{
-            background: '#4a4a4a',
-            border: 'none',
-            color: 'white',
-            padding: '4px 10px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
+          style={{ background: '#4a4a4a', border: 'none', color: 'white', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}
         >
           축소
         </button>
         <button
           onClick={() => setScale(prev => Math.min(prev + 0.2, 3))}
-          style={{
-            background: '#4a4a4a',
-            border: 'none',
-            color: 'white',
-            padding: '4px 10px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px'
-          }}
+          style={{ background: '#4a4a4a', border: 'none', color: 'white', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}
         >
           확대
         </button>
-        <span style={{ color: '#333', minWidth: '40px', textAlign: 'center' }}>
-          {Math.round(scale * 100)}%
-        </span>
+        <span style={{ color: '#333', minWidth: '40px', textAlign: 'center' }}>{Math.round(scale * 100)}%</span>
       </div>
 
-      <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
-        {Array.from({ length: numPages }, (_, index) => (
-          <div key={`page_${index + 1}`} style={{ position: 'relative' }}>
-            <Page
-              pageNumber={index + 1}
-              scale={scale}
-              renderTextLayer={true}
-            />
-            {highlights
-              .filter(h => h.page === index + 1)
-              .flatMap((h, idx) => h.positions.map((pos, innerIdx) => {
-                const pageDiv = viewerRef.current?.querySelector(`.react-pdf__Page[data-page-number="${h.page}"]`);
-                const canvas = pageDiv?.querySelector('canvas');
-                const canvasRect = canvas?.getBoundingClientRect();
-                if (!canvasRect) return null;
-                return (
-                  <div
-                    key={`${idx}-${innerIdx}`}
-                    style={{
-                      position: 'absolute',
-                      left: `${pos.x1 * canvasRect.width}px`,
-                      top: `${pos.y1 * canvasRect.height}px`,
-                      width: `${(pos.x2 - pos.x1) * canvasRect.width}px`,
-                      height: `${(pos.y2 - pos.y1) * canvasRect.height}px`,
-                      backgroundColor: h.color,
-                      opacity: 0.5,
-                      borderRadius: '4px',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                );
-              }))}
-          </div>
-        ))}
-      </Document>
+      {/* PDF 뷰어 영역 */}
+      <div
+        onMouseUp={onTextSelection}
+        style={{ flex: 1, overflowY: 'auto', position: 'relative' }}
+        ref={viewerRef}
+      >
+        {popup && (
+          <HighlightPopup
+            position={popup.position}
+            onSelectColor={addHighlight}
+            onCopyText={copyText}
+          />
+        )}
+
+        <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
+          {Array.from({ length: numPages }, (_, index) => (
+            <div key={`page_${index + 1}`} style={{ position: 'relative' }}>
+              <Page
+                pageNumber={index + 1}
+                scale={scale}
+                renderTextLayer={true}
+              />
+              {highlights
+                .filter(h => h.page === index + 1)
+                .flatMap((h, idx) => h.positions.map((pos, innerIdx) => {
+                  const pageDiv = viewerRef.current?.querySelector(`.react-pdf__Page[data-page-number="${h.page}"]`);
+                  const canvas = pageDiv?.querySelector('canvas');
+                  const canvasRect = canvas?.getBoundingClientRect();
+                  if (!canvasRect) return null;
+                  return (
+                    <div
+                      key={`${idx}-${innerIdx}`}
+                      style={{
+                        position: 'absolute',
+                        left: `${pos.x1 * canvasRect.width}px`,
+                        top: `${pos.y1 * canvasRect.height}px`,
+                        width: `${(pos.x2 - pos.x1) * canvasRect.width}px`,
+                        height: `${(pos.y2 - pos.y1) * canvasRect.height}px`,
+                        backgroundColor: h.color,
+                        opacity: 0.5,
+                        borderRadius: '4px',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                  );
+                }))}
+            </div>
+          ))}
+        </Document>
+      </div>
     </div>
   );
 };

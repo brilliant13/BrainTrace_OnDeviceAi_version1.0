@@ -85,7 +85,8 @@
 
 /* 소스 패널 내용 영역 */
 .source-inner .panel-content {
-  height: calc(100% - 45px); /* 헤더 높이 제외 */
+  height: calc(100% - 45px);
+  /* 헤더 높이 제외 */
   overflow: auto;
 }
 

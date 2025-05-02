@@ -1,0 +1,40 @@
+.source-quota-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background-color: #ffffff;
+    border-top: 1px solid #e0e0e0;
+    font-size: 14px;
+    color: #333;
+}
+
+.quota-label {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+
+.quota-progress-wrapper {
+    flex: 1;
+    height: 8px;
+    background-color: #eee;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.quota-progress {
+    height: 100%;
+    background-color: #363030;
+    transition: width 0.3s ease;
+    border-radius: 6px;
+}
+
+.quota-count {
+    white-space: nowrap;
+    font-size: 13px;
+    color: #666;
+}

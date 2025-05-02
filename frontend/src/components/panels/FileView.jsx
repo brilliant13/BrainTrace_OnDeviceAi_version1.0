@@ -4,25 +4,8 @@ import './styles/Common.css';
 import './styles/SourcePanel.css';
 import './styles/Scrollbar.css';
 import './styles/FileView.css';
-
-function FileIcon({ fileName }) {
-  const getFileIcon = () => {
-    if (fileName.endsWith('.pdf')) return '📕';
-    if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.svg')) return '🖼️';
-    if (fileName.endsWith('.md')) return '📝';
-    if (fileName.endsWith('.js') || fileName.endsWith('.jsx')) return '📜';
-    if (fileName.endsWith('.py')) return '🐍';
-    if (fileName.endsWith('.json')) return '📋';
-    if (fileName.endsWith('.css')) return '🎨';
-    if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) return '📄';
-    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) return '📊';
-    if (fileName.endsWith('.pptx') || fileName.endsWith('.ppt')) return '📊';
-    if (fileName.endsWith('.txt')) return '📝';
-    if (fileName.endsWith('.fig')) return '🖌️';
-    return '📄';
-  };
-  return <span className="file-icon">{getFileIcon()}</span>;
-}
+import FileIcon from './FileIcon'
+import { TiUpload } from "react-icons/ti";
 
 function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToFolder, onOpenPDF, fileMap, moveItem }) {
   const [isOpen, setIsOpen] = useState(depth === 0);
@@ -92,7 +75,7 @@ function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToF
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
-      {isDragOver && <div className="drop-overlay"><div className="drop-icon">📥</div></div>}
+      {isDragOver && <div className="drop-overlay"><div className="drop-icon"><TiUpload /></div></div>}
       <div
         className={`file-item folder-item ${isDragOver ? 'drag-over' : ''}`}
         style={{ paddingLeft: `${depth * 16}px` }}
@@ -100,12 +83,12 @@ function FolderView({ item, depth = 0, selectedFile, onSelectFile, onDropFileToF
         draggable
         onDragStart={(e) => e.dataTransfer.setData('text/plain', item.name)}
       >
-        <span className="file-icon">{isOpen ? '📂' : '📁'}</span>
-        <span className="file-name">{item.name}</span>
+        <span className="tree-toggle">{isOpen ? '▼' : '▶ '}</span>
+        <span className="file-name folder-name">{item.name}</span>
       </div>
 
       {isOpen && (
-        <div className="folder-contents">
+        <div className="tree-children">
           {item.children?.map((child, index) =>
             child.type === 'folder' ? (
               <FolderView
@@ -150,9 +133,19 @@ function FileView({ activeProject, files, setFiles, onOpenPDF, fileMap, setFileM
   const [isDraggingOverRoot, setIsDraggingOverRoot] = useState(false);
 
   useEffect(() => {
-    const newFiles = activeProject?.files || [];
-    setFiles(newFiles);
-  }, [activeProject, setFiles]);
+    const saved = localStorage.getItem(`brainTrace-files-${activeProject?.id}`);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setFiles(parsed);
+      } catch (err) {
+        console.error('파일 로딩 오류:', err);
+        setFiles(activeProject?.files || []);
+      }
+    } else {
+      setFiles(activeProject?.files || []);
+    }
+  }, [activeProject]);
 
   const moveItem = (name, targetFolder) => {
     let movedItem = null;
@@ -211,6 +204,7 @@ function FileView({ activeProject, files, setFiles, onOpenPDF, fileMap, setFileM
     });
     setFileMap(prev => ({ ...prev, ...newMap }));
     setFiles(updated);
+    localStorage.setItem(`brainTrace-files-${activeProject?.id}`, JSON.stringify(updated));
   };
 
   const handleRootDrop = (e) => {
@@ -233,7 +227,11 @@ function FileView({ activeProject, files, setFiles, onOpenPDF, fileMap, setFileM
           const file = new File([memo.content], memo.name, { type: 'text/plain' });
           const newEntry = { name: memo.name, type: 'file' };
           setFileMap(prev => ({ ...prev, [memo.name]: file }));
-          setFiles(prev => [...prev, newEntry]);
+          setFiles(prev => {
+            const updated = [...prev, newEntry];
+            localStorage.setItem(`brainTrace-files-${activeProject?.id}`, JSON.stringify(updated));
+            return updated;
+          });
           return;
         }
       } catch (err) {
@@ -247,7 +245,11 @@ function FileView({ activeProject, files, setFiles, onOpenPDF, fileMap, setFileM
       newMap[file.name] = file;
     });
     setFileMap(prev => ({ ...prev, ...newMap }));
-    setFiles(prev => [...prev, ...newEntries]);
+    setFiles(prev => {
+      const updated = [...prev, ...newEntries];
+      localStorage.setItem(`brainTrace-files-${activeProject?.id}`, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (
@@ -258,7 +260,7 @@ function FileView({ activeProject, files, setFiles, onOpenPDF, fileMap, setFileM
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleRootDrop}
     >
-      {isDraggingOverRoot && <div className="drop-overlay"><div className="drop-icon">📥</div></div>}
+      {isDraggingOverRoot && <div className="drop-overlay"><div className="drop-icon"><TiUpload /></div></div>}
       {files.length > 0 ? (
         files.map((item, index) =>
           item.type === 'folder' ? (

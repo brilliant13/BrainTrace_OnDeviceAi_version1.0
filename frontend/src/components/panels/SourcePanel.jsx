@@ -11,6 +11,7 @@ import SourceUploadModal from './SourceUploadModal';
 import toggleIcon from '../../assets/icons/toggle-view.png';
 import addFolderIcon from '../../assets/icons/add-folder.png';
 import newFileIcon from '../../assets/icons/new-file.png';
+import SourceQuotaBar from './SourceQuotaBar';
 
 function SourcePanel({ activeProject, collapsed, setCollapsed, setIsPDFOpen, onBackFromPDF }) {
   const project = projectData.find(p => p.id === activeProject) || projectData[0];
@@ -21,19 +22,22 @@ function SourcePanel({ activeProject, collapsed, setCollapsed, setIsPDFOpen, onB
   const [showAddFolderInput, setShowAddFolderInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
 
-  const panelRef = useRef(null);
+  const panelRef = useRef();
+  const [containerWidth, setContainerWidth] = useState(0);
+
   const [panelWidth, setPanelWidth] = useState(0);
   const isIconMode = panelWidth > 0 && panelWidth < 193;
 
   useEffect(() => {
-    if (panelRef.current && !collapsed) {
-      const observer = new ResizeObserver(([entry]) => {
-        setPanelWidth(entry.contentRect.width);
-      });
-      observer.observe(panelRef.current);
-      return () => observer.disconnect();
-    }
-  }, [collapsed]);
+    if (!panelRef.current) return;
+    const resizeObserver = new ResizeObserver(() => {
+      const width = panelRef.current.offsetWidth;
+      setContainerWidth(width);
+      setPanelWidth(width);
+    });
+    resizeObserver.observe(panelRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   const handleAddFolder = (e) => {
     e.preventDefault();
@@ -56,7 +60,7 @@ function SourcePanel({ activeProject, collapsed, setCollapsed, setIsPDFOpen, onB
         <img
           src={toggleIcon}
           alt="Toggle"
-          style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+          style={{ width: '23px', height: '23px', cursor: 'pointer' }}
           onClick={() => setCollapsed(prev => !prev)}
         />
       </div>
@@ -109,20 +113,23 @@ function SourcePanel({ activeProject, collapsed, setCollapsed, setIsPDFOpen, onB
           <div className="panel-content" style={{ flexGrow: 1, overflow: 'auto' }}>
             {openedPDF ? (
               <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
-                <button onClick={() => {
-                  setOpenedPDF(null);
-                  setIsPDFOpen(false);
-                  if (onBackFromPDF) onBackFromPDF(); // 패널 크기 초기화
-
-                }}
-                  className="pdf-back-button">
+                <button
+                  onClick={() => {
+                    setOpenedPDF(null);
+                    setIsPDFOpen(false);
+                    if (onBackFromPDF) onBackFromPDF();
+                  }}
+                  className="pdf-back-button"
+                >
                   ← 뒤로가기
                 </button>
-                <PDFViewer file={openedPDF} containerWidth={panelWidth} />
+                <div className="panel-container">
+                  <PDFViewer file={openedPDF} containerWidth={containerWidth} />
+                </div>
               </div>
             ) : (
               <FileView
-                activeProject={project}  // ✅ 전체 project 객체를 넘김
+                activeProject={project}
                 files={files}
                 setFiles={setFiles}
                 onOpenPDF={(file) => {
@@ -137,7 +144,6 @@ function SourcePanel({ activeProject, collapsed, setCollapsed, setIsPDFOpen, onB
         </>
       )}
 
-
       <SourceUploadModal
         visible={showUploadModal}
         onClose={() => setShowUploadModal(false)}
@@ -148,6 +154,7 @@ function SourcePanel({ activeProject, collapsed, setCollapsed, setIsPDFOpen, onB
           setFiles(prev => [...prev, ...newEntries]);
         }}
       />
+      {!collapsed && <SourceQuotaBar current={10} max={50} />}
     </div>
   );
 }

@@ -5,13 +5,15 @@
   flex-direction: column;
   height: 100%;
   padding: 16px;
+  background-color: #fff;
+  /* 추가: 전체 배경 흰색 */
 }
 
 /* 그래프 영역 스타일 */
 .graph-area {
   height: 300px;
   position: relative;
-  background-color: #f5f5f5;
+  background-color: white;
   border-radius: 6px;
   margin-bottom: 16px;
   overflow: hidden;
@@ -49,7 +51,6 @@
 .main-node {
   width: 50px;
   height: 50px;
-  background-color: #3b82f6;
   border-radius: 50%;
   top: 50%;
   left: 50%;
@@ -62,7 +63,6 @@
   height: 30px;
   min-width: 70px;
   padding: 0 12px;
-  background-color: #8b5cf6;
   border-radius: 15px;
   color: white;
   font-size: 12px;
@@ -71,7 +71,6 @@
 .small-node {
   width: 24px;
   height: 24px;
-  background-color: #f59e0b;
   border-radius: 50%;
   font-size: 12px;
   color: white;
@@ -89,7 +88,6 @@
 
 .editor-toolbar {
   padding: 8px;
-  background-color: #f5f5f5;
   border-bottom: 1px solid #e0e0e0;
   display: flex;
 }
@@ -115,7 +113,6 @@
   padding: 16px;
   font-size: 14px;
   resize: none;
-  background-color: #ffffff;
   color: #333;
 }
 
@@ -126,7 +123,6 @@
 /* 메모 툴바 추가 스타일 */
 .memo-toolbar {
   padding: 8px;
-  background-color: #f8f8f8;
   border-bottom: 1px solid #e0e0e0;
   margin-bottom: 16px;
 }
@@ -150,6 +146,8 @@
 .memo-content {
   padding: 0 16px;
   margin-bottom: 16px;
+  background-color: #fff;
+  /* 선택 사항 */
 }
 
 .memo-content h3 {
@@ -195,7 +193,6 @@
 
 .save-button {
   padding: 4px 12px;
-  background-color: #4d5ef6;
   color: white;
   border: none;
   border-radius: 4px;
@@ -203,9 +200,6 @@
   font-size: 12px;
 }
 
-.save-button:hover {
-  background-color: #4f46e5;
-}
 
 /* 헤더 스타일 */
 .header-bar {
@@ -243,4 +237,38 @@
   overflow: auto;
   height: auto;
   max-height: 100%;
+}
+
+.toggle-icon-button {
+  background: transparent;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-icon-button.selected {
+  background-color: #e0e0e0;
+}
+
+.memo-list-title {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.memo-title-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  transform: translateY(1px);
+  /* 아이콘 약간 아래로 내리기 */
+}
+
+.memo-title-text {
+  transform: translateY(-1px);
+  /* 글자를 살짝 위로 */
 }

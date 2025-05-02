@@ -1,6 +1,12 @@
 **/__pycache__/
 *.pyc
 /neo4j/
-/frontend/
 *.log
 .DS_Store
+
+backend/venv
+frontend/node_modules
+
+backend/LLM/genie_bundle_3_2
+backend/data/
+backnd/node_modules

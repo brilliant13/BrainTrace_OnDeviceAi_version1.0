@@ -36,11 +36,6 @@ function MemoEditor({ memo, onSaveAndClose }) {
         onChange={(e) => setBody(e.target.value)}
       />
 
-      <div className="editor-footer">
-        <span className="word-count">
-          {body.trim() ? body.trim().split(/\s+/).length : 0} words
-        </span>
-      </div>
     </div>
   );
 }

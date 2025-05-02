@@ -1,15 +1,22 @@
 // src/data/projectData.js
+import { BsGraphUp } from "react-icons/bs";
+import { FiFigma } from "react-icons/fi";
+import { MdWorkOutline, MdLocalHospital } from "react-icons/md";
+import { FaGraduationCap } from "react-icons/fa";
+import { BsRocket } from "react-icons/bs";
+import { PiStudentBold } from "react-icons/pi";
+
 const projectData = [
   {
     id: 1,
     name: "팀워터 사이언스",
-    icon: "📊",
+    icon: BsGraphUp,
     files: [
       {
         name: "<나의 팀워터 사이언스 브레인>",
         type: "folder",
         children: [
-          { name: "아이디어.md", type: "file" },
+          { name: "아이디어.txt", type: "file" },
           { name: "마인드맵.png", type: "file" }
         ]
       },
@@ -25,9 +32,9 @@ const projectData = [
         name: "학습메모",
         type: "folder",
         children: [
-          { name: "<1주차> Spring Overview.md", type: "file" },
-          { name: "<2주차> Dependency Injection.md", type: "file" },
-          { name: "<3주차> SpringMVC.md", type: "file" }
+          { name: "<1주차> Spring Overview.txt", type: "file" },
+          { name: "<2주차> Dependency Injection.txt", type: "file" },
+          { name: "<3주차> SpringMVC.txt", type: "file" }
         ]
       }
     ],
@@ -52,7 +59,7 @@ const projectData = [
   {
     id: 2,
     name: "Figma",
-    icon: "🎨",
+    icon: FiFigma,
     files: [
       {
         name: "디자인 에셋",
@@ -67,18 +74,18 @@ const projectData = [
         name: "UI 컴포넌트",
         type: "folder",
         children: [
-          { name: "버튼.fig", type: "file" },
-          { name: "카드.fig", type: "file" },
-          { name: "내비게이션.fig", type: "file" }
+          { name: "버튼.txt", type: "file" },
+          { name: "카드.pdf", type: "file" },
+          { name: "내비게이션.txt", type: "file" }
         ]
       },
       {
         name: "프로토타입",
         type: "folder",
         children: [
-          { name: "로그인 화면.fig", type: "file" },
-          { name: "대시보드.fig", type: "file" },
-          { name: "사용자 흐름.fig", type: "file" }
+          { name: "로그인 화면.txt", type: "file" },
+          { name: "대시보드.txt", type: "file" },
+          { name: "사용자 흐름.txt", type: "file" }
         ]
       }
     ],
@@ -104,7 +111,7 @@ const projectData = [
   {
     id: 3,
     name: "Freelance",
-    icon: "💼",
+    icon: MdWorkOutline,
     files: [
       {
         name: "클라이언트",
@@ -119,23 +126,9 @@ const projectData = [
         name: "프로젝트",
         type: "folder",
         children: [
-          {
-            name: "웹사이트 리디자인",
-            type: "folder",
-            children: [
-              { name: "요구사항.docx", type: "file" },
-              { name: "견적서.pdf", type: "file" },
-              { name: "계약서.pdf", type: "file" }
-            ]
-          },
-          {
-            name: "모바일 앱 개발",
-            type: "folder",
-            children: [
-              { name: "기획서.pptx", type: "file" },
-              { name: "앱 목업.png", type: "file" }
-            ]
-          }
+          { name: "요구사항.docx", type: "file" },
+          { name: "견적서.pdf", type: "file" },
+          { name: "계약서.pdf", type: "file" }
         ]
       },
       {
@@ -170,7 +163,7 @@ const projectData = [
   {
     id: 4,
     name: "Student Loans",
-    icon: "🎓",
+    icon: MdLocalHospital,
     files: [
       {
         name: "대출 정보",
@@ -221,7 +214,7 @@ const projectData = [
   {
     id: 5,
     name: "Virta Health",
-    icon: "🏥",
+    icon: FaGraduationCap,
     files: [
       {
         name: "건강 기록",
@@ -269,6 +262,83 @@ const projectData = [
     ],
 
     createdAt: "2024. 05. 19.",
+  },
+  {
+    id: 6,
+    name: "Space Research",
+    icon: BsRocket,
+    files: [
+      {
+        name: "논문 자료",
+        type: "folder",
+        children: [
+          { name: "우주 탐사 개요.pdf", type: "file" },
+          { name: "엔진 설계.docx", type: "file" }
+        ]
+      },
+      {
+        name: "시뮬레이션 결과",
+        type: "folder",
+        children: [
+          { name: "모델링 결과.png", type: "file" },
+          { name: "테스트 로그.txt", type: "file" }
+        ]
+      }
+    ],
+    chat: {
+      title: "로켓 엔진 효율 향상",
+      content: "로켓 엔진 효율을 높이기 위한 주요 전략은 다음과 같습니다:\n\n1. 연료 최적화\n2. 연소실 압력 개선\n3. 배기 시스템 간소화\n4. 재사용 가능한 부품 도입"
+    },
+    memo: {
+      title: "우주 프로젝트 회의록",
+      content: "# 우주 추진 회의\n\n- 차세대 액체 연료 엔진에 대한 논의\n- 열 손실 최소화를 위한 재료 제안\n- 프로젝트 마일스톤 확인"
+    },
+    nodes: [
+      { id: "main", label: "R", type: "main", x: 50, y: 50 },
+      { id: "eng", label: "Engine", type: "sub", x: 30, y: 30 },
+      { id: "fuel", label: "Fuel", type: "sub", x: 70, y: 30 },
+      { id: "sim", label: "Sim", type: "sub", x: 50, y: 70 }
+    ],
+    createdAt: "2025. 4. 29."
+  },
+
+  {
+    id: 7,
+    name: "대학생 커뮤니티",
+    icon: PiStudentBold,
+    files: [
+      {
+        name: "운영 계획",
+        type: "folder",
+        children: [
+          { name: "동아리 소개.txt", type: "file" },
+          { name: "활동 일정.pdf", type: "file" }
+        ]
+      },
+      {
+        name: "홍보 자료",
+        type: "folder",
+        children: [
+          { name: "포스터 디자인.png", type: "file" },
+          { name: "SNS 콘텐츠.md", type: "file" }
+        ]
+      }
+    ],
+    chat: {
+      title: "대학생 커뮤니티 운영 가이드",
+      content: "성공적인 커뮤니티 운영을 위한 3가지:\n\n1. 소통 중심의 문화\n2. 꾸준한 콘텐츠 제작\n3. 참여 유도 캠페인"
+    },
+    memo: {
+      title: "운영진 회의 요약",
+      content: "# 5월 회의 요약\n\n- 신입부원 환영 행사 준비\n- 회비 사용 내역 보고\n- 여름방학 프로그램 기획 시작"
+    },
+    nodes: [
+      { id: "main", label: "U", type: "main", x: 50, y: 50 },
+      { id: "event", label: "Event", type: "sub", x: 30, y: 30 },
+      { id: "promo", label: "Promo", type: "sub", x: 70, y: 30 },
+      { id: "doc", label: "Doc", type: "sub", x: 50, y: 70 }
+    ],
+    createdAt: "2025. 4. 30."
   }
 ];
 

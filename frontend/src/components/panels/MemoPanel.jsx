@@ -23,12 +23,8 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
   const [memos, setMemos] = useState([]);
   const [selectedMemoId, setSelectedMemoId] = useState(null);
   const [highlightedMemoId, setHighlightedMemoId] = useState(null);
-
-  const nodes = [
-    { id: "main", label: "노드", type: "main", x: 50, y: 50 },
-    { id: "sub1", label: "A", type: "sub", x: 30, y: 30 },
-    { id: "sub2", label: "B", type: "sub", x: 70, y: 30 }
-  ];
+  const [graphHeight, setGraphHeight] = useState(350);
+  const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem(MEMO_STORAGE_KEY);
@@ -43,11 +39,33 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
     setSelectedMemoId(null);
   }, [MEMO_STORAGE_KEY]);
 
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+      const newHeight = e.clientY - document.querySelector('.panel-container').getBoundingClientRect().top - 45;
+      if (newHeight > 10 && newHeight < 950) {
+        setGraphHeight(newHeight);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isResizing) setIsResizing(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+
   const selectedMemo = memos.find(m => m.id === selectedMemoId);
 
   const handleAddMemo = () => {
     const newId = Date.now();
-    const newMemo = { id: newId, title: `새 메모 ${memos.length + 1}`, content: '' };
+    const newMemo = { id: newId, title: ``, content: '' };
     const updated = [newMemo, ...memos];
     setMemos(updated);
     localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updated));
@@ -74,7 +92,7 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
         className="header-bar"
         style={{
           display: 'flex',
-          justifyContent: collapsed ? 'center' : 'space-between',
+          justifyContent: 'space-between',
           alignItems: 'center',
           height: '45px',
           padding: '10px 16px',
@@ -83,37 +101,76 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
       >
         {!collapsed && (
           <div className="header-actions2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="header-title" style={{ fontSize: '16px' }}>Memo</span>
-            <img
-              src={showGraph ? graphOnIcon : graphOffIcon}
-              alt="Graph View"
-              style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-              onClick={() => setShowGraph(prev => !prev)}
-            />
-            <img
-              src={showMemo ? memoOnIcon : memoOffIcon}
-              alt="Memo View"
-              style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-              onClick={() => setShowMemo(prev => !prev)}
-            />
+            <span className="header-title" style={{ fontSize: '17px' }}>Insight </span>
           </div>
         )}
         <div className="header-actions">
+          {!collapsed && (
+            <>
+              <img
+                src={showGraph ? graphOnIcon : graphOffIcon}
+                alt="Graph View"
+                style={{ width: '19px', height: '19px', cursor: 'pointer' }}
+                onClick={() => setShowGraph(prev => !prev)}
+              />
+              <img
+                src={showMemo ? memoOnIcon : memoOffIcon}
+                alt="Memo View"
+                style={{ width: '19px', height: '19px', cursor: 'pointer' }}
+                onClick={() => setShowMemo(prev => !prev)}
+              />
+            </>
+          )}
           <img
             src={toggleIcon}
             alt="Toggle View"
-            style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+            style={{ width: '23px', height: '23px', cursor: 'pointer' }}
             onClick={() => setCollapsed(prev => !prev)}
           />
         </div>
       </div>
 
       {!collapsed && (
-        <div className="panel-content">
-          {showGraph && <GraphView nodes={nodes} />}
+        <div className="panel-content" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: 'calc(100%)',
+          overflow: 'hidden'
+        }}>
+          {showGraph && (
+            <div
+              style={{
+                height: showMemo ? `${graphHeight}px` : 'calc(100%)',
+                transition: isResizing ? 'none' : 'height 0.3s ease'
+              }}
+            >
+              <GraphView
+                brainId={projectId || 'default-brain-id'}
+                height={showMemo ? graphHeight : undefined}
+              />
+            </div>
+          )}
+
+          {/* 리사이저 바 */}
+          {showGraph && showMemo && (
+            <div
+              style={{
+                height: '10px',
+                cursor: 'row-resize',
+                borderBottom: '1px solid #ccc',
+                backgroundColor: 'transparent', // ✅ 완전 투명
+              }}
+              onMouseDown={() => setIsResizing(true)}
+            />
+          )}
+
 
           {showMemo && (
-            <div className="memo-body" style={{ marginTop: '16px' }}>
+            <div className="memo-body" style={{
+              flex: 1,
+              overflow: 'auto',
+              borderTop: '1px solid #eaeaea',
+            }}>
               {selectedMemoId == null ? (
                 <MemoListPanel
                   memos={memos}
@@ -124,19 +181,17 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
                   onDelete={handleDeleteMemo}
                 />
               ) : (
-                <div>
-                  <MemoEditor
-                    memo={selectedMemo}
-                    onSaveAndClose={(updatedMemo) => {
-                      const updatedList = memos.map(m =>
-                        m.id === updatedMemo.id ? updatedMemo : m
-                      );
-                      setMemos(updatedList);
-                      localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updatedList));
-                      setSelectedMemoId(null);
-                    }}
-                  />
-                </div>
+                <MemoEditor
+                  memo={selectedMemo}
+                  onSaveAndClose={(updatedMemo) => {
+                    const updatedList = memos.map(m =>
+                      m.id === updatedMemo.id ? updatedMemo : m
+                    );
+                    setMemos(updatedList);
+                    localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updatedList));
+                    setSelectedMemoId(null);
+                  }}
+                />
               )}
             </div>
           )}

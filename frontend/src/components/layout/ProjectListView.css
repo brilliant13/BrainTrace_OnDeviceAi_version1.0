@@ -9,7 +9,6 @@
     font-size: 33px;
     font-weight: bold;
     color: #111;
-    /* ✅ 헤더도 진하게 */
     margin-bottom: 30px;
 }
 
@@ -48,11 +47,8 @@
 
 .add-card {
     background-color: white;
-    /* ✅ 밝은 회색 배경 */
     border: 1px dashed #d0d0d0;
-    /* ✅ 점선 테두리로 구분감 */
     color: #555;
-    /* ✅ 글씨도 은은하게 */
     font-weight: 500;
     text-align: center;
     display: flex;
@@ -63,7 +59,6 @@
 
 .add-card:hover {
     background-color: #ebebeb;
-    /* ✅ 살짝 밝아지는 hover 효과 */
     cursor: pointer;
 }
 
@@ -75,9 +70,7 @@
 
 .project-header {
     text-align: center;
-    /* ✅ 가운데 정렬 */
     margin-bottom: 40px;
-    /* ✅ 아래 여백 */
 }
 
 .page-highlight {
@@ -86,4 +79,49 @@
     margin: 0;
     color: #222;
     letter-spacing: -0.5px;
+}
+
+.sort-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.sort-button {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 9999px;
+    padding: 8px 14px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.sort-button:hover {
+    background-color: #f5f5f5;
+}
+
+.sort-menu {
+    position: absolute;
+    top: 110%;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    z-index: 10;
+    width: 160px;
+    display: none;
+}
+
+.sort-dropdown:hover .sort-menu {
+    display: block;
+}
+
+.sort-menu-item {
+    padding: 10px 16px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.sort-menu-item:hover {
+    background-color: #f0f0f0;
 }

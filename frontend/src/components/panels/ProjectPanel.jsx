@@ -1,41 +1,56 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom'; // ✅ 추가
+import { useNavigate } from 'react-router-dom';
 import './styles/Common.css';
 import './styles/ProjectPanel.css';
 import './styles/Scrollbar.css';
 
 import projectData from '../../data/projectData';
+import { IoHomeOutline } from "react-icons/io5";
+import { AiOutlinePlus } from "react-icons/ai";
+
 
 function ProjectPanel({ activeProject, onProjectChange }) {
-  const navigate = useNavigate(); // ✅ 네비게이션 훅 사용
+  const navigate = useNavigate();
 
   const handleProjectClick = (projectId) => {
-    onProjectChange(projectId); // 상태 업데이트
-    navigate(`/project/${projectId}`); // ✅ URL 이동
+    onProjectChange(projectId);
+    navigate(`/project/${projectId}`);
   };
 
   return (
     <div className="panel-container sidebar-container">
       <div className="panel-content">
         <div className="sidebar-icons">
-          {projectData.map(project => (
-            <div
-              key={project.id}
-              className={`sidebar-icon ${activeProject === project.id ? 'active' : ''}`}
-              onClick={() => handleProjectClick(project.id)} // ✅ 클릭 핸들링
-              title={project.name}
-            >
-              <span role="img" aria-label={project.name}>{project.icon}</span>
-            </div>
-          ))}
+          {projectData.map(project => {
+            const Icon = project.icon;
+            return (
+              <div
+                key={project.id}
+                className={`sidebar-icon ${activeProject === project.id ? 'active' : ''}`}
+                onClick={() => handleProjectClick(project.id)}
+                title={project.name}
+              >
+                <Icon size={20} />
+              </div>
+            );
+          })}
 
           <div
             className="sidebar-icon add-icon"
-            onClick={() => navigate('/')} // ✅ 새 프로젝트 추가 → 프로젝트 리스트 페이지로
+            onClick={() => navigate('/')}
           >
-            <span role="img" aria-label="add">➕</span>
+            <span role="img" aria-label="add"><AiOutlinePlus size={25} style={{ margin: 'auto' }} /></span>
           </div>
         </div>
+      </div>
+
+      {/* 맨 아래 고정 홈 아이콘 */}
+      <div
+        className="sidebar-icon home-icon"
+        onClick={() => navigate('/')}
+        title="홈으로"
+      >
+        <IoHomeOutline size={20} />
       </div>
     </div>
   );

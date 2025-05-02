@@ -1,3 +1,4 @@
+// src/components/layout/MainLayout.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Panel,
@@ -36,14 +37,21 @@ function MainLayout() {
     }
   }, [selectedProject, navigate]);
 
-  const DEFAULT_SOURCE_PANEL_SIZE = 20;
+  const DEFAULT_SOURCE_PANEL_SIZE = 16;
+  const DEFAULT_CHAT_PANEL_SIZE = 50;  // 추가된 기본 채팅 패널 크기
+  const DEFAULT_MEMO_PANEL_SIZE = 30;
+
   const [activeProject, setActiveProject] = useState(projectId);
   const [sourceCollapsed, setSourceCollapsed] = useState(false);
   const [memoCollapsed, setMemoCollapsed] = useState(false);
+
   const sourcePanelRef = useRef(null);
+  const chatPanelRef = useRef(null);  // 추가된 채팅 패널 ref
   const memoPanelRef = useRef(null);
-  const [sourcePanelSize, setSourcePanelSize] = useState(20);
-  const [memoPanelSize, setMemoPanelSize] = useState(25);
+
+  const [sourcePanelSize, setSourcePanelSize] = useState(DEFAULT_SOURCE_PANEL_SIZE);
+  const [chatPanelSize, setChatPanelSize] = useState(DEFAULT_CHAT_PANEL_SIZE);  // 추가된 채팅 패널 크기 상태
+  const [memoPanelSize, setMemoPanelSize] = useState(DEFAULT_MEMO_PANEL_SIZE);
   const [isPDFOpen, setIsPDFOpen] = useState(false);
 
   const handleBackFromPDF = () => {
@@ -58,10 +66,15 @@ function MainLayout() {
     navigate(`/project/${projectId}`);
   };
 
+  // 패널 리사이즈 핸들러들
   const handleSourceResize = (size) => {
     if (!sourceCollapsed) {
       setSourcePanelSize(size);
     }
+  };
+
+  const handleChatResize = (size) => {
+    setChatPanelSize(size);
   };
 
   const handleMemoResize = (size) => {
@@ -70,25 +83,59 @@ function MainLayout() {
     }
   };
 
+  // 소스 패널 크기 변경 효과
   useEffect(() => {
     if (sourcePanelRef.current) {
-      if (isPDFOpen) {
-        sourcePanelRef.current.resize(35);
+      if (sourceCollapsed) {
+        sourcePanelRef.current.resize(5);  // 접혔을 때 최소 크기
       } else {
         sourcePanelRef.current.resize(sourcePanelSize);
       }
     }
-  }, [isPDFOpen, sourceCollapsed]);
+  }, [isPDFOpen, sourceCollapsed, sourcePanelSize]);
 
+  // 메모 패널 크기 변경 효과
   useEffect(() => {
-    if (memoPanelRef.current) {
-      if (memoCollapsed) {
-        memoPanelRef.current.resize(5);
+    if (!memoPanelRef.current) return;
+
+    if (memoCollapsed) {
+      memoPanelRef.current.resize(5); // 접힘
+    } else {
+      if (memoPanelSize === 5) {
+        memoPanelRef.current.resize(DEFAULT_MEMO_PANEL_SIZE);
       } else {
         memoPanelRef.current.resize(memoPanelSize);
       }
     }
-  }, [memoCollapsed, memoPanelSize]);
+  }, [memoCollapsed]); // memoPanelSize 제거
+
+  // 패널 레이아웃 재조정 (총합이 100%가 되도록)
+  useEffect(() => {
+    const allPanelsOpen = !sourceCollapsed && !memoCollapsed;
+
+    if (!allPanelsOpen) return;
+
+    const total = sourcePanelSize + chatPanelSize + memoPanelSize;
+
+    if (Math.abs(total - 100) < 0.5) return; // 거의 100이면 무시 (떨림 방지)
+
+    const ratio = 100 / total;
+
+    setSourcePanelSize(prev => parseFloat((prev * ratio).toFixed(1)));
+    setChatPanelSize(prev => parseFloat((prev * ratio).toFixed(1)));
+    setMemoPanelSize(prev => parseFloat((prev * ratio).toFixed(1)));
+  }, [sourceCollapsed, memoCollapsed]);
+
+  useEffect(() => {
+    const handleDragOver = (e) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('dragover', handleDragOver);
+    return () => {
+      window.removeEventListener('dragover', handleDragOver);
+    };
+  }, []);
 
   return (
     <div className="main-container">
@@ -102,9 +149,9 @@ function MainLayout() {
       <PanelGroup direction="horizontal" className="panels-container">
         <Panel
           ref={sourcePanelRef}
-          defaultSize={sourceCollapsed ? 5 : 20}
+          defaultSize={sourceCollapsed ? 5 : DEFAULT_SOURCE_PANEL_SIZE}
           minSize={sourceCollapsed ? 5 : 10}
-          maxSize={sourceCollapsed ? 5 : 120}
+          maxSize={sourceCollapsed ? 5 : 100}
           className={sourceCollapsed ? 'panel-collapsed' : ''}
           onResize={handleSourceResize}
         >
@@ -121,7 +168,12 @@ function MainLayout() {
 
         <ResizeHandle />
 
-        <Panel defaultSize={50} minSize={30}>
+        <Panel
+          ref={chatPanelRef}
+          defaultSize={DEFAULT_CHAT_PANEL_SIZE}
+          minSize={30}
+          onResize={handleChatResize}
+        >
           <div className="layout-inner chat-inner">
             <ChatPanel activeProject={Number(activeProject)} />
           </div>
@@ -131,9 +183,9 @@ function MainLayout() {
 
         <Panel
           ref={memoPanelRef}
-          defaultSize={memoCollapsed ? 5 : 25}
+          defaultSize={memoCollapsed ? 5 : DEFAULT_MEMO_PANEL_SIZE}
           minSize={memoCollapsed ? 5 : 10}
-          maxSize={memoCollapsed ? 5 : 120}
+          maxSize={memoCollapsed ? 5 : 100}
           className={memoCollapsed ? 'panel-collapsed' : ''}
           onResize={handleMemoResize}
         >
