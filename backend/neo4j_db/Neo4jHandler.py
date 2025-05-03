@@ -222,7 +222,7 @@ class Neo4jHandler:
                 edges_result = session.run("""
                     MATCH (source)-[r]->(target)
                     WHERE source.brain_id = $brain_id AND target.brain_id = $brain_id
-                    RETURN DISTINCT source.name as source, target.name as target, type(r) as relation
+                    RETURN DISTINCT source.name as source, target.name as target, r.relation as relation
                     """, brain_id=brain_id)
                 
                 links = [

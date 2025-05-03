@@ -10,3 +10,4 @@ frontend/node_modules
 backend/LLM/genie_bundle_3_2
 backend/data/
 backnd/node_modules
+backend/data/qdrant/meta.json
