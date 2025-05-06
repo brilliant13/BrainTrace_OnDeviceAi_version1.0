@@ -117,8 +117,8 @@ export default function ProjectListView() {
                                     if (editingId === p.brain_id || e.target.closest('.project-name')) return;
 
                                     // 그 외엔 정상 이동
-                                    // nav(`/project/${p.brain_id}`);
-                                    nav(`/project/1`);
+                                    nav(`/project/${p.brain_id}`);
+                                    //nav(`/project/1`);
                                 }}
                             >
                                 <div className="project-icon">
