@@ -1,5 +1,5 @@
 .project-list-view {
-    padding: 60px 40px 40px 40px;
+    padding: 60px 40px 100px 40px;
     font-family: 'Noto Sans KR', sans-serif;
     color: #222;
     background-color: #fff;
@@ -10,6 +10,13 @@
     font-weight: bold;
     color: #111;
     margin-bottom: 30px;
+}
+
+.project-list-page {
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .project-grid {
@@ -25,10 +32,19 @@
     cursor: pointer;
     box-shadow: 0 5px 5px rgba(0, 0, 0, 0.15);
     transition: transform 0.2s ease;
+    position: relative;
 }
 
 .project-card:hover {
     transform: translateY(-4px);
+}
+
+.project-card.add-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #363030;
 }
 
 .project-icon {
@@ -40,9 +56,72 @@
     font-weight: 600;
 }
 
+/* 제목 인라인 편집 시 테두리 표시 */
+.project-name[contenteditable="true"] {
+    border-bottom: 1px dashed #666;
+    outline: none;
+}
+
 .project-file-count {
     color: #666;
     font-size: 13px;
+}
+
+/* ProjectListView.css (추가·수정) */
+
+/* 고정 위치 및 기본 스타일은 그대로 두고, 내부 타이포·링크만 다듬기 */
+.project-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 18px 10px;
+
+    background: #fafafa;
+    /* 밝은 톤 */
+    border-top: 1px solid #e0e0e0;
+    font-family: "Noto Sans KR", sans-serif;
+    font-size: 13px;
+    /* 실제 사이트처럼 작게 */
+    line-height: 1.4;
+    color: #6b6b6b;
+    /* 중간 회색 */
+    z-index: 100;
+}
+
+/* 중앙 정렬 & 반응형 간격 */
+.footer-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* ‑ 브랜드 / © 표기 */
+.footer-inner .brand {
+    font-weight: 600;
+    color: #333;
+}
+
+/* ‑ 구분점(·) */
+.footer-inner .divider {
+    color: #c0c0c0;
+    font-size: 12px;
+}
+
+/* 링크 모양 */
+.footer-inner a {
+    text-decoration: none;
+    color: #6b6b6b;
+    transition: color 0.15s;
+}
+
+.footer-inner a:hover {
+    color: #111;
+    /* hover 시 진해짐 */
 }
 
 .add-card {
@@ -73,6 +152,13 @@
     margin-bottom: 40px;
 }
 
+.project-header-controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+    padding-right: 20px;
+}
+
 .page-highlight {
     font-size: 36px;
     font-weight: 700;
@@ -84,6 +170,7 @@
 .sort-dropdown {
     position: relative;
     display: inline-block;
+    z-index: 20;
 }
 
 .sort-button {
@@ -101,15 +188,15 @@
 
 .sort-menu {
     position: absolute;
-    top: 110%;
+    top: 105%;
     right: 0;
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-    z-index: 10;
     width: 160px;
     display: none;
+    z-index: 50;
 }
 
 .sort-dropdown:hover .sort-menu {
@@ -124,4 +211,45 @@
 
 .sort-menu-item:hover {
     background-color: #f0f0f0;
+}
+
+.card-menu {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 20px;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 50%;
+    padding: 2px 6px;
+    transition: background 0.15s;
+}
+
+.card-menu:hover {
+    background: rgba(0, 0, 0, .08);
+}
+
+.card-menu-popup {
+    position: absolute;
+    top: 26px;
+    right: 0;
+    width: 140px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .1);
+    z-index: 20;
+}
+
+.popup-item {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    cursor: pointer;
+}
+
+.popup-item:hover {
+    background: #e9ecef;
 }

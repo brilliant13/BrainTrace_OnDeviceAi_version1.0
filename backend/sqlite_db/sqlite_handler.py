@@ -1,8 +1,5 @@
-import sqlite3
-import logging
-import os
+import sqlite3, json, logging, os, hashlib,datetime        
 from typing import Dict, List, Optional
-import hashlib
 
 class SQLiteHandler:
     def __init__(self, db_path=None):
@@ -238,34 +235,48 @@ class SQLiteHandler:
             return None
     
     # Brain 관련 메서드
-    def create_brain(self, brain_name: str, user_id: int) -> dict:
-        """새 브레인 생성"""
+    def create_brain(self, brain_name: str, user_id: int,
+                     icon_key: str | None = None,
+                     files: list | None = None,
+                     created_at: str | None = None) -> dict:
         try:
-            # 먼저 사용자가 존재하는지 확인
-            user = self.get_user(user_id)
-            if not user:
-                raise ValueError(f"존재하지 않는 사용자 ID: {user_id}")
-                
+            # 사용자 존재 확인
+            if not self.get_user(user_id):
+                raise ValueError("존재하지 않는 사용자")
+            
+            # 2) created_at 기본값: 오늘
+            if created_at is None:
+                created_at = datetime.date.today().isoformat()   # '2025-05-07'
+
+
             conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute(
-                "INSERT INTO Brain (brain_name, user_id) VALUES (?, ?)",
-                (brain_name, user_id)
+            cur  = conn.cursor()
+            cur.execute(
+                """INSERT INTO Brain
+                     (brain_name, user_id, icon_key, files_json, created_at)
+                   VALUES (?,?,?,?,?)""",
+                (
+                    brain_name,
+                    user_id,
+                    icon_key,
+                    json.dumps(files, ensure_ascii=False) if files else None,
+                    created_at
+                )
             )
-            brain_id = cursor.lastrowid
-            
-            conn.commit()
-            conn.close()
-            
-            logging.info("브레인 생성 완료: brain_id=%s, brain_name=%s, user_id=%s", brain_id, brain_name, user_id)
-            return {"brain_id": brain_id, "brain_name": brain_name, "user_id": user_id}
-        except ValueError as e:
-            logging.error("브레인 생성 실패: %s", str(e))
-            raise
+            brain_id = cur.lastrowid
+            conn.commit(); conn.close()
+
+            return {
+                "brain_id":   brain_id,
+                "brain_name": brain_name,
+                "user_id":    user_id,
+                "icon_key":   icon_key,
+                "files":      files,
+                "created_at": created_at,
+            }
         except Exception as e:
-            logging.error("브레인 생성 오류: %s", str(e))
-            raise RuntimeError(f"브레인 생성 오류: {str(e)}")
+            logging.error("브레인 생성 오류: %s", e)
+            raise
     
     def delete_brain(self, brain_id: int) -> bool:
         """브레인 삭제"""
@@ -314,55 +325,81 @@ class SQLiteHandler:
             logging.error("브레인 이름 업데이트 오류: %s", str(e))
             raise RuntimeError(f"브레인 이름 업데이트 오류: {str(e)}")
     
-    def get_brain(self, brain_id: int) -> Optional[dict]:
-        """브레인 정보 조회"""
+    def get_brain(self, brain_id: int) -> dict | None:
         try:
             conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute("SELECT brain_id, brain_name, user_id FROM Brain WHERE brain_id = ?", (brain_id,))
-            brain = cursor.fetchone()
-            
+            cur  = conn.cursor()
+            cur.execute(
+                """SELECT brain_id, brain_name, user_id,
+                          icon_key, files_json, created_at
+                   FROM Brain WHERE brain_id=?""",
+                (brain_id,)
+            )
+            row = cur.fetchone()
             conn.close()
-            
-            if brain:
-                return {"brain_id": brain[0], "brain_name": brain[1], "user_id": brain[2]}
-            else:
+            if not row:
                 return None
+            return {
+                "brain_id":   row[0],
+                "brain_name": row[1],
+                "user_id":    row[2],
+                "icon_key":   row[3],
+                "files":      json.loads(row[4]) if row[4] else None,
+                "created_at": row[5],
+            }
         except Exception as e:
-            logging.error("브레인 조회 오류: %s", str(e))
+            logging.error("브레인 조회 오류: %s", e)
             return None
-    
+         
     def get_user_brains(self, user_id: int) -> List[dict]:
-        """사용자의 모든 브레인 조회"""
+        """특정 사용자의 모든 브레인"""
         try:
             conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute("SELECT brain_id, brain_name, user_id FROM Brain WHERE user_id = ?", (user_id,))
-            brains = cursor.fetchall()
-            
-            conn.close()
-            
-            return [{"brain_id": brain[0], "brain_name": brain[1], "user_id": brain[2]} for brain in brains]
+            cur  = conn.cursor()
+            cur.execute(
+                """SELECT brain_id, brain_name, user_id,
+                          icon_key, files_json, created_at
+                     FROM Brain WHERE user_id=?""",
+                (user_id,)
+            )
+            rows = cur.fetchall(); conn.close()
+            return [
+                {
+                    "brain_id":   r[0],
+                    "brain_name": r[1],
+                    "user_id":    r[2],
+                    "icon_key":   r[3],
+                    "files":      json.loads(r[4]) if r[4] else None,
+                    "created_at": r[5],
+                } for r in rows
+            ]
         except Exception as e:
-            logging.error("사용자 브레인 목록 조회 오류: %s", str(e))
+            logging.error("사용자 브레인 목록 조회 오류: %s", e)
             return []
     
     def get_all_brains(self) -> List[dict]:
-        """모든 브레인 조회"""
+        """시스템의 모든 브레인"""
         try:
             conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute("SELECT brain_id, brain_name, user_id FROM Brain")
-            brains = cursor.fetchall()
-            
-            conn.close()
-            
-            return [{"brain_id": brain[0], "brain_name": brain[1], "user_id": brain[2]} for brain in brains]
+            cur  = conn.cursor()
+            cur.execute(
+                """SELECT brain_id, brain_name, user_id,
+                          icon_key, files_json, created_at
+                     FROM Brain"""
+            )
+            rows = cur.fetchall(); conn.close()
+            return [
+                {
+                    "brain_id":   r[0],
+                    "brain_name": r[1],
+                    "user_id":    r[2],
+                    "icon_key":   r[3],
+                    "files":      json.loads(r[4]) if r[4] else None,
+                    "created_at": r[5],
+                } for r in rows
+            ]
         except Exception as e:
-            logging.error("브레인 목록 조회 오류: %s", str(e))
+            logging.error("브레인 목록 조회 오류: %s", e)
             return []
     
     # Folder 관련 메서드
