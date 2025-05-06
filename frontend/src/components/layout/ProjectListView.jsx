@@ -10,8 +10,9 @@ import { iconByKey } from '../iconMap';
 import NewBrainModal from '../NewBrainModal';
 import ConfirmDialog from '../ConfirmDialog';
 import AppHeader from './AppHeader';
-import AppFooter from './AppFooter';      // 추가
-
+import AppFooter from './AppFooter';
+import { RiDeleteBinLine } from "react-icons/ri";
+import { GoPencil } from "react-icons/go";
 import './ProjectListView.css';
 
 export default function ProjectListView() {
@@ -194,6 +195,7 @@ export default function ProjectListView() {
                                                     }, 0);
                                                 }}
                                             >
+                                                <GoPencil size={14} style={{ marginRight: 4 }} />
                                                 제목 수정
                                             </div>
 
@@ -205,6 +207,7 @@ export default function ProjectListView() {
                                                     setMenuOpenId(null);
                                                 }}
                                             >
+                                                <RiDeleteBinLine size={14} style={{ marginRight: 4 }} />
                                                 삭제
                                             </div>
                                         </div>

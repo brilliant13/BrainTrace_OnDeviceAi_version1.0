@@ -4,6 +4,7 @@ import { FiFigma } from 'react-icons/fi';
 import { MdWorkOutline, MdLocalHospital } from 'react-icons/md';
 import { FaGraduationCap } from 'react-icons/fa';
 import { PiStudentBold } from 'react-icons/pi';
+import { AiOutlineBulb } from 'react-icons/ai';
 
 export const ICONS = [
     { key: 'BsGraphUp', label: '그래프', cmp: BsGraphUp },
@@ -13,6 +14,7 @@ export const ICONS = [
     { key: 'FaGraduationCap', label: '교육', cmp: FaGraduationCap },
     { key: 'BsRocket', label: '로켓', cmp: BsRocket },
     { key: 'PiStudentBold', label: '커뮤니티', cmp: PiStudentBold },
+    { key: 'AiOutlineBulb', label: '아이디어', cmp: AiOutlineBulb }
 ];
 
 export const iconByKey = ICONS.reduce((m, o) => ({ ...m, [o.key]: o.cmp }), {});
