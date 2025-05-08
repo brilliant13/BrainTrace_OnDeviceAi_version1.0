@@ -28,7 +28,7 @@ class BrainResponse(BaseModel):
     user_id: int = Field(..., description="소유자 사용자 ID", example=1)
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "brain_id": 1,
                 "brain_name": "파이썬 학습",

@@ -22,6 +22,19 @@ class SQLiteHandler:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
+            # 시퀀스 테이블 생성
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Sequence (
+                name TEXT PRIMARY KEY,
+                value INTEGER NOT NULL DEFAULT 0
+            )
+            ''')
+            
+            # 초기 시퀀스 값 설정
+            cursor.execute('''
+            INSERT OR IGNORE INTO Sequence (name, value) VALUES ('content_id', 0)
+            ''')
+            
             # User 테이블 생성
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS User (
@@ -55,12 +68,52 @@ class SQLiteHandler:
             # Memo 테이블 생성
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS Memo (
-                memo_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                memo_id INTEGER PRIMARY KEY,
                 memo_text TEXT,
                 memo_title TEXT,
                 memo_date DATETIME DEFAULT CURRENT_TIMESTAMP,
                 is_source BOOLEAN DEFAULT 0,
+                type TEXT,                
                 folder_id INTEGER,
+                FOREIGN KEY (folder_id) REFERENCES Folder(folder_id)
+            )
+            ''')
+
+            # PDF 테이블 생성
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Pdf (
+                pdf_id INTEGER PRIMARY KEY,
+                pdf_title TEXT,
+                pdf_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                pdf_path TEXT,
+                folder_id INTEGER,
+                type TEXT,
+                FOREIGN KEY (folder_id) REFERENCES Folder(folder_id)
+            )
+            ''')
+
+            # Voice 테이블 생성
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Voice (
+                voice_id INTEGER PRIMARY KEY,
+                voice_title TEXT,
+                voice_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                voice_path TEXT,
+                folder_id INTEGER,
+                type TEXT,
+                FOREIGN KEY (folder_id) REFERENCES Folder(folder_id)
+            )
+            ''')
+
+            # TextFile 테이블 생성
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS TextFile (
+                txt_id INTEGER PRIMARY KEY,
+                txt_title TEXT,
+                txt_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                txt_path TEXT,
+                folder_id INTEGER,
+                type TEXT,
                 FOREIGN KEY (folder_id) REFERENCES Folder(folder_id)
             )
             ''')
@@ -597,7 +650,33 @@ class SQLiteHandler:
             return None
     
     # Memo 관련 메서드
-    def create_memo(self, memo_title: str, memo_text: str, folder_id: Optional[int] = None, is_source: bool = False) -> dict:
+    def _get_next_id(self) -> int:
+        """다음 ID 값을 가져옵니다."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # 트랜잭션 시작
+            cursor.execute("BEGIN TRANSACTION")
+            
+            # 현재 값 조회
+            cursor.execute("SELECT value FROM Sequence WHERE name = 'content_id'")
+            current_value = cursor.fetchone()[0]
+            
+            # 값 증가
+            new_value = current_value + 1
+            cursor.execute("UPDATE Sequence SET value = ? WHERE name = 'content_id'", (new_value,))
+            
+            # 트랜잭션 커밋
+            conn.commit()
+            conn.close()
+            
+            return new_value
+        except Exception as e:
+            logging.error("ID 생성 오류: %s", str(e))
+            raise RuntimeError(f"ID 생성 오류: {str(e)}")
+
+    def create_memo(self, memo_title: str, memo_text: str, folder_id: Optional[int] = None, is_source: bool = False, type: Optional[str] = None) -> dict:
         """새 메모 생성"""
         try:
             # folder_id가 주어진 경우에만 폴더 존재 여부 확인
@@ -609,11 +688,13 @@ class SQLiteHandler:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
+            # 새 ID 생성
+            memo_id = self._get_next_id()
+            
             cursor.execute(
-                "INSERT INTO Memo (memo_title, memo_text, folder_id, is_source) VALUES (?, ?, ?, ?)",
-                (memo_title, memo_text, folder_id, 1 if is_source else 0)
+                "INSERT INTO Memo (memo_id, memo_title, memo_text, folder_id, is_source, type) VALUES (?, ?, ?, ?, ?, ?)",
+                (memo_id, memo_title, memo_text, folder_id, 1 if is_source else 0, type)
             )
-            memo_id = cursor.lastrowid
             
             # 현재 날짜 가져오기 (자동 생성됨)
             cursor.execute("SELECT memo_date FROM Memo WHERE memo_id = ?", (memo_id,))
@@ -630,6 +711,7 @@ class SQLiteHandler:
                 "memo_text": memo_text,
                 "memo_date": memo_date,
                 "is_source": is_source,
+                "type": type,
                 "folder_id": folder_id
             }
         except ValueError as e:
@@ -661,7 +743,7 @@ class SQLiteHandler:
             logging.error("메모 삭제 오류: %s", str(e))
             raise RuntimeError(f"메모 삭제 오류: {str(e)}")
     
-    def update_memo(self, memo_id: int, memo_title: str = None, memo_text: str = None, is_source: bool = None, folder_id: Optional[int] = None) -> bool:
+    def update_memo(self, memo_id: int, memo_title: str = None, memo_text: str = None, is_source: bool = None, folder_id: Optional[int] = None, type: Optional[str] = None) -> bool:
         """메모 정보 업데이트"""
         try:
             # 메모가 존재하는지 확인
@@ -693,6 +775,10 @@ class SQLiteHandler:
             if is_source is not None:
                 update_fields.append("is_source = ?")
                 params.append(1 if is_source else 0)
+
+            if type is not None:
+                update_fields.append("type = ?")
+                params.append(type)
 
             # folder_id가 None이거나 "null"이면 NULL로 설정
             if folder_id is None or folder_id == "null":
@@ -737,7 +823,7 @@ class SQLiteHandler:
             cursor = conn.cursor()
             
             cursor.execute(
-                "SELECT memo_id, memo_title, memo_text, memo_date, is_source, folder_id FROM Memo WHERE memo_id = ?", 
+                "SELECT memo_id, memo_title, memo_text, memo_date, is_source, type, folder_id FROM Memo WHERE memo_id = ?", 
                 (memo_id,)
             )
             memo = cursor.fetchone()
@@ -751,7 +837,8 @@ class SQLiteHandler:
                     "memo_text": memo[2],
                     "memo_date": memo[3],
                     "is_source": bool(memo[4]),
-                    "folder_id": memo[5]
+                    "type": memo[5],
+                    "folder_id": memo[6]
                 }
             else:
                 return None
@@ -867,4 +954,568 @@ class SQLiteHandler:
             ]
         except Exception as e:
             logging.error("폴더 없는 메모 제목 목록 조회 오류: %s", str(e))
+            return []
+
+    # PDF 관련 메서드
+    def create_pdf(self, pdf_title: str, pdf_path: str, folder_id: Optional[int] = None, type: Optional[str] = None) -> dict:
+        """새 PDF 생성"""
+        try:
+            # folder_id가 주어진 경우에만 폴더 존재 여부 확인
+            if folder_id is not None:
+                folder = self.get_folder(folder_id)
+                if not folder:
+                    raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+                    
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # 새 ID 생성
+            pdf_id = self._get_next_id()
+            
+            cursor.execute(
+                "INSERT INTO Pdf (pdf_id, pdf_title, pdf_path, folder_id, type) VALUES (?, ?, ?, ?, ?)",
+                (pdf_id, pdf_title, pdf_path, folder_id, type)
+            )
+            
+            # 현재 날짜 가져오기 (자동 생성됨)
+            cursor.execute("SELECT pdf_date FROM Pdf WHERE pdf_id = ?", (pdf_id,))
+            pdf_date = cursor.fetchone()[0]
+            
+            conn.commit()
+            conn.close()
+            
+            logging.info("PDF 생성 완료: pdf_id=%s, pdf_title=%s, folder_id=%s", 
+                        pdf_id, pdf_title, folder_id)
+            return {
+                "pdf_id": pdf_id, 
+                "pdf_title": pdf_title, 
+                "pdf_path": pdf_path,
+                "pdf_date": pdf_date,
+                "type": type,
+                "folder_id": folder_id
+            }
+        except ValueError as e:
+            logging.error("PDF 생성 실패: %s", str(e))
+            raise
+        except Exception as e:
+            logging.error("PDF 생성 오류: %s", str(e))
+            raise RuntimeError(f"PDF 생성 오류: {str(e)}")
+
+    def delete_pdf(self, pdf_id: int) -> bool:
+        """PDF 삭제"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("DELETE FROM Pdf WHERE pdf_id = ?", (pdf_id,))
+            deleted = cursor.rowcount > 0
+            
+            conn.commit()
+            conn.close()
+            
+            if deleted:
+                logging.info("PDF 삭제 완료: pdf_id=%s", pdf_id)
+            else:
+                logging.warning("PDF 삭제 실패: 존재하지 않는 pdf_id=%s", pdf_id)
+            
+            return deleted
+        except Exception as e:
+            logging.error("PDF 삭제 오류: %s", str(e))
+            raise RuntimeError(f"PDF 삭제 오류: {str(e)}")
+
+    def update_pdf(self, pdf_id: int, pdf_title: str = None, pdf_path: str = None, folder_id: Optional[int] = None, type: Optional[str] = None) -> bool:
+        """PDF 정보 업데이트"""
+        try:
+            # PDF가 존재하는지 확인
+            pdf = self.get_pdf(pdf_id)
+            if not pdf:
+                raise ValueError(f"존재하지 않는 PDF ID: {pdf_id}")
+            
+            # folder_id가 주어진 경우에만 폴더 존재 여부 확인
+            if folder_id is not None and folder_id != "null":
+                folder = self.get_folder(folder_id)
+                if not folder:
+                    raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+            
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # 업데이트할 필드 지정
+            update_fields = []
+            params = []
+            
+            if pdf_title is not None:
+                update_fields.append("pdf_title = ?")
+                params.append(pdf_title)
+                
+            if pdf_path is not None:
+                update_fields.append("pdf_path = ?")
+                params.append(pdf_path)
+                
+            if type is not None:
+                update_fields.append("type = ?")
+                params.append(type)
+
+            # folder_id가 None이거나 "null"이면 NULL로 설정
+            if folder_id is None or folder_id == "null":
+                update_fields.append("folder_id = NULL")
+            elif folder_id is not None:
+                update_fields.append("folder_id = ?")
+                params.append(folder_id)
+                
+            if not update_fields:
+                return False  # 업데이트할 내용 없음
+            
+            # 날짜 자동 업데이트
+            update_fields.append("pdf_date = CURRENT_TIMESTAMP")
+            
+            # 쿼리 구성
+            query = f"UPDATE Pdf SET {', '.join(update_fields)} WHERE pdf_id = ?"
+            params.append(pdf_id)
+            
+            cursor.execute(query, params)
+            updated = cursor.rowcount > 0
+            
+            conn.commit()
+            conn.close()
+            
+            if updated:
+                logging.info("PDF 업데이트 완료: pdf_id=%s", pdf_id)
+            else:
+                logging.warning("PDF 업데이트 실패: 존재하지 않는 pdf_id=%s", pdf_id)
+            
+            return updated
+        except ValueError as e:
+            logging.error("PDF 업데이트 실패: %s", str(e))
+            raise
+        except Exception as e:
+            logging.error("PDF 업데이트 오류: %s", str(e))
+            raise RuntimeError(f"PDF 업데이트 오류: {str(e)}")
+
+    def get_pdf(self, pdf_id: int) -> Optional[dict]:
+        """PDF 정보 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id FROM Pdf WHERE pdf_id = ?", 
+                (pdf_id,)
+            )
+            pdf = cursor.fetchone()
+            
+            conn.close()
+            
+            if pdf:
+                return {
+                    "pdf_id": pdf[0], 
+                    "pdf_title": pdf[1], 
+                    "pdf_path": pdf[2],
+                    "pdf_date": pdf[3],
+                    "type": pdf[4],
+                    "folder_id": pdf[5]
+                }
+            else:
+                return None
+        except Exception as e:
+            logging.error("PDF 조회 오류: %s", str(e))
+            return None
+
+    def get_folder_pdfs(self, folder_id: int) -> List[dict]:
+        """폴더의 모든 PDF 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id FROM Pdf WHERE folder_id = ? ORDER BY pdf_date DESC", 
+                (folder_id,)
+            )
+            pdfs = cursor.fetchall()
+            
+            conn.close()
+            
+            return [
+                {
+                    "pdf_id": pdf[0], 
+                    "pdf_title": pdf[1], 
+                    "pdf_path": pdf[2],
+                    "pdf_date": pdf[3],
+                    "type": pdf[4],
+                    "folder_id": pdf[5]
+                } 
+                for pdf in pdfs
+            ]
+        except Exception as e:
+            logging.error("폴더 PDF 목록 조회 오류: %s", str(e))
+            return []
+
+    # Voice 관련 메서드
+    def create_voice(self, voice_title: str, voice_path: str, folder_id: Optional[int] = None, type: Optional[str] = None) -> dict:
+        """새 음성 파일 생성"""
+        try:
+            if folder_id is not None:
+                folder = self.get_folder(folder_id)
+                if not folder:
+                    raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+                    
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            voice_id = self._get_next_id()
+            
+            cursor.execute(
+                "INSERT INTO Voice (voice_id, voice_title, voice_path, folder_id, type) VALUES (?, ?, ?, ?, ?)",
+                (voice_id, voice_title, voice_path, folder_id, type)
+            )
+            
+            cursor.execute("SELECT voice_date FROM Voice WHERE voice_id = ?", (voice_id,))
+            voice_date = cursor.fetchone()[0]
+            
+            conn.commit()
+            conn.close()
+            
+            logging.info("음성 파일 생성 완료: voice_id=%s, voice_title=%s, folder_id=%s", 
+                        voice_id, voice_title, folder_id)
+            return {
+                "voice_id": voice_id, 
+                "voice_title": voice_title, 
+                "voice_path": voice_path,
+                "voice_date": voice_date,
+                "type": type,
+                "folder_id": folder_id
+            }
+        except ValueError as e:
+            logging.error("음성 파일 생성 실패: %s", str(e))
+            raise
+        except Exception as e:
+            logging.error("음성 파일 생성 오류: %s", str(e))
+            raise RuntimeError(f"음성 파일 생성 오류: {str(e)}")
+
+    def delete_voice(self, voice_id: int) -> bool:
+        """음성 파일 삭제"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("DELETE FROM Voice WHERE voice_id = ?", (voice_id,))
+            deleted = cursor.rowcount > 0
+            
+            conn.commit()
+            conn.close()
+            
+            if deleted:
+                logging.info("음성 파일 삭제 완료: voice_id=%s", voice_id)
+            else:
+                logging.warning("음성 파일 삭제 실패: 존재하지 않는 voice_id=%s", voice_id)
+            
+            return deleted
+        except Exception as e:
+            logging.error("음성 파일 삭제 오류: %s", str(e))
+            raise RuntimeError(f"음성 파일 삭제 오류: {str(e)}")
+
+    def update_voice(self, voice_id: int, voice_title: str = None, voice_path: str = None, folder_id: Optional[int] = None, type: Optional[str] = None) -> bool:
+        """음성 파일 정보 업데이트"""
+        try:
+            voice = self.get_voice(voice_id)
+            if not voice:
+                raise ValueError(f"존재하지 않는 음성 파일 ID: {voice_id}")
+            
+            if folder_id is not None and folder_id != "null":
+                folder = self.get_folder(folder_id)
+                if not folder:
+                    raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+            
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            update_fields = []
+            params = []
+            
+            if voice_title is not None:
+                update_fields.append("voice_title = ?")
+                params.append(voice_title)
+                
+            if voice_path is not None:
+                update_fields.append("voice_path = ?")
+                params.append(voice_path)
+                
+            if type is not None:
+                update_fields.append("type = ?")
+                params.append(type)
+
+            if folder_id is None or folder_id == "null":
+                update_fields.append("folder_id = NULL")
+            elif folder_id is not None:
+                update_fields.append("folder_id = ?")
+                params.append(folder_id)
+                
+            if not update_fields:
+                return False
+            
+            update_fields.append("voice_date = CURRENT_TIMESTAMP")
+            
+            query = f"UPDATE Voice SET {', '.join(update_fields)} WHERE voice_id = ?"
+            params.append(voice_id)
+            
+            cursor.execute(query, params)
+            updated = cursor.rowcount > 0
+            
+            conn.commit()
+            conn.close()
+            
+            if updated:
+                logging.info("음성 파일 업데이트 완료: voice_id=%s", voice_id)
+            else:
+                logging.warning("음성 파일 업데이트 실패: 존재하지 않는 voice_id=%s", voice_id)
+            
+            return updated
+        except ValueError as e:
+            logging.error("음성 파일 업데이트 실패: %s", str(e))
+            raise
+        except Exception as e:
+            logging.error("음성 파일 업데이트 오류: %s", str(e))
+            raise RuntimeError(f"음성 파일 업데이트 오류: {str(e)}")
+
+    def get_voice(self, voice_id: int) -> Optional[dict]:
+        """음성 파일 정보 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id FROM Voice WHERE voice_id = ?", 
+                (voice_id,)
+            )
+            voice = cursor.fetchone()
+            
+            conn.close()
+            
+            if voice:
+                return {
+                    "voice_id": voice[0], 
+                    "voice_title": voice[1], 
+                    "voice_path": voice[2],
+                    "voice_date": voice[3],
+                    "type": voice[4],
+                    "folder_id": voice[5]
+                }
+            else:
+                return None
+        except Exception as e:
+            logging.error("음성 파일 조회 오류: %s", str(e))
+            return None
+
+    def get_folder_voices(self, folder_id: int) -> List[dict]:
+        """폴더의 모든 음성 파일 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id FROM Voice WHERE folder_id = ? ORDER BY voice_date DESC", 
+                (folder_id,)
+            )
+            voices = cursor.fetchall()
+            
+            conn.close()
+            
+            return [
+                {
+                    "voice_id": voice[0], 
+                    "voice_title": voice[1], 
+                    "voice_path": voice[2],
+                    "voice_date": voice[3],
+                    "type": voice[4],
+                    "folder_id": voice[5]
+                } 
+                for voice in voices
+            ]
+        except Exception as e:
+            logging.error("폴더 음성 파일 목록 조회 오류: %s", str(e))
+            return []
+
+    # TextFile 관련 메서드
+    def create_textfile(self, txt_title: str, txt_path: str, folder_id: Optional[int] = None, type: Optional[str] = None) -> dict:
+        """새 텍스트 파일 생성"""
+        try:
+            if folder_id is not None:
+                folder = self.get_folder(folder_id)
+                if not folder:
+                    raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+                    
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            txt_id = self._get_next_id()
+            
+            cursor.execute(
+                "INSERT INTO TextFile (txt_id, txt_title, txt_path, folder_id, type) VALUES (?, ?, ?, ?, ?)",
+                (txt_id, txt_title, txt_path, folder_id, type)
+            )
+            
+            cursor.execute("SELECT txt_date FROM TextFile WHERE txt_id = ?", (txt_id,))
+            txt_date = cursor.fetchone()[0]
+            
+            conn.commit()
+            conn.close()
+            
+            logging.info("텍스트 파일 생성 완료: txt_id=%s, txt_title=%s, folder_id=%s", 
+                        txt_id, txt_title, folder_id)
+            return {
+                "txt_id": txt_id, 
+                "txt_title": txt_title, 
+                "txt_path": txt_path,
+                "txt_date": txt_date,
+                "type": type,
+                "folder_id": folder_id
+            }
+        except ValueError as e:
+            logging.error("텍스트 파일 생성 실패: %s", str(e))
+            raise
+        except Exception as e:
+            logging.error("텍스트 파일 생성 오류: %s", str(e))
+            raise RuntimeError(f"텍스트 파일 생성 오류: {str(e)}")
+
+    def delete_textfile(self, txt_id: int) -> bool:
+        """텍스트 파일 삭제"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("DELETE FROM TextFile WHERE txt_id = ?", (txt_id,))
+            deleted = cursor.rowcount > 0
+            
+            conn.commit()
+            conn.close()
+            
+            if deleted:
+                logging.info("텍스트 파일 삭제 완료: txt_id=%s", txt_id)
+            else:
+                logging.warning("텍스트 파일 삭제 실패: 존재하지 않는 txt_id=%s", txt_id)
+            
+            return deleted
+        except Exception as e:
+            logging.error("텍스트 파일 삭제 오류: %s", str(e))
+            raise RuntimeError(f"텍스트 파일 삭제 오류: {str(e)}")
+
+    def update_textfile(self, txt_id: int, txt_title: str = None, txt_path: str = None, folder_id: Optional[int] = None, type: Optional[str] = None) -> bool:
+        """텍스트 파일 정보 업데이트"""
+        try:
+            textfile = self.get_textfile(txt_id)
+            if not textfile:
+                raise ValueError(f"존재하지 않는 텍스트 파일 ID: {txt_id}")
+            
+            if folder_id is not None and folder_id != "null":
+                folder = self.get_folder(folder_id)
+                if not folder:
+                    raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+            
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            update_fields = []
+            params = []
+            
+            if txt_title is not None:
+                update_fields.append("txt_title = ?")
+                params.append(txt_title)
+                
+            if txt_path is not None:
+                update_fields.append("txt_path = ?")
+                params.append(txt_path)
+                
+            if type is not None:
+                update_fields.append("type = ?")
+                params.append(type)
+
+            if folder_id is None or folder_id == "null":
+                update_fields.append("folder_id = NULL")
+            elif folder_id is not None:
+                update_fields.append("folder_id = ?")
+                params.append(folder_id)
+                
+            if not update_fields:
+                return False
+            
+            update_fields.append("txt_date = CURRENT_TIMESTAMP")
+            
+            query = f"UPDATE TextFile SET {', '.join(update_fields)} WHERE txt_id = ?"
+            params.append(txt_id)
+            
+            cursor.execute(query, params)
+            updated = cursor.rowcount > 0
+            
+            conn.commit()
+            conn.close()
+            
+            if updated:
+                logging.info("텍스트 파일 업데이트 완료: txt_id=%s", txt_id)
+            else:
+                logging.warning("텍스트 파일 업데이트 실패: 존재하지 않는 txt_id=%s", txt_id)
+            
+            return updated
+        except ValueError as e:
+            logging.error("텍스트 파일 업데이트 실패: %s", str(e))
+            raise
+        except Exception as e:
+            logging.error("텍스트 파일 업데이트 오류: %s", str(e))
+            raise RuntimeError(f"텍스트 파일 업데이트 오류: {str(e)}")
+
+    def get_textfile(self, txt_id: int) -> Optional[dict]:
+        """텍스트 파일 정보 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id FROM TextFile WHERE txt_id = ?", 
+                (txt_id,)
+            )
+            textfile = cursor.fetchone()
+            
+            conn.close()
+            
+            if textfile:
+                return {
+                    "txt_id": textfile[0], 
+                    "txt_title": textfile[1], 
+                    "txt_path": textfile[2],
+                    "txt_date": textfile[3],
+                    "type": textfile[4],
+                    "folder_id": textfile[5]
+                }
+            else:
+                return None
+        except Exception as e:
+            logging.error("텍스트 파일 조회 오류: %s", str(e))
+            return None
+
+    def get_folder_textfiles(self, folder_id: int) -> List[dict]:
+        """폴더의 모든 텍스트 파일 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id FROM TextFile WHERE folder_id = ? ORDER BY txt_date DESC", 
+                (folder_id,)
+            )
+            textfiles = cursor.fetchall()
+            
+            conn.close()
+            
+            return [
+                {
+                    "txt_id": textfile[0], 
+                    "txt_title": textfile[1], 
+                    "txt_path": textfile[2],
+                    "txt_date": textfile[3],
+                    "type": textfile[4],
+                    "folder_id": textfile[5]
+                } 
+                for textfile in textfiles
+            ]
+        except Exception as e:
+            logging.error("폴더 텍스트 파일 목록 조회 오류: %s", str(e))
             return [] 
