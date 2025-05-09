@@ -1,9 +1,92 @@
+/* ChatPanel.css - with added styles for empty chat state */
+
 .chat-content {
   display: flex;
   flex-direction: column;
   padding: 20px;
-  background-color: #fafafa;
+  /* background-color: #fafafa; */
   height: 100%;
+}
+
+/* Style for the empty chat state */
+.empty-chat-content {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  /* background-color: #fafafa; */
+  height: 100%;
+  position: relative;
+}
+
+/* Centered input container */
+.centered-input-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  width: 100%;
+}
+
+.input-wrapper {
+  width: 100%;
+  max-width: 480px; /* Adjust as needed */
+  padding: 20px;
+}
+
+/* Input with button inside */
+.input-with-button {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 8px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.input-with-button.rounded {
+  border-radius: 24px;
+}
+
+.chat-input {
+  flex: 1;
+  border: none;
+  resize: none;
+  padding: 8px 40px 8px 8px;
+  background: transparent;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1a202c;
+  outline: none;
+  min-height: 24px;
+  max-height: 120px;
+}
+
+.submit-circle-button {
+  position: absolute;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #363030;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.submit-circle-button:hover {
+  background-color: #555;
+}
+
+.send-icon {
+  font-size: 12px;
+  padding-left: 2px;
 }
 
 .chat-header {
@@ -64,43 +147,10 @@
   color: #222;
 }
 
-.chat-input-container {
-  padding-top: 14px;
-  border-top: 1px solid #ddd;
-}
-
 .chat-controls {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-}
-
-.control-button {
-  flex: 1;
-  padding: 10px 0;
-  font-size: 14px;
-  font-weight: 500;
-  background-color: #f1f1f1;
-  border: none;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  color: #222;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.control-button:hover {
-  background-color: #e5e5e5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-}
-
-.submit-button {
-  background-color: #363030;
-  color: white;
-}
-
-.submit-button:hover {
-  background-color: gray;
+  margin-top: 12px;
 }
 
 .chat-input-container {
@@ -108,25 +158,6 @@
   padding-top: 16px;
   border-top: 1px solid #ddd;
   background-color: #fafafa;
-}
-
-.chat-textarea {
-  width: 100%;
-  resize: none;
-  padding: 12px 14px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  outline: none;
-  margin-bottom: 12px;
-  background-color: #fff;
-  color: #333;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: border 0.2s ease;
-}
-
-.chat-textarea:focus {
-  border-color: black;
 }
 
 /* 사용자/봇 메시지 분리 */
