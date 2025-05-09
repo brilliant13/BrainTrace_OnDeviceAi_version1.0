@@ -128,6 +128,8 @@ async def answer_endpoint(request_data: AnswerRequest):
         result = neo4j_handler.query_schema_by_node_names(similar_node_names, brain_id)
         if not result:
             raise Exception("스키마 조회 결과가 없습니다.")
+            
+        logging.info("### Neo4j 조회 결과 전체: %s", result)
         
         # 결과를 즉시 처리
         nodes_result = result.get("nodes", [])
