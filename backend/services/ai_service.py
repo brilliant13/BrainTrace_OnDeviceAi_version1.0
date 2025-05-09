@@ -13,7 +13,8 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 if not openai_api_key:
     raise ValueError("❌ OpenAI API Key가 설정되지 않았습니다. .env 파일을 확인하세요.")
 
-
+# ✅ OpenAI 클라이언트 설정 (노드/엣지 추출에 활용)
+client = openai.OpenAI(api_key=openai_api_key)
 
 def extract_graph_components(text: str, source_id: str):
     """
