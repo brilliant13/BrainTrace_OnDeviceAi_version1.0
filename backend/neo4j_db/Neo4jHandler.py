@@ -110,26 +110,30 @@ class Neo4jHandler:
             # 두 개의 별도 쿼리로 분리: 1단계 관계와 2단계 관계
             with self.driver.session() as session:
                 # 1단계: 직접 연결된 노드 및 관계
-                query1 = """
+                query1 = '''
                 MATCH (n:Node)
                 WHERE n.name IN $names AND n.brain_id = $brain_id
                 OPTIONAL MATCH (n)-[r]-(m:Node)
-                WHERE m IS NOT NULL AND m.brain_id = $brain_id
+                WHERE m.brain_id = $brain_id
                 RETURN 
-                  collect(DISTINCT n) AS start_nodes,
-                  collect(DISTINCT m) AS direct_nodes,
-                  collect(DISTINCT r) AS direct_relationships
-                """
-                
-                # 2단계: 간접 연결된 노드
-                query2 = """
+                collect(DISTINCT n) AS start_nodes,
+                collect(DISTINCT m) AS direct_nodes,
+                collect(DISTINCT r) AS direct_relationships
+                '''
+                    
+                # 2단계: 중간 노드(m)와 간접 연결된 노드(p) 및 관계(r2)
+                query2 = '''
                 MATCH (n:Node)-[r1]-(m:Node)-[r2]-(p:Node)
-                WHERE n.name IN $names AND p <> n 
-                AND n.brain_id = $brain_id AND m.brain_id = $brain_id AND p.brain_id = $brain_id
+                WHERE n.name IN $names 
+                AND n.brain_id = $brain_id 
+                AND m.brain_id = $brain_id 
+                AND p.brain_id = $brain_id 
+                AND p <> n
                 RETURN 
-                  collect(DISTINCT p) AS indirect_nodes,
-                  collect(DISTINCT r2) AS indirect_relationships
-                """
+                collect(DISTINCT m) AS intermediate_nodes,
+                collect(DISTINCT p) AS indirect_nodes,
+                collect(DISTINCT r2) AS indirect_relationships
+                '''
                 
                 # 쿼리 실행
                 result1 = session.run(query1, names=node_names, brain_id=brain_id)
