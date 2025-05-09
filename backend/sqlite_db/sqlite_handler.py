@@ -31,9 +31,12 @@ class SQLiteHandler:
             # Brain 테이블 생성
             cursor.execute('''
             CREATE TABLE IF NOT EXISTS Brain (
-                brain_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                brain_name TEXT NOT NULL,
-                user_id INTEGER NOT NULL,
+                brain_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+                brain_name TEXT    NOT NULL,
+                user_id    INTEGER NOT NULL,
+                icon_key   TEXT,
+                files_json TEXT,
+                created_at TEXT,
                 FOREIGN KEY (user_id) REFERENCES User(user_id)
             )
             ''')
