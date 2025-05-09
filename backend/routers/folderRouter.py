@@ -28,7 +28,7 @@ class FolderResponse(BaseModel):
     brain_id: int = Field(..., description="폴더가 속한 브레인 ID", example=1)
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "folder_id": 1,
                 "folder_name": "학습 자료",

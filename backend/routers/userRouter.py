@@ -28,7 +28,7 @@ class UserResponse(BaseModel):
     user_name: str = Field(..., description="사용자 이름", example="홍길동")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "user_id": 1,
                 "user_name": "홍길동"

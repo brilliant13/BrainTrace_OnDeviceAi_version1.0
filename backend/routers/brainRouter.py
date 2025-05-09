@@ -27,12 +27,21 @@ class BrainUpdate(BaseModel):
     files      : Optional[list] = None
     created_at : Optional[str]  = None
 
-class BrainResponse(BrainCreate):
-    brain_id: int
-    brain_name: str
-    user_id:    int
+class BrainResponse(BaseModel):
+    brain_id: int = Field(..., description="브레인 ID", example=1)
+    brain_name: str = Field(..., description="브레인 이름", example="파이썬 학습")
+    user_id: int = Field(..., description="소유자 사용자 ID", example=1)
     icon_key:   str | None = None        
     created_at: str | None = None
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "brain_id": 1,
+                "brain_name": "파이썬 학습",
+                "user_id": 1
+            }
+        }
 
 # ───────── 새 엔드포인트: 제목(이름)만 수정 ───────── #
 class BrainRename(BaseModel):

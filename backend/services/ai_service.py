@@ -3,8 +3,18 @@ import openai
 import json
 from .chunk_service import chunk_text
 
-# OpenAI 클라이언트 설정 (노드/엣지 추출에 활용)
-client = openai.OpenAI(api_key="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")
+import os
+from dotenv import load_dotenv  # dotenv 추가
+
+# ✅ .env 파일에서 환경 변수 로드
+load_dotenv()
+openai_api_key = os.getenv("OPENAI_API_KEY")
+
+if not openai_api_key:
+    raise ValueError("❌ OpenAI API Key가 설정되지 않았습니다. .env 파일을 확인하세요.")
+
+# ✅ OpenAI 클라이언트 설정 (노드/엣지 추출에 활용)
+client = openai.OpenAI(api_key=openai_api_key)
 
 def extract_graph_components(text: str, source_id: str):
     """

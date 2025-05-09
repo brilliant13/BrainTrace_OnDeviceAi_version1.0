@@ -20,11 +20,13 @@ class MemoCreate(BaseModel):
     memo_text: str = Field(..., description="메모 내용", example="파이썬은 들여쓰기가 중요한 언어입니다.")
     folder_id: Optional[int] = Field(None, description="메모가 속한 폴더 ID", example=1)
     is_source: Optional[bool] = Field(False, description="소스 메모 여부", example=False)
+    type: Optional[str] = Field(None, description="파일 확장자명", example="txt")
 
 class MemoUpdate(BaseModel):
     memo_title: Optional[str] = Field(None, description="새 메모 제목", min_length=1, max_length=100, example="파이썬 고급 문법")
     memo_text: Optional[str] = Field(None, description="새 메모 내용", example="파이썬의 고급 기능에는 제너레이터와 데코레이터가 있습니다.")
     is_source: Optional[bool] = Field(None, description="소스 메모 여부", example=True)
+    type: Optional[str] = Field(None, description="파일 확장자명", example="txt")
 
 class MemoResponse(BaseModel):
     memo_id: int = Field(..., description="메모 ID", example=1)
@@ -32,16 +34,18 @@ class MemoResponse(BaseModel):
     memo_text: str = Field(..., description="메모 내용", example="파이썬은 들여쓰기가 중요한 언어입니다.")
     memo_date: str = Field(..., description="메모 작성/수정일", example="2023-06-15 14:30:45")
     is_source: bool = Field(..., description="소스 메모 여부", example=False)
+    type: Optional[str] = Field(None, description="파일 확장자명", example="txt")
     folder_id: Optional[int] = Field(None, description="메모가 속한 폴더 ID", example=1)
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "memo_id": 1,
                 "memo_title": "파이썬 문법 정리",
                 "memo_text": "파이썬은 들여쓰기가 중요한 언어입니다.",
                 "memo_date": "2023-06-15 14:30:45",
                 "is_source": False,
+                "type": "txt",
                 "folder_id": 1
             }
         }
@@ -58,6 +62,7 @@ async def create_memo(memo_data: MemoCreate):
     - **memo_text**: 메모 내용
     - **folder_id**: (선택) 메모를 생성할 폴더 ID. 지정하지 않으면 폴더 없이 생성됩니다.
     - **is_source**: (선택) 소스 메모 여부
+    - **type**: (선택) 파일 확장자명
     """
     try:
         # folder_id가 주어진 경우 폴더 존재 여부 확인
@@ -70,7 +75,8 @@ async def create_memo(memo_data: MemoCreate):
             memo_data.memo_title,
             memo_data.memo_text,
             memo_data.folder_id,
-            memo_data.is_source
+            memo_data.is_source,
+            memo_data.type
         )
         return memo
     except ValueError as e:
@@ -95,7 +101,7 @@ async def get_memo(memo_id: int):
 
 @router.put("/{memo_id}", response_model=MemoResponse,
            summary="메모 정보 수정",
-           description="메모의 제목, 내용 또는 소스 여부를 업데이트합니다.")
+           description="메모의 제목, 내용, 소스 여부 또는 파일 확장자명을 업데이트합니다.")
 async def update_memo(memo_id: int, memo_data: MemoUpdate):
     """
     메모 정보를 업데이트합니다:
@@ -104,6 +110,7 @@ async def update_memo(memo_id: int, memo_data: MemoUpdate):
     - **memo_title**: (선택) 새 메모 제목
     - **memo_text**: (선택) 새 메모 내용
     - **is_source**: (선택) 소스 메모 여부
+    - **type**: (선택) 파일 확장자명
     """
     # 메모 존재 여부 확인
     memo = sqlite_handler.get_memo(memo_id)
@@ -116,7 +123,9 @@ async def update_memo(memo_id: int, memo_data: MemoUpdate):
             memo_id,
             memo_data.memo_title,
             memo_data.memo_text,
-            memo_data.is_source
+            memo_data.is_source,
+            None,  # folder_id는 변경하지 않음
+            memo_data.type
         )
         
         if not updated:

@@ -4,6 +4,7 @@
 .modern-explorer {
   font-size: 14px;
   padding: 0;
+  background: #fafafa;
 }
 
 .folder-container {
@@ -71,6 +72,7 @@
 
 /* 액션 버튼 스타일 */
 .action-buttons {
+  background: #fafafa;
   display: flex;
   justify-content: center;
   align-items: center;

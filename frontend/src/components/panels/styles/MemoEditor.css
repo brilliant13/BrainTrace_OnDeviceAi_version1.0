@@ -22,6 +22,7 @@
     padding-bottom: 8px;
     transition: border-color 0.2s ease;
     color: black;
+    background-color: white;
 }
 
 /* 본문 에디터 */
@@ -38,6 +39,7 @@
     transition: box-shadow 0.2s ease;
     min-height: 300px;
     color: black;
+    background-color: white;
 }
 
 .notion-textarea:focus {

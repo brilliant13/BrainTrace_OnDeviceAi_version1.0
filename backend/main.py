@@ -11,6 +11,9 @@ from routers import userRouter  # 사용자 관리 라우터 추가
 from routers import brainRouter  # 브레인 관리 라우터 추가
 from routers import folderRouter  # 폴더 관리 라우터 추가
 from routers import memoRouter  # 메모 관리 라우터 추가
+from routers import pdfRouter  # PDF 관리 라우터 추가
+from routers import voiceRouter  # 음성 파일 관리 라우터 추가
+from routers import textFileRouter  # 텍스트 파일 관리 라우터 추가
 # 로깅 설정
 logging.basicConfig(
     level=logging.INFO, 
@@ -68,6 +71,9 @@ app.include_router(userRouter.router)  # 사용자 관리 라우터 등록
 app.include_router(brainRouter.router)  # 브레인 관리 라우터 등록
 app.include_router(folderRouter.router)  # 폴더 관리 라우터 등록
 app.include_router(memoRouter.router)  # 메모 관리 라우터 등록
+app.include_router(pdfRouter.router)  # PDF 관리 라우터 등록
+app.include_router(voiceRouter.router)  # 음성 파일 관리 라우터 등록
+app.include_router(textFileRouter.router)  # 텍스트 파일 관리 라우터 등록
 # Neo4j 프로세스 객체
 neo4j_process = None
 
