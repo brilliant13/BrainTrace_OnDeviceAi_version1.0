@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional,Dict,Any
 from sqlite_db.sqlite_handler import SQLiteHandler
 import logging
 
@@ -64,6 +64,18 @@ class DeleteFolderResponse(BaseModel):
     deleted_memos_count: int = Field(..., description="삭제된 메모의 수", example=5)
     success: bool = Field(..., description="삭제 성공 여부", example=True)
 
+# (기존 FolderResponse 모델 대신)
+class FolderWithChildren(BaseModel):
+    folder_id: int
+    folder_name: str
+    brain_id: int
+    memos: List[Dict[str, Any]]      # sqlite_handler.get_folder_memos 형태
+    pdfs: List[Dict[str, Any]]       # sqlite_handler.get_folder_pdfs 형태
+    textfiles: List[Dict[str, Any]]  # sqlite_handler.get_folder_textfiles 형태
+    voices: List[Dict[str, Any]]     # sqlite_handler.get_folder_voices 형태
+
+
+
 # API 엔드포인트 정의
 @router.post("/create_folder", response_model=FolderResponse, status_code=status.HTTP_201_CREATED,
             summary="폴더 생성",
@@ -91,18 +103,18 @@ async def create_folder(folder_data: FolderCreate):
            summary="브레인의 폴더 목록 조회",
            description="특정 브레인에 속한 모든 폴더 목록을 반환합니다.")
 async def get_brain_folders(brain_id: int):
-    """
-    특정 브레인의 모든 폴더를 반환합니다:
-    
-    - **brain_id**: 폴더 목록을 조회할 브레인 ID
-    """
-    # 브레인 존재 여부 확인
-    brain = sqlite_handler.get_brain(brain_id)
-    if not brain:
-        raise HTTPException(status_code=404, detail="브레인을 찾을 수 없습니다")
-        
+    # 폴더 리스트
     folders = sqlite_handler.get_brain_folders(brain_id)
-    return folders
+    result = []
+    for f in folders:
+        result.append({
+            **f,
+            "memos": sqlite_handler.get_folder_memos(f["folder_id"]),
+            "pdfs": sqlite_handler.get_folder_pdfs(f["folder_id"]),
+            "textfiles": sqlite_handler.get_folder_textfiles(f["folder_id"]),
+            "voices": sqlite_handler.get_folder_voices(f["folder_id"])
+        })
+    return result
 
 @router.get("/{folder_id}", response_model=FolderResponse,
            summary="특정 폴더 조회",

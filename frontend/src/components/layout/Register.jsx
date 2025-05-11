@@ -1,7 +1,7 @@
 // src/components/layout/Register.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { register } from '../../../../backend/services/backend';
+import { createUser } from '../../../../backend/services/backend';
 import './auth.css';
 export default function Register() {
     const nav = useNavigate();
@@ -18,7 +18,7 @@ export default function Register() {
         }
         setLoading(true); setError('');
         try {
-            await register(username, password);
+            await createUser(username, password);
             alert('회원가입이 완료되었습니다! 로그인해 주세요.');
             nav('/login');
         } catch (err) {

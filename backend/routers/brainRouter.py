@@ -119,7 +119,6 @@ async def update_brain(brain_id: int, data: BrainUpdate):
         logging.error("브레인 업데이트 오류: %s", e)
         raise HTTPException(500, "내부 서버 오류")
     
-    
 @router.patch(
     "/{brain_id}/rename",
     response_model=BrainResponse,

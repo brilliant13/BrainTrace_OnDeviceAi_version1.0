@@ -1,7 +1,7 @@
 // src/components/layout/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { login } from '../../../../backend/services/backend';
+import { authUser } from '../../../../backend/services/backend';
 import './auth.css';
 export default function Login() {
     const navigate = useNavigate();
@@ -14,7 +14,7 @@ export default function Login() {
         e.preventDefault();
         setLoading(true); setError('');
         try {
-            const res = await login(username, password);
+            const res = await authUser(username, password);
             // 세션 저장
             localStorage.setItem('userId', res.user_id);
             localStorage.setItem('userName', res.user_name);

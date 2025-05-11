@@ -1,5 +1,6 @@
 import sqlite3, json, logging, os, hashlib,datetime        
-from typing import Dict, List, Optional
+from typing import List, Dict, Any, Optional
+
 
 class SQLiteHandler:
     def __init__(self, db_path=None):
@@ -867,7 +868,6 @@ class SQLiteHandler:
                 (memo_id,)
             )
             memo = cursor.fetchone()
-            
             conn.close()
             
             if memo:
@@ -1040,6 +1040,38 @@ class SQLiteHandler:
         except Exception as e:
             logging.error("PDF 생성 오류: %s", str(e))
             raise RuntimeError(f"PDF 생성 오류: {str(e)}")
+        
+    def get_pdfs_by_folder(self, folder_id: int) -> List[Dict[str, Any]]:
+        """특정 폴더에 속한 PDF 목록을 조회합니다."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id
+                FROM Pdf
+                WHERE folder_id = ?
+                ORDER BY pdf_date DESC
+            """, (folder_id,))
+            rows = cursor.fetchall()
+            conn.close()
+
+            return [
+                {
+                    "pdf_id": row[0],
+                    "pdf_title": row[1],
+                    "pdf_path": row[2],
+                    "pdf_date": row[3],
+                    "type": row[4],
+                    "folder_id": row[5]
+                }
+                for row in rows
+
+            ]
+        except Exception as e:
+            logging.error("get_pdfs_by_folder 오류: %s", str(e))
+            return []
+
 
     def delete_pdf(self, pdf_id: int) -> bool:
         """PDF 삭제"""
@@ -1231,6 +1263,38 @@ class SQLiteHandler:
         except Exception as e:
             logging.error("음성 파일 생성 오류: %s", str(e))
             raise RuntimeError(f"음성 파일 생성 오류: {str(e)}")
+        
+    def get_folder_voices(self, folder_id: int) -> List[dict]:
+        """폴더에 속한 음성 파일 목록 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+        
+            cursor.execute(
+                "SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id FROM Voice WHERE folder_id = ? ORDER BY voice_date DESC", 
+                (folder_id,)
+            )
+            voices = cursor.fetchall()
+        
+            conn.close()
+        
+            return [
+                {
+                    "voice_id": row[0],
+                    "voice_title": row[1],
+                    "voice_path": row[2],
+                    "voice_date": row[3],
+                    "type": row[4],
+                    "folder_id": row[5]
+                }
+                for row in voices
+            ]
+        except Exception as e:
+            logging.error("폴더 음성 파일 목록 조회 오류: %s", str(e))
+            return []
+
+
+
 
     def delete_voice(self, voice_id: int) -> bool:
         """음성 파일 삭제"""
@@ -1416,6 +1480,35 @@ class SQLiteHandler:
         except Exception as e:
             logging.error("텍스트 파일 생성 오류: %s", str(e))
             raise RuntimeError(f"텍스트 파일 생성 오류: {str(e)}")
+        
+    def get_folder_textfiles(self, folder_id: int) -> List[dict]:
+        """폴더에 속한 텍스트 파일 목록 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id "
+                "FROM TextFile WHERE folder_id = ? ORDER BY txt_date DESC",
+                (folder_id,)
+            )
+            rows = cursor.fetchall()
+            conn.close()
+            return [
+                {
+                    "txt_id": row[0],
+                    "txt_title": row[1],
+                    "txt_path": row[2],
+                    "txt_date": row[3],
+                    "type": row[4],
+                    "folder_id": row[5]
+                }
+                for row in rows
+            ]
+        except Exception as e:
+            logging.error("get_folder_textfiles 오류: %s", str(e))
+            return []
+
+
 
     def delete_textfile(self, txt_id: int) -> bool:
         """텍스트 파일 삭제"""
@@ -1531,7 +1624,7 @@ class SQLiteHandler:
             logging.error("텍스트 파일 조회 오류: %s", str(e))
             return None
 
-    def get_folder_textfiles(self, folder_id: int) -> List[dict]:
+    def get_textfiles_by_folder(self, folder_id: int) -> List[dict]:
         """폴더의 모든 텍스트 파일 조회"""
         try:
             conn = sqlite3.connect(self.db_path)

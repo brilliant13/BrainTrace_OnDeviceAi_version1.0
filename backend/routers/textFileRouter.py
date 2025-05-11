@@ -194,3 +194,23 @@ async def move_textfile_out_of_folder(txt_id: int):
     except Exception as e:
         logging.error("텍스트 파일 폴더 제거 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="내부 서버 오류") 
+    
+@router.get(
+    "/folder/{folder_id}",
+    response_model=List[TextFileResponse],
+    summary="폴더의 텍스트 파일 목록 조회",
+    description="특정 폴더에 속한 텍스트 파일들을 반환합니다."
+)
+async def get_textfiles_by_folder(folder_id: int):
+    # 폴더 존재 여부 확인 (선택)
+    folder = sqlite_handler.get_folder(folder_id)
+    if not folder:
+        raise HTTPException(status_code=404, detail="폴더를 찾을 수 없습니다")
+
+    try:
+        # sqlite_handler에 아래 메서드가 있어야 합니다.
+        textfiles = sqlite_handler.get_folder_textfiles(folder_id)
+        return textfiles
+    except Exception as e:
+        logging.error("폴더 텍스트 파일 조회 오류: %s", str(e))
+        raise HTTPException(status_code=500, detail="텍스트 파일 조회 중 오류 발생")

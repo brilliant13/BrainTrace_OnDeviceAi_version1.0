@@ -194,3 +194,19 @@ async def move_pdf_out_of_folder(pdf_id: int):
     except Exception as e:
         logging.error("PDF 폴더 제거 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="내부 서버 오류") 
+    
+@router.get("/folder/{folder_id}", response_model=List[PdfResponse],
+        summary="폴더에 속한 PDF 목록 조회",
+        description="특정 폴더에 속한 모든 PDF 목록을 반환합니다.")
+async def get_pdfs_by_folder(folder_id: int):
+    """
+    폴더 ID에 속한 PDF 목록을 반환합니다:
+
+    - **folder_id**: 조회할 폴더 ID
+    """
+    try:
+        pdfs = sqlite_handler.get_pdfs_by_folder(folder_id)
+        return pdfs
+    except Exception as e:
+        logging.error("PDF 목록 조회 실패: %s", str(e))
+        raise HTTPException(status_code=500, detail="PDF 목록 조회 중 오류 발생")

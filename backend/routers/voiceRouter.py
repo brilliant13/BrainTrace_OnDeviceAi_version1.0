@@ -194,3 +194,24 @@ async def move_voice_out_of_folder(voice_id: int):
     except Exception as e:
         logging.error("음성 파일 폴더 제거 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="내부 서버 오류") 
+    
+
+@router.get("/folder/{folder_id}", response_model=List[VoiceResponse],
+    summary="폴더의 음성 파일 목록 조회",
+    description="지정된 폴더 ID에 속한 모든 음성 파일 정보를 조회합니다.")
+async def get_voices_by_folder(folder_id: int):
+    """
+    특정 폴더에 속한 음성 파일 목록을 반환합니다:
+
+    - **folder_id**: 음성 파일을 조회할 폴더 ID
+    """
+    folder = sqlite_handler.get_folder(folder_id)
+    if not folder:
+        raise HTTPException(status_code=404, detail="폴더를 찾을 수 없습니다")
+
+    try:
+        voices = sqlite_handler.get_folder_voices(folder_id)
+        return voices
+    except Exception as e:
+        logging.error("폴더 음성 파일 조회 오류: %s", str(e))
+        raise HTTPException(status_code=500, detail="내부 서버 오류")
