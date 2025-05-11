@@ -18,13 +18,11 @@ class BrainCreate(BaseModel):
     brain_name : str = Field(..., min_length=1, max_length=50)
     user_id    : int
     icon_key   : Optional[str]  = None        # 예: "BsGraphUp"
-    files      : Optional[list] = None        # 파일 트리(JSON 호환)
     created_at : Optional[str]  = None        # "2025-05-06" 등
 
 class BrainUpdate(BaseModel):
     brain_name : Optional[str]  = None
     icon_key   : Optional[str]  = None
-    files      : Optional[list] = None
     created_at : Optional[str]  = None
 
 class BrainResponse(BaseModel):
@@ -59,7 +57,6 @@ async def create_brain(brain: BrainCreate):
             brain_name = brain.brain_name,
             user_id    = brain.user_id,
             icon_key   = brain.icon_key,
-            files      = brain.files,
             created_at = date.today().isoformat()   # ← 오늘 날짜 자동 입력
         )
     except ValueError as e:

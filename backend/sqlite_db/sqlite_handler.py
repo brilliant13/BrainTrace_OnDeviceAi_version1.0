@@ -12,12 +12,15 @@ class SQLiteHandler:
         else:
             self.db_path = db_path
         
-        self._init_db()
+        #self._init_db()
     
     def _init_db(self):
         """SQLite 데이터베이스와 테이블 초기화"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            
+            conn = sqlite3.connect(self.db_path, timeout=30,check_same_thread=False)
+            conn.execute("PRAGMA journal_mode=WAL;")
+            conn.execute("PRAGMA busy_timeout=30000;")
             cursor = conn.cursor()
             
             # 시퀀스 테이블 생성
@@ -49,7 +52,6 @@ class SQLiteHandler:
                 brain_name TEXT    NOT NULL,
                 user_id    INTEGER NOT NULL,
                 icon_key   TEXT,
-                files_json TEXT,
                 created_at TEXT,
                 FOREIGN KEY (user_id) REFERENCES User(user_id)
             )
@@ -124,6 +126,9 @@ class SQLiteHandler:
             logging.info("SQLite 데이터베이스 초기화 완료: %s", self.db_path)
         except Exception as e:
             logging.error("SQLite 데이터베이스 초기화 오류: %s", str(e))
+        finally:
+            if conn:
+                conn.close()
     
     def _hash_password(self, password: str) -> str:
         """비밀번호를 SHA-256 해시로 변환"""
@@ -294,7 +299,6 @@ class SQLiteHandler:
     # Brain 관련 메서드
     def create_brain(self, brain_name: str, user_id: int,
                      icon_key: str | None = None,
-                     files: list | None = None,
                      created_at: str | None = None) -> dict:
         try:
             # 사용자 존재 확인
@@ -310,13 +314,12 @@ class SQLiteHandler:
             cur  = conn.cursor()
             cur.execute(
                 """INSERT INTO Brain
-                     (brain_name, user_id, icon_key, files_json, created_at)
-                   VALUES (?,?,?,?,?)""",
+                     (brain_name, user_id, icon_key, created_at)
+                   VALUES (?,?,?,?)""",
                 (
                     brain_name,
                     user_id,
                     icon_key,
-                    json.dumps(files, ensure_ascii=False) if files else None,
                     created_at
                 )
             )
@@ -328,7 +331,6 @@ class SQLiteHandler:
                 "brain_name": brain_name,
                 "user_id":    user_id,
                 "icon_key":   icon_key,
-                "files":      files,
                 "created_at": created_at,
             }
         except Exception as e:
@@ -388,7 +390,7 @@ class SQLiteHandler:
             cur  = conn.cursor()
             cur.execute(
                 """SELECT brain_id, brain_name, user_id,
-                          icon_key, files_json, created_at
+                          icon_key, created_at
                    FROM Brain WHERE brain_id=?""",
                 (brain_id,)
             )
@@ -401,8 +403,7 @@ class SQLiteHandler:
                 "brain_name": row[1],
                 "user_id":    row[2],
                 "icon_key":   row[3],
-                "files":      json.loads(row[4]) if row[4] else None,
-                "created_at": row[5],
+                "created_at": row[4],
             }
         except Exception as e:
             logging.error("브레인 조회 오류: %s", e)
@@ -415,7 +416,7 @@ class SQLiteHandler:
             cur  = conn.cursor()
             cur.execute(
                 """SELECT brain_id, brain_name, user_id,
-                          icon_key, files_json, created_at
+                          icon_key, created_at
                      FROM Brain WHERE user_id=?""",
                 (user_id,)
             )
@@ -426,8 +427,7 @@ class SQLiteHandler:
                     "brain_name": r[1],
                     "user_id":    r[2],
                     "icon_key":   r[3],
-                    "files":      json.loads(r[4]) if r[4] else None,
-                    "created_at": r[5],
+                    "created_at": r[4],
                 } for r in rows
             ]
         except Exception as e:
@@ -441,7 +441,7 @@ class SQLiteHandler:
             cur  = conn.cursor()
             cur.execute(
                 """SELECT brain_id, brain_name, user_id,
-                          icon_key, files_json, created_at
+                          icon_key, created_at
                      FROM Brain"""
             )
             rows = cur.fetchall(); conn.close()
@@ -451,8 +451,7 @@ class SQLiteHandler:
                     "brain_name": r[1],
                     "user_id":    r[2],
                     "icon_key":   r[3],
-                    "files":      json.loads(r[4]) if r[4] else None,
-                    "created_at": r[5],
+                    "created_at": r[4],
                 } for r in rows
             ]
         except Exception as e:

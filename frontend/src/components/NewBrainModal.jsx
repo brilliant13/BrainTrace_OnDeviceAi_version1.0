@@ -19,10 +19,9 @@ export default function NewBrainModal({ onClose, onCreated }) {
             const newBrain = await createBrain({
                 brain_name: name,
                 user_id: uid,
-                icon_key: iconKey,
-                files: [],              // 초기 빈 트리
+                icon_key: iconKey
             });
-            onCreated(newBrain);              // 부모에 새 객체 전달
+            onCreated(newBrain);
             onClose();
         } catch (err) {
             alert(err.response?.data?.detail ?? '생성 실패');
@@ -37,7 +36,11 @@ export default function NewBrainModal({ onClose, onCreated }) {
                 <h3>새 프로젝트</h3>
 
                 <label>이름</label>
-                <input value={name} onChange={e => setName(e.target.value)} required />
+                <input
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    required
+                />
 
                 <label>아이콘</label>
                 <div className="icon-grid">
@@ -45,10 +48,7 @@ export default function NewBrainModal({ onClose, onCreated }) {
                         <div
                             key={key}
                             className={`icon-cell ${iconKey === key ? 'active' : ''}`}
-                            onClick={() => {
-                                console.log('iconKey ->', key);
-                                setIconKey(key);
-                            }}
+                            onClick={() => setIconKey(key)}
                         >
                             <Icon size={28} />
                         </div>
@@ -58,7 +58,11 @@ export default function NewBrainModal({ onClose, onCreated }) {
                 <button type="submit" disabled={loading}>
                     {loading ? '저장 중…' : '생성'}
                 </button>
-                <button type="button" className="secondary" onClick={onClose}>
+                <button
+                    type="button"
+                    className="secondary"
+                    onClick={onClose}
+                >
                     취소
                 </button>
             </form>

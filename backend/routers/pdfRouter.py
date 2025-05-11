@@ -67,7 +67,7 @@ async def create_pdf(pdf_data: PdfCreate):
         raise HTTPException(status_code=500, detail="내부 서버 오류")
     
 @router.get(
-    "/default",
+    "/default/pp",
     response_model=List[PdfResponse],
     summary="폴더 없이 저장된 PDF 목록 조회",
     description="folder_id 가 null 인 PDF 들을 반환합니다."

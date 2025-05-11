@@ -14,6 +14,9 @@ from routers import memoRouter  # 메모 관리 라우터 추가
 from routers import pdfRouter  # PDF 관리 라우터 추가
 from routers import voiceRouter  # 음성 파일 관리 라우터 추가
 from routers import textFileRouter  # 텍스트 파일 관리 라우터 추가
+from sqlite_db.sqlite_handler import SQLiteHandler
+
+sqlite_handler = SQLiteHandler()  # 이제 _init_db() 는 호출되지 않음
 # 로깅 설정
 logging.basicConfig(
     level=logging.INFO, 
@@ -28,6 +31,10 @@ logging.getLogger("uvicorn.access").setLevel(logging.INFO)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global neo4j_process
+
+    
+    # 1) DB 스키마를 한 번만 초기화
+    sqlite_handler._init_db()
     try:
         neo4j_process = run_neo4j()
         if neo4j_process:

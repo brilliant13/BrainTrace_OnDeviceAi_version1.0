@@ -9,12 +9,11 @@ export const updateUser = (id, body) => api.put(`/users/${id}`, body).then(r => 
 export const authUser = (username, password) => api.post('/users/auth', { username, password }).then(r => r.data);
 
 /* ───────── BRAINS ───────── */
-export const createBrain = ({ brain_name, user_id, icon_key, files }) =>
+export const createBrain = ({ brain_name, user_id, icon_key }) =>
     api.post('/brains', {
         brain_name,
         user_id,
         icon_key,
-        files,
     }).then(res => res.data);
 export const listBrains = () => api.get('/brains').then(r => r.data);
 export const listUserBrains = user_id => api.get(`/brains/user/${user_id}`).then(r => r.data);
@@ -69,6 +68,6 @@ export const moveVoiceToFolder = (targetFolderId, voiceId) => api.put(`/voices/c
 export const removeVoiceFromFolder = voiceId => api.put(`/voices/MoveOutFolder/${voiceId}`).then(r => r.data);
 
 // ───────── DEFAULT (루트) ─────────
-export const getDefaultPdfs = () => api.get(`/pdfs/default`).then(r => r.data);
+export const getDefaultPdfs = () => api.get(`/pdfs/default/pp`).then(r => r.data);
 export const getDefaultTextfiles = () => api.get(`/textfiles/default`).then(r => r.data);
 export const getDefaultVoices = () => api.get(`/voices/default`).then(r => r.data);
