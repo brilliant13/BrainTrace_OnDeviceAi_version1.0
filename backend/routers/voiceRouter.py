@@ -65,6 +65,19 @@ async def create_voice(voice_data: VoiceCreate):
     except Exception as e:
         logging.error("음성 파일 생성 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="내부 서버 오류")
+@router.get(
+    "/default",
+    response_model=List[VoiceResponse],
+    summary="폴더 없이 저장된 음성 파일 조회",
+    description="folder_id 가 null 인 음성 파일들을 반환합니다."
+)
+async def get_default_voices():
+    try:
+        return sqlite_handler.get_default_voices()
+    except Exception as e:
+        logging.error("기본 음성 파일 조회 오류: %s", e)
+        raise HTTPException(status_code=500, detail="기본 음성 파일 조회 중 오류 발생")
+
 
 @router.get("/{voice_id}", response_model=VoiceResponse,
     summary="음성 파일 조회",
@@ -215,3 +228,4 @@ async def get_voices_by_folder(folder_id: int):
     except Exception as e:
         logging.error("폴더 음성 파일 조회 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="내부 서버 오류")
+    

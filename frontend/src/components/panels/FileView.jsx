@@ -11,6 +11,9 @@ import { TiUpload } from 'react-icons/ti';
 
 import {
   listBrainFolders,
+  getDefaultPdfs,
+  getDefaultTextfiles,
+  getDefaultVoices,
   createMemo,
   createPdf,
   createTextFile,
@@ -26,34 +29,29 @@ import {
   deleteMemo
 } from '../../../../backend/services/backend';
 
+// API 에서 넘어온 폴더/메모 정보를 트리 구조로 변환
 function normalizeApiTree(apiFolders = []) {
   return apiFolders.map(folder => ({
     type: 'folder',
     folder_id: folder.folder_id,
     name: folder.folder_name,
     children: [
-      ...(folder.memos || []).map(memo => ({
-        type: 'file',
-        filetype: 'memo',
-        memo_id: memo.memo_id,
-        name: memo.memo_title
-      })),
       ...(folder.pdfs || []).map(pdf => ({
         type: 'file',
         filetype: 'pdf',
-        pdf_id: pdf.pdf_id,
+        id: pdf.pdf_id,
         name: pdf.pdf_title
       })),
       ...(folder.textfiles || []).map(txt => ({
         type: 'file',
         filetype: 'txt',
-        txt_id: txt.txt_id,
+        id: txt.txt_id,
         name: txt.txt_title
       })),
       ...(folder.voices || []).map(voice => ({
         type: 'file',
         filetype: 'voice',
-        voice_id: voice.voice_id,
+        id: voice.voice_id,
         name: voice.voice_title
       }))
     ]
@@ -71,127 +69,106 @@ export default function FileView({
   const [selectedFile, setSelectedFile] = useState(null);
   const [isRootDrag, setIsRootDrag] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [rootFiles, setRootFiles] = useState([]);
+
   useEffect(() => {
     refresh();
   }, [brainId]);
 
+  // 전체 폴더 + 루트 파일(refreshKey 증가) 로드
   const refresh = async () => {
     if (!brainId) return;
     try {
+      // 1) 실제 폴더 트리
       const api = await listBrainFolders(brainId);
       setFiles(normalizeApiTree(api));
+
+      // 2) folder_id === null 인 파일들
+      const [pdfs, txts, voices] = await Promise.all([
+        getDefaultPdfs(),
+        getDefaultTextfiles(),
+        getDefaultVoices()
+      ]);
+      setRootFiles([
+        ...pdfs.map(p => ({ filetype: 'pdf', id: p.pdf_id, name: p.pdf_title })),
+        ...txts.map(t => ({ filetype: 'txt', id: t.txt_id, name: t.txt_title })),
+        ...voices.map(v => ({ filetype: 'voice', id: v.voice_id, name: v.voice_title }))
+      ]);
+
       setRefreshKey(k => k + 1);
     } catch (err) {
-      console.error('폴더/메모 로드 실패', err);
+      console.error('전체 로드 실패', err);
     }
   };
 
-  // ── 공통 분기 로직 ──
+  // 파일 생성 분기 (모두 TextFile API 사용)
   const createFileByType = async (f, folderId = null) => {
     const ext = f.name.split('.').pop().toLowerCase();
-    const type = ext;
-    const common = { folder_id: folderId, type };
+    const common = { folder_id: folderId, type: ext };
 
-    if (ext === 'pdf') {
-      await createPdf({ ...common, pdf_title: f.name, pdf_path: f.name });
-    } else if (ext === 'txt') {
+    if (ext === 'txt') {
       await createTextFile({ ...common, txt_title: f.name, txt_path: f.name });
+    } else if (ext === 'pdf') {
+      await createPdf({ ...common, pdf_title: f.name, pdf_path: f.name });
     } else if (['mp3', 'wav', 'm4a'].includes(ext)) {
       await createVoice({ ...common, voice_title: f.name, voice_path: f.name });
     } else {
-      await createMemo({
-        memo_title: f.name,
-        memo_text: '',
-        folder_id: folderId,
-        is_source: false,
-        brain_id: brainId,
-        type
-      });
+      // 기타 확장자도 텍스트 파일로 저장
+      await createTextFile({ ...common, txt_title: f.name, txt_path: f.name });
     }
   };
 
-  // ── 루트에 드롭 ──
+  // 루트에 드롭: 내부이동(JSON) / OS 드롭
   const handleRootDrop = async e => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     setIsRootDrag(false);
 
-    const draggedName = e.dataTransfer.getData('text/plain');
-    if (draggedName) {
-      let moved;
-      const prune = arr =>
-        arr.filter(n => {
-          if (n.type === 'file' && n.name === draggedName) {
-            moved = n;
-            return false;
-          }
-          if (n.type === 'folder') {
-            n.children = prune(n.children || []);
-          }
-          return true;
-        });
-      prune(files);
-      if (moved) {
-        try {
-          await removeMemoFromFolder(moved.memo_id);
-          await refresh();
-        } catch (err) {
-          console.error('루트 이동 실패', err);
-        }
-      }
+    // 1) 내부 이동
+    const moved = e.dataTransfer.getData('application/json');
+    if (moved) {
+      const { id, filetype } = JSON.parse(moved);
+      await moveItem({ id, filetype }, null);
       return;
     }
 
+    // 2) OS 파일 드롭
     const dropped = Array.from(e.dataTransfer.files);
     try {
-      await Promise.all(dropped.map(f => createFileByType(f)));
-      const mapFrag = Object.fromEntries(dropped.map(f => [f.name, f]));
-      setFileMap(prev => ({ ...prev, ...mapFrag }));
+      await Promise.all(dropped.map(f => createFileByType(f, null)));
+      const frag = Object.fromEntries(dropped.map(f => [f.name, f]));
+      setFileMap(prev => ({ ...prev, ...frag }));
       await refresh();
     } catch (err) {
       console.error('루트 파일 생성 실패', err);
     }
   };
 
-  // ── 폴더에 드롭 ──
-  const handleDropToFolder = async (folderId, droppedFiles) => {
-    if (!Array.isArray(droppedFiles)) {
-      console.error('handleDropToFolder: droppedFiles is not an array', droppedFiles);
-      return;
-    }
+  // 폴더에 드롭: OS 파일만 처리 (내부 이동은 FolderView에서)
+  const handleDropToFolder = async (folderId, dropped) => {
+    if (!Array.isArray(dropped)) return;
     try {
-      await Promise.all(droppedFiles.map(f => createFileByType(f, folderId)));
-      const mapFrag = Object.fromEntries(droppedFiles.map(f => [f.name, f]));
-      setFileMap(prev => ({ ...prev, ...mapFrag }));
+      await Promise.all(dropped.map(f => createFileByType(f, folderId)));
+      const frag = Object.fromEntries(dropped.map(f => [f.name, f]));
+      setFileMap(prev => ({ ...prev, ...frag }));
       await refresh();
     } catch (err) {
       console.error('폴더 파일 생성 실패', err);
     }
   };
 
-  // ── 내부 이동 (폴더 ↔ 폴더/루트) ──
+  // 내부 이동 (폴더 ↔ 루트)
   const moveItem = async ({ id, filetype }, targetFolderId) => {
     const toRoot = targetFolderId == null;
     try {
-      switch (filetype) {
-        case 'memo':
-          if (toRoot) await removeMemoFromFolder(id);
-          else await moveMemoToFolder(targetFolderId, id);
-          break;
-        case 'pdf':
-          if (toRoot) await removePdfFromFolder(id);
-          else await movePdfToFolder(targetFolderId, id);
-          break;
-        case 'txt':
-          if (toRoot) await removeTextFileFromFolder(id);
-          else await moveTextfileToFolder(targetFolderId, id);
-          break;
-        case 'voice':
-          if (toRoot) await removeVoiceFromFolder(id);
-          else await moveVoiceToFolder(targetFolderId, id);
-          break;
-        default:
-          console.warn('지원되지 않는 파일 타입', filetype);
+      if (filetype === 'pdf') {
+        if (toRoot) await removePdfFromFolder(id);
+        else await movePdfToFolder(targetFolderId, id);
+      } else if (filetype === 'txt') {
+        if (toRoot) await removeTextFileFromFolder(id);
+        else await moveTextfileToFolder(targetFolderId, id);
+      } else if (filetype === 'voice') {
+        if (toRoot) await removeVoiceFromFolder(id);
+        else await moveVoiceToFolder(targetFolderId, id);
       }
       await refresh();
     } catch (e) {
@@ -199,89 +176,66 @@ export default function FileView({
     }
   };
 
-
-  // ── 삭제 (memo만) ──
-  const handleDelete = async memo_id => {
-    try {
-      await deleteMemo(memo_id);
-      await refresh();
-    } catch (err) {
-      console.error('삭제 실패', err);
-    }
-  };
-
   return (
     <div
       className={`file-explorer modern-explorer${isRootDrag ? ' root-drag-over' : ''}`}
-      onDragEnter={e => {
-        e.preventDefault();
-        setIsRootDrag(true);
-      }}
-      onDragLeave={e => {
-        e.preventDefault();
-        setIsRootDrag(false);
-      }}
+      onDragEnter={e => { e.preventDefault(); setIsRootDrag(true); }}
+      onDragLeave={e => { e.preventDefault(); setIsRootDrag(false); }}
       onDragOver={e => e.preventDefault()}
       onDrop={handleRootDrop}
     >
       {isRootDrag && (
         <div className="drop-overlay">
-          <div className="drop-icon">
-            <TiUpload />
-          </div>
+          <div className="drop-icon"><TiUpload /></div>
         </div>
       )}
 
-      {files.length > 0 ? (
-        files.map((node, i) =>
-          node.type === 'folder' ? (
-            <FolderView
-              key={i}
-              item={node}
-              refreshKey={refreshKey}
-              depth={0}
-              selectedFile={selectedFile}
-              onSelectFile={setSelectedFile}
-              onDropFileToFolder={handleDropToFolder}
-              onOpenPDF={onOpenPDF}
-              fileMap={fileMap}
-              moveItem={moveItem}
-              refreshParent={refresh}
-            />
-          ) : (
-            <div
-              key={i}
-              className={`file-item ${selectedFile === node.name ? 'selected' : ''}`}
-            >
-              <FileIcon fileName={node.name} />
-              <span
-                className="file-name"
-                draggable
-                onClick={() => {
-                  setSelectedFile(node.name);
-                  if (node.name.endsWith('.pdf') && fileMap[node.name]) {
-                    onOpenPDF(fileMap[node.name]);
-                  }
-                }}
-                onDragStart={e =>
-                  e.dataTransfer.setData('text/plain', node.name)
-                }
-              >
-                {node.name}
-              </span>
-              <button
-                className="delete-btn"
-                onClick={() => handleDelete(node.memo_id)}
-              >
-                🗑
-              </button>
-            </div>
-          )
-        )
-      ) : (
-        <div className="empty-state">
-          <p>파일이 없습니다.</p>
+      {/* ── 실제 폴더 트리 ── */}
+      {files.map(node =>
+        node.type === 'folder' ? (
+          <FolderView
+            key={node.folder_id}
+            item={node}
+            refreshKey={refreshKey}
+            depth={0}
+            selectedFile={selectedFile}
+            onSelectFile={setSelectedFile}
+            onDropFileToFolder={handleDropToFolder}
+            onOpenPDF={onOpenPDF}
+            fileMap={fileMap}
+            moveItem={moveItem}
+            refreshParent={refresh}
+          />
+        ) : null
+      )}
+
+      {/* ── 루트 레벨 파일들 ── */}
+      {rootFiles.map(f => (
+        <div
+          key={`${f.filetype}-${f.id}`}
+          className={`file-item ${selectedFile === f.name ? 'selected' : ''}`}
+          draggable
+          onDragStart={e =>
+            e.dataTransfer.setData(
+              'application/json',
+              JSON.stringify({ id: f.id, filetype: f.filetype })
+            )
+          }
+          onClick={() => {
+            setSelectedFile(f.name);
+            if (f.filetype === 'pdf' && fileMap[f.name]) {
+              onOpenPDF(fileMap[f.name]);
+            }
+          }}
+        >
+          <FileIcon fileName={f.name} />
+          <span className="file-name">{f.name}</span>
         </div>
+      ))}
+
+      {/* 빈 상태 */}
+      {files.length === 0 && rootFiles.length === 0 && (
+        <div className="empty-state"><p>파일이 없습니다.</p></div>
       )}
     </div>
   );

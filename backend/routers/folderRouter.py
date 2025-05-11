@@ -66,13 +66,13 @@ class DeleteFolderResponse(BaseModel):
 
 # (기존 FolderResponse 모델 대신)
 class FolderWithChildren(BaseModel):
-    folder_id: int
-    folder_name: str
-    brain_id: int
-    memos: List[Dict[str, Any]]      # sqlite_handler.get_folder_memos 형태
-    pdfs: List[Dict[str, Any]]       # sqlite_handler.get_folder_pdfs 형태
-    textfiles: List[Dict[str, Any]]  # sqlite_handler.get_folder_textfiles 형태
-    voices: List[Dict[str, Any]]     # sqlite_handler.get_folder_voices 형태
+    folder_id: Optional[int] = Field(None, description="폴더 ID (null이면 루트)")
+    folder_name: str          = Field(...,  description="폴더 이름 ('Root' 등)")
+    brain_id: int             = Field(...,  description="브레인 ID")
+    memos: List[Dict[str,Any]]
+    pdfs: List[Dict[str,Any]]
+    textfiles: List[Dict[str,Any]]
+    voices: List[Dict[str,Any]]
 
 
 
@@ -99,7 +99,7 @@ async def create_folder(folder_data: FolderCreate):
         logging.error("폴더 생성 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="내부 서버 오류")
 
-@router.get("/brain/{brain_id}", response_model=List[FolderResponse],
+@router.get("/brain/{brain_id}", response_model=List[FolderWithChildren],
            summary="브레인의 폴더 목록 조회",
            description="특정 브레인에 속한 모든 폴더 목록을 반환합니다.")
 async def get_brain_folders(brain_id: int):
@@ -108,12 +108,16 @@ async def get_brain_folders(brain_id: int):
     result = []
     for f in folders:
         result.append({
-            **f,
-            "memos": sqlite_handler.get_folder_memos(f["folder_id"]),
-            "pdfs": sqlite_handler.get_folder_pdfs(f["folder_id"]),
-            "textfiles": sqlite_handler.get_folder_textfiles(f["folder_id"]),
-            "voices": sqlite_handler.get_folder_voices(f["folder_id"])
+            "folder_id":   f["folder_id"],
+            "folder_name": f["folder_name"],
+            "brain_id":    brain_id,
+            "memos":       sqlite_handler.get_folder_memos(f["folder_id"]),
+            "pdfs":        sqlite_handler.get_folder_pdfs(f["folder_id"]),
+            "textfiles":   sqlite_handler.get_folder_textfiles(f["folder_id"]),
+            "voices":      sqlite_handler.get_folder_voices(f["folder_id"]),
         })
+    
+    # 루트를 목록 맨 앞에 추가
     return result
 
 @router.get("/{folder_id}", response_model=FolderResponse,

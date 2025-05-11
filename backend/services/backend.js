@@ -67,3 +67,8 @@ export const updateVoice = (id, body) => api.put(`/voices/${id}`, body).then(r =
 export const deleteVoice = id => api.delete(`/voices/${id}`);
 export const moveVoiceToFolder = (targetFolderId, voiceId) => api.put(`/voices/changeFolder/${targetFolderId}/${voiceId}`).then(r => r.data);
 export const removeVoiceFromFolder = voiceId => api.put(`/voices/MoveOutFolder/${voiceId}`).then(r => r.data);
+
+// ───────── DEFAULT (루트) ─────────
+export const getDefaultPdfs = () => api.get(`/pdfs/default`).then(r => r.data);
+export const getDefaultTextfiles = () => api.get(`/textfiles/default`).then(r => r.data);
+export const getDefaultVoices = () => api.get(`/voices/default`).then(r => r.data);

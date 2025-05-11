@@ -65,6 +65,19 @@ async def create_textfile(textfile_data: TextFileCreate):
     except Exception as e:
         logging.error("텍스트 파일 생성 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="내부 서버 오류")
+    
+@router.get(
+    "/default",
+    response_model=List[TextFileResponse],
+    summary="폴더 없이 저장된 텍스트 파일 조회",
+    description="folder_id 가 null 인 텍스트 파일들을 반환합니다."
+)
+async def get_default_textfiles():
+    try:
+        return sqlite_handler.get_default_textfiles()
+    except Exception as e:
+        logging.error("기본 텍스트 파일 조회 오류: %s", e)
+        raise HTTPException(status_code=500, detail="기본 텍스트 파일 조회 중 오류 발생")
 
 @router.get("/{txt_id}", response_model=TextFileResponse,
     summary="텍스트 파일 조회",
@@ -214,3 +227,4 @@ async def get_textfiles_by_folder(folder_id: int):
     except Exception as e:
         logging.error("폴더 텍스트 파일 조회 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="텍스트 파일 조회 중 오류 발생")
+    

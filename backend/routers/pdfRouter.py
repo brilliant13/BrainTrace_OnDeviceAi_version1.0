@@ -65,6 +65,17 @@ async def create_pdf(pdf_data: PdfCreate):
     except Exception as e:
         logging.error("PDF 생성 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="내부 서버 오류")
+    
+@router.get(
+    "/default",
+    response_model=List[PdfResponse],
+    summary="폴더 없이 저장된 PDF 목록 조회",
+    description="folder_id 가 null 인 PDF 들을 반환합니다."
+)
+async def get_default_pdfs():
+    return sqlite_handler.get_default_pdfs()
+
+
 
 @router.get("/{pdf_id}", response_model=PdfResponse,
     summary="PDF 파일 조회",

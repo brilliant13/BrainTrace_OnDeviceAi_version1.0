@@ -1652,3 +1652,120 @@ class SQLiteHandler:
         except Exception as e:
             logging.error("폴더 텍스트 파일 목록 조회 오류: %s", str(e))
             return [] 
+        
+    def get_default_memos(self) -> List[Dict[str, Any]]:
+        """folder_id가 NULL인 메모(루트 메모) 목록 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT memo_id, memo_title, memo_text, memo_date, is_source, type, folder_id
+                FROM Memo
+                WHERE folder_id IS NULL
+                ORDER BY memo_date DESC
+            """)
+            rows = cursor.fetchall()
+            conn.close()
+
+            return [
+                {
+                    "memo_id": row[0],
+                    "memo_title": row[1],
+                    "memo_text": row[2],
+                    "memo_date": row[3],
+                    "is_source": bool(row[4]),
+                    "type": row[5],
+                    "folder_id": row[6]
+                }
+                for row in rows
+            ]
+        except Exception as e:
+            logging.error("get_default_memos 오류: %s", e)
+            return []
+
+    def get_default_pdfs(self) -> List[Dict[str, Any]]:
+        """folder_id가 NULL인 PDF(루트 PDF) 목록 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id
+                FROM Pdf
+                WHERE folder_id IS NULL
+                ORDER BY pdf_date DESC
+            """)
+            rows = cursor.fetchall()
+            conn.close()
+
+            return [
+                {
+                    "pdf_id":   row[0],
+                    "pdf_title": row[1],
+                    "pdf_path":  row[2],
+                    "pdf_date":  row[3],
+                    "type":      row[4],
+                    "folder_id": row[5]
+                }
+                for row in rows
+            ]
+        except Exception as e:
+            logging.error("get_default_pdfs 오류: %s", e)
+            return []
+
+    def get_default_textfiles(self) -> List[Dict[str, Any]]:
+        """folder_id가 NULL인 텍스트 파일(루트 TXT) 목록 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id
+                FROM TextFile
+                WHERE folder_id IS NULL
+                ORDER BY txt_date DESC
+            """)
+            rows = cursor.fetchall()
+            conn.close()
+
+            return [
+                {
+                    "txt_id":    row[0],
+                    "txt_title": row[1],
+                    "txt_path":  row[2],
+                    "txt_date":  row[3],
+                    "type":      row[4],
+                    "folder_id": row[5]
+                }
+                for row in rows
+            ]
+        except Exception as e:
+            logging.error("get_default_textfiles 오류: %s", e)
+            return []
+
+    def get_default_voices(self) -> List[Dict[str, Any]]:
+        """folder_id가 NULL인 음성 파일(루트 VOICE) 목록 조회"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id
+                FROM Voice
+                WHERE folder_id IS NULL
+                ORDER BY voice_date DESC
+            """)
+            rows = cursor.fetchall()
+            conn.close()
+
+            return [
+                {
+                    "voice_id":    row[0],
+                    "voice_title": row[1],
+                    "voice_path":  row[2],
+                    "voice_date":  row[3],
+                    "type":        row[4],
+                    "folder_id":   row[5]
+                }
+                for row in rows
+            ]
+        except Exception as e:
+            logging.error("get_default_voices 오류: %s", e)
+            return []
