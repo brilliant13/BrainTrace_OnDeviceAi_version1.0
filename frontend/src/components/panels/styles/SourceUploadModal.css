@@ -9,23 +9,23 @@
 }
 
 .upload-modal {
-    background: white;
+    background: #f9f9f9;
     border-radius: 12px;
     padding: 32px;
     width: 480px;
     max-width: 90%;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     position: relative;
 }
 
 .description {
     font-size: 14px;
     margin-bottom: 20px;
-    color: #666;
+    color: #444;
 }
 
 .drop-zone {
-    border: 2px dashed #ccc;
+    border: 2px dashed #aaa;
     padding: 32px;
     text-align: center;
     border-radius: 10px;
@@ -33,23 +33,24 @@
 }
 
 .drop-zone.drag-over {
-    background-color: #f0f8ff;
-    border-color: #3b82f6;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-color: #222;
 }
 
 .upload-icon {
     font-size: 32px;
     margin-bottom: 8px;
+    color: #222;
 }
 
 .highlight {
-    color: #3b82f6;
+    color: #222;
     font-weight: 500;
 }
 
 .file-types {
     font-size: 12px;
-    color: #888;
+    color: #666;
     margin-top: 8px;
 }
 
@@ -62,7 +63,7 @@
 }
 
 .source-button {
-    background-color: #f1f5f9;
+    background-color: #ececec;
     border: none;
     padding: 8px 12px;
     border-radius: 6px;
@@ -70,6 +71,7 @@
     font-size: 13px;
     flex: 1;
     min-width: 100px;
+    color: #333;
 }
 
 .footer {
@@ -82,14 +84,14 @@
 .limit-bar {
     width: 80%;
     height: 6px;
-    background: #eee;
+    background: #e0e0e0;
     border-radius: 3px;
     overflow: hidden;
 }
 
 .limit-bar .filled {
     height: 100%;
-    background: #3b82f6;
+    background: #222;
 }
 
 .limit-label {
@@ -98,7 +100,7 @@
 }
 
 .fancy-form {
-    background-color: #f9fafb;
+    background-color: #f2f2f2;
     padding: 16px;
     margin: 12px;
     border-radius: 12px;
@@ -106,21 +108,21 @@
     display: flex;
     gap: 12px;
     flex-direction: column;
-    border: 1px solid #e5e7eb;
+    border: 1px solid #d1d1d1;
 }
 
 .fancy-form input {
     padding: 10px 14px;
     font-size: 14px;
     border-radius: 8px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #bbb;
     outline: none;
     transition: border-color 0.2s ease;
 }
 
 .fancy-form input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    border-color: #222;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
 }
 
 .fancy-form .form-buttons {
@@ -139,19 +141,19 @@
 }
 
 .fancy-form button.primary {
-    background-color: #3b82f6;
-    color: white;
+    background-color: #222;
+    color: #fff;
 }
 
 .fancy-form button.primary:hover {
-    background-color: #2563eb;
+    background-color: #000;
 }
 
 .fancy-form button.secondary {
-    background-color: #e5e7eb;
-    color: #374151;
+    background-color: #ddd;
+    color: #333;
 }
 
 .fancy-form button.secondary:hover {
-    background-color: #d1d5db;
+    background-color: #ccc;
 }

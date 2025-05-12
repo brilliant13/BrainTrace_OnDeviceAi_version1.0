@@ -203,8 +203,6 @@ const projectData = [
         ]
       }
     ],
-<<<<<<< HEAD
-=======
     chat: {
       title: "로켓 엔진 효율 향상",
       content: "로켓 엔진 효율을 높이기 위한 주요 전략은 다음과 같습니다:\n\n1. 연료 최적화\n2. 연소실 압력 개선\n3. 배기 시스템 간소화\n4. 재사용 가능한 부품 도입"
@@ -219,7 +217,6 @@ const projectData = [
       { id: "fuel", label: "Fuel", type: "sub", x: 70, y: 30 },
       { id: "sim", label: "Sim", type: "sub", x: 50, y: 70 }
     ],
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
     createdAt: "2025. 4. 29."
   },
 
@@ -245,8 +242,6 @@ const projectData = [
         ]
       }
     ],
-<<<<<<< HEAD
-=======
     chat: {
       title: "대학생 커뮤니티 운영 가이드",
       content: "성공적인 커뮤니티 운영을 위한 3가지:\n\n1. 소통 중심의 문화\n2. 꾸준한 콘텐츠 제작\n3. 참여 유도 캠페인"
@@ -261,7 +256,6 @@ const projectData = [
       { id: "promo", label: "Promo", type: "sub", x: 70, y: 30 },
       { id: "doc", label: "Doc", type: "sub", x: 50, y: 70 }
     ],
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
     createdAt: "2025. 4. 30."
   }
 ];

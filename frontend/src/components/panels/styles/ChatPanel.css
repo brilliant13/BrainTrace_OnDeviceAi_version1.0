@@ -1,14 +1,7 @@
-<<<<<<< HEAD
-/* ChatPanel.css - with added styles for empty chat state */
-
-=======
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 .chat-content {
   display: flex;
   flex-direction: column;
   padding: 20px;
-<<<<<<< HEAD
-  /* background-color: #fafafa; */
   height: 100%;
 }
 
@@ -33,7 +26,8 @@
 
 .input-wrapper {
   width: 100%;
-  max-width: 480px; /* Adjust as needed */
+  max-width: 480px;
+  /* Adjust as needed */
   padding: 20px;
 }
 
@@ -93,12 +87,6 @@
   padding-left: 2px;
 }
 
-=======
-  background-color: #fafafa;
-  height: 100%;
-}
-
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 .chat-header {
   font-size: 18px;
   font-weight: 600;
@@ -157,12 +145,6 @@
   color: #222;
 }
 
-<<<<<<< HEAD
-.chat-controls {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 12px;
-=======
 .chat-input-container {
   padding-top: 14px;
   border-top: 1px solid #ddd;
@@ -200,7 +182,6 @@
 
 .submit-button:hover {
   background-color: gray;
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 }
 
 .chat-input-container {
@@ -210,8 +191,6 @@
   background-color: #fafafa;
 }
 
-<<<<<<< HEAD
-=======
 .chat-textarea {
   width: 100%;
   resize: none;
@@ -231,7 +210,6 @@
   border-color: black;
 }
 
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 /* 사용자/봇 메시지 분리 */
 .message-wrapper {
   display: flex;

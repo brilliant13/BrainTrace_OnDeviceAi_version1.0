@@ -122,52 +122,72 @@ async def delete_voice(voice_id: int):
     if not sqlite_handler.delete_voice(voice_id):
         raise HTTPException(status_code=404, detail="음성 파일을 찾을 수 없습니다")
 
-
 # ───────── MOVE FOLDER ─────────
-@router.put("/changeFolder/{target_folder_id}/{voice_id}", response_model=VoiceResponse,
-    summary="음성 파일 폴더 이동")
-async def change_voice_folder(target_folder_id: int, voice_id: int):
+@router.put(
+    "/brain/{brain_id}/changeFolder/{target_folder_id}/{voice_id}",
+    response_model=VoiceResponse,
+    summary="음성 파일 폴더 이동 (brainId 경로 포함)"
+)
+async def change_voice_folder(
+    brain_id: int,
+    target_folder_id: int,
+    voice_id: int
+):
+    # 1) 음성 파일 존재 확인
     if not sqlite_handler.get_voice(voice_id):
         raise HTTPException(status_code=404, detail="음성 파일을 찾을 수 없습니다")
+    # 2) 대상 폴더 존재 확인
     if not sqlite_handler.get_folder(target_folder_id):
         raise HTTPException(status_code=404, detail="대상 폴더를 찾을 수 없습니다")
 
     try:
-        sqlite_handler.update_voice(
+        updated = sqlite_handler.update_voice(
             voice_id=voice_id,
             voice_title=None,
             voice_path=None,
             folder_id=target_folder_id,
             type=None,
-            brain_id=None
+            brain_id=brain_id    # ← brain_id 경로 파라미터로 덮어쓰기
         )
+        if not updated:
+            raise HTTPException(status_code=400, detail="폴더 변경 실패")
         return sqlite_handler.get_voice(voice_id)
+
     except Exception as e:
         logging.error("음성 파일 폴더 변경 오류: %s", e)
         raise HTTPException(status_code=500, detail="내부 서버 오류")
 
 
 # ───────── REMOVE FROM FOLDER ─────────
-@router.put("/MoveOutFolder/{voice_id}", response_model=VoiceResponse,
-    summary="음성 파일 폴더 제거")
-async def move_voice_out_of_folder(voice_id: int):
+@router.put(
+    "/brain/{brain_id}/MoveOutFolder/{voice_id}",
+    response_model=VoiceResponse,
+    summary="음성 파일 폴더 제거 (brainId 경로 포함)"
+)
+async def move_voice_out_of_folder(
+    brain_id: int,
+    voice_id: int
+):
+    # 1) 음성 파일 존재 확인
     if not sqlite_handler.get_voice(voice_id):
         raise HTTPException(status_code=404, detail="음성 파일을 찾을 수 없습니다")
+
     try:
-        sqlite_handler.update_voice(
+        updated = sqlite_handler.update_voice(
             voice_id=voice_id,
             voice_title=None,
             voice_path=None,
             folder_id=None,
             type=None,
-            brain_id=None
+            brain_id=brain_id    # ← brain_id 경로 파라미터로 덮어쓰기
         )
+        if not updated:
+            raise HTTPException(status_code=400, detail="폴더 제거 실패")
         return sqlite_handler.get_voice(voice_id)
+
     except Exception as e:
         logging.error("음성 파일 폴더 제거 오류: %s", e)
         raise HTTPException(status_code=500, detail="내부 서버 오류")
-
-
 # ───────── GET BY FOLDER ─────────
 @router.get("/folder/{folder_id}", response_model=List[VoiceResponse],
     summary="폴더의 음성 파일 목록 조회")

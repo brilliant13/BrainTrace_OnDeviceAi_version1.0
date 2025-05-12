@@ -29,7 +29,7 @@ class Neo4jHandler:
                     # 이미 source_id가 포함되어 있지 않으면 추가
                     if isinstance(desc, dict) and "source_id" not in desc and "description" in desc:
                         desc["source_id"] = node.get("source_id", "")
-                    new_descriptions.append(json.dumps(desc, ensure_ascii=True))
+                    new_descriptions.append(json.dumps(desc, ensure_ascii=False))
                 
                 tx.run(
                     """
@@ -70,7 +70,7 @@ class Neo4jHandler:
         try:
             with self.driver.session() as session:
                 session.execute_write(_insert, nodes, edges, brain_id)
-                logging.info("✅ Neo4j node and edge insertion and transaction commit completed")
+                logging.info("✅ Neo4j 노드와 엣지 삽입 및 트랜잭션 커밋 완료")
         except Exception as e:
             logging.error(f"❌ Neo4j 쓰기 트랜잭션 오류: {str(e)}")
             raise RuntimeError(f"Neo4j 쓰기 트랜잭션 오류: {str(e)}")
@@ -103,14 +103,12 @@ class Neo4jHandler:
         if not node_names or not isinstance(node_names, list):
             logging.error("유효하지 않은 node_names: %s", node_names)
             return None
-
-        logging.info("Neo4j schema query started (node name list: %s, brain_id: %s)", node_names, brain_id)
-
+        
+        logging.info("Neo4j 스키마 조회 시작 (노드 이름 목록: %s, brain_id: %s)", node_names, brain_id)
+        
         try:
             # 두 개의 별도 쿼리로 분리: 1단계 관계와 2단계 관계
             with self.driver.session() as session:
-                logging.info("Neo4j session started")
-
                 # 1단계: 직접 연결된 노드 및 관계
                 query1 = '''
                 MATCH (n:Node)
@@ -121,18 +119,10 @@ class Neo4jHandler:
                 collect(DISTINCT n) AS start_nodes,
                 collect(DISTINCT m) AS direct_nodes,
                 collect(DISTINCT r) AS direct_relationships
-<<<<<<< HEAD
                 '''
                     
                 # 2단계: 중간 노드(m)와 간접 연결된 노드(p) 및 관계(r2)
                 query2 = '''
-=======
-                """
-                logging.info("Step 1 query preparation completed")
-
-                # 2단계: 간접 연결된 노드
-                query2 = """
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
                 MATCH (n:Node)-[r1]-(m:Node)-[r2]-(p:Node)
                 WHERE n.name IN $names 
                 AND n.brain_id = $brain_id 
@@ -140,60 +130,45 @@ class Neo4jHandler:
                 AND p.brain_id = $brain_id 
                 AND p <> n
                 RETURN 
-<<<<<<< HEAD
                 collect(DISTINCT m) AS intermediate_nodes,
                 collect(DISTINCT p) AS indirect_nodes,
                 collect(DISTINCT r2) AS indirect_relationships
                 '''
                 
-=======
-                collect(DISTINCT p) AS indirect_nodes,
-                collect(DISTINCT r2) AS indirect_relationships
-                """
-                logging.info("Step 2 query preparation completed")
-
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
                 # 쿼리 실행
-                logging.info("Step 1 query execution started")
                 result1 = session.run(query1, names=node_names, brain_id=brain_id)
                 record1 = result1.single()
-                logging.info("Step 1 query execution completed")
-
-                logging.info("Step 2 query execution started")
+                
                 result2 = session.run(query2, names=node_names, brain_id=brain_id)
                 record2 = result2.single()
-                logging.info("Step 2 query execution completed")
-
+                
                 if not record1:
-                    logging.warning("No Neo4j query results found")
+                    logging.warning("Neo4j 조회 결과가 없습니다.")
                     return None
-
+                
                 # 결과 취합
                 nodes = record1.get("start_nodes", [])
                 related_nodes = record1.get("direct_nodes", [])
                 relationships = record1.get("direct_relationships", [])
-                logging.info("Step 1 result aggregation completed")
-
+                
                 # 2단계 결과 추가
                 if record2:
                     indirect_nodes = record2.get("indirect_nodes", [])
                     indirect_relationships = record2.get("indirect_relationships", [])
-                    logging.info("Step 2 result aggregation started")
-
+                    
                     # None 값은 제외
                     for node in indirect_nodes:
                         if node is not None:
                             related_nodes.append(node)
-
+                            
                     for rel in indirect_relationships:
                         if rel is not None:
                             relationships.append(rel)
-                    logging.info("Step 2 result aggregation completed")
-
+                
                 # 중복 제거는 Neo4j 쿼리 내에서 DISTINCT로 처리되었으므로 여기서는 생략
-                logging.info("Neo4j schema query results: nodes=%d, related nodes=%d, relationships=%d", 
-                            len(nodes), len(related_nodes), len(relationships))
-
+                logging.info("Neo4j 스키마 조회 결과: 노드=%d개, 관련 노드=%d개, 관계=%d개", 
+                           len(nodes), len(related_nodes), len(relationships))
+                
                 # 결과 반환
                 return {
                     "nodes": nodes,
@@ -210,17 +185,14 @@ class Neo4jHandler:
         """
         for attempt in range(retries):
             try:
-                logging.info("Query execution attempt %d started", attempt + 1)
                 with self.driver.session() as session:
                     result = session.run(query, parameters)
-                    logging.info("Query execution attempt %d successful", attempt + 1)
                     return [record.data() for record in result]
             except Exception as e:
-                logging.warning("Retry attempt %d failed: %s", attempt + 1, e)
+                logging.warning(f"재시도 {attempt+1}회 실패: {e}")
                 if attempt == retries - 1:
-                    logging.error("Exception occurred after all retry attempts failed")
                     raise
-            return []
+        return []
 
     def fetch_all_edges(self, brain_id: str) -> List[Dict]:
         try:
@@ -235,11 +207,11 @@ class Neo4jHandler:
 
     def get_brain_graph(self, brain_id: str) -> Dict[str, List]:
         """특정 브레인의 노드와 엣지 정보 조회"""
-        logging.info("Neo4j get_brain_graph started - brain_id: %s", brain_id)
+        logging.info(f"Neo4j get_brain_graph 시작 - brain_id: {brain_id}")
         try:
             with self.driver.session() as session:
                 # 노드 조회
-                logging.info("Node query execution")
+                logging.info("노드 조회 쿼리 실행")
                 nodes_result = session.run("""
                     MATCH (n)
                     WHERE n.brain_id = $brain_id
@@ -247,10 +219,10 @@ class Neo4jHandler:
                     """, brain_id=brain_id)
                 
                 nodes = [{"name": record["name"]} for record in nodes_result]
-                logging.info("Number of nodes found: %d", len(nodes))
+                logging.info(f"조회된 노드 수: {len(nodes)}")
 
                 # 엣지(관계) 조회
-                logging.info("Edge query execution")
+                logging.info("엣지 조회 쿼리 실행")
                 edges_result = session.run("""
                     MATCH (source)-[r]->(target)
                     WHERE source.brain_id = $brain_id AND target.brain_id = $brain_id
@@ -265,13 +237,13 @@ class Neo4jHandler:
                     }
                     for record in edges_result
                 ]
-                logging.info("Number of edges found: %d", len(links))
+                logging.info(f"조회된 엣지 수: {len(links)}")
 
                 result = {
                     "nodes": nodes,
                     "links": links
                 }
-                logging.info("Data to return: %s", result)
+                logging.info(f"반환할 데이터: {result}")
                 return result
         except Exception as e:
             logging.error("Neo4j 그래프 조회 오류: %s", str(e))
@@ -284,7 +256,7 @@ class Neo4jHandler:
             DETACH DELETE n
             """
             self._execute_with_retry(query, {"brain_id": brain_id})
-            logging.info("✅ All data for brain_id %s deleted successfully", brain_id)
+            logging.info(f"✅ brain_id {brain_id}의 모든 데이터 삭제 완료")
         except Exception as e:
             logging.error(f"❌ Neo4j 데이터 삭제 실패: {str(e)}")
             raise RuntimeError(f"Neo4j 데이터 삭제 실패: {str(e)}")

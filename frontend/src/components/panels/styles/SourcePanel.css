@@ -23,8 +23,6 @@
   margin: 1px 0;
 }
 
-<<<<<<< HEAD
-=======
 .file-item:hover {
   background-color: #f5f5f5;
 }
@@ -33,7 +31,6 @@
   background-color: #e6f2ff;
   color: gray;
 }
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 
 .file-icon {
   margin-right: 10px;

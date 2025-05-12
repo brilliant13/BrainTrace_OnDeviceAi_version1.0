@@ -124,40 +124,72 @@ async def delete_textfile(txt_id: int):
         raise HTTPException(status_code=404, detail="텍스트 파일을 찾을 수 없습니다")
 
 
-# ───────── MOVE FOLDER ─────────
-@router.put("/changeFolder/{target_folder_id}/{txt_id}", response_model=TextFileResponse,
-    summary="텍스트 파일 폴더 이동")
-async def change_textfile_folder(target_folder_id: int, txt_id: int):
-    # 기존 텍스트 파일/폴더 유효성 검사 생략...
-    updated = sqlite_handler.update_textfile(
-        txt_id=txt_id,
-        txt_title=None,
-        txt_path=None,
-        folder_id=target_folder_id,
-        type=None,
-        brain_id=None
-    )
-    if not updated:
-        raise HTTPException(status_code=400, detail="폴더 변경 실패")
-    return sqlite_handler.get_textfile(txt_id)
 
+# ───────── MOVE FOLDER ─────────
+@router.put(
+    "/brain/{brain_id}/changeFolder/{target_folder_id}/{txt_id}",
+    response_model=TextFileResponse,
+    summary="텍스트 파일 폴더 이동 (brainId 경로 포함)"
+)
+async def change_textfile_folder(
+    brain_id: int,
+    target_folder_id: int,
+    txt_id: int
+):
+    # 1) 파일 존재 확인
+    if not sqlite_handler.get_textfile(txt_id):
+        raise HTTPException(status_code=404, detail="텍스트 파일을 찾을 수 없습니다")
+    # 2) 대상 폴더 확인
+    if not sqlite_handler.get_folder(target_folder_id):
+        raise HTTPException(status_code=404, detail="대상 폴더를 찾을 수 없습니다")
+
+    try:
+        # folder_id만 바꾸고 brain_id는 그대로 덮어쓰기
+        updated = sqlite_handler.update_textfile(
+            txt_id=txt_id,
+            txt_title=None,
+            txt_path=None,
+            folder_id=target_folder_id,
+            type=None,
+            brain_id=brain_id      # ← 여기에 brain_id 추가
+        )
+        if not updated:
+            raise HTTPException(status_code=400, detail="폴더 변경 실패")
+        return sqlite_handler.get_textfile(txt_id)
+    except Exception as e:
+        logging.error("텍스트 파일 폴더 변경 오류: %s", e)
+        raise HTTPException(status_code=500, detail="내부 서버 오류")
 
 # ───────── REMOVE FROM FOLDER ─────────
-@router.put("/MoveOutFolder/{txt_id}", response_model=TextFileResponse,
-    summary="텍스트 파일 폴더 제거")
-async def move_textfile_out_of_folder(txt_id: int):
-    updated = sqlite_handler.update_textfile(
-        txt_id=txt_id,
-        txt_title=None,
-        txt_path=None,
-        folder_id=None,
-        type=None,
-        brain_id=None
-    )
-    if not updated:
-        raise HTTPException(status_code=400, detail="폴더 제거 실패")
-    return sqlite_handler.get_textfile(txt_id)
+@router.put(
+    "/brain/{brain_id}/MoveOutFolder/{txt_id}",
+    response_model=TextFileResponse,
+    summary="텍스트 파일 폴더 제거 (brainId 경로 포함)"
+)
+async def move_textfile_out_of_folder(
+    brain_id: int,
+    txt_id: int
+):
+    # 1) 파일 존재 확인
+    if not sqlite_handler.get_textfile(txt_id):
+        raise HTTPException(status_code=404, detail="텍스트 파일을 찾을 수 없습니다")
 
+    try:
+        # folder_id=null, brain_id는 경로값으로 재설정
+        updated = sqlite_handler.update_textfile(
+            txt_id=txt_id,
+            txt_title=None,
+            txt_path=None,
+            folder_id=None,
+            type=None,
+            brain_id=brain_id      # ← 여기에 brain_id 추가
+        )
+        if not updated:
+            raise HTTPException(status_code=400, detail="폴더 제거 실패")
+        return sqlite_handler.get_textfile(txt_id)
+    except Exception as e:
+        logging.error("텍스트 파일 폴더 제거 오류: %s", e)
+        raise HTTPException(status_code=500, detail="내부 서버 오류")
 
 # ───────── GET BY FOLDER ─────────
 @router.get("/folder/{folder_id}", response_model=List[TextFileResponse],

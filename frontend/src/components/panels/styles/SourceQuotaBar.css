@@ -4,12 +4,7 @@
     gap: 12px;
     padding: 12px 16px;
     background-color: #ffffff;
-<<<<<<< HEAD
     font-size: 15px;
-=======
-    border-top: 1px solid #e0e0e0;
-    font-size: 14px;
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
     color: #333;
 }
 
@@ -17,24 +12,14 @@
     white-space: nowrap;
     display: flex;
     align-items: center;
-<<<<<<< HEAD
     font-weight: 550;
     color: #333;
     font-size: 15px;
-=======
-    font-weight: 500;
-    color: #333;
-    font-size: 14px;
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 }
 
 .quota-progress-wrapper {
     flex: 1;
-<<<<<<< HEAD
     height: 9px;
-=======
-    height: 8px;
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
     background-color: #eee;
     border-radius: 6px;
     overflow: hidden;

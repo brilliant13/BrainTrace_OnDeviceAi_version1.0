@@ -1,5 +1,4 @@
 // src/components/panels/FileView.jsx
-<<<<<<< HEAD
 import React, { useState, useEffect } from 'react'
 import './styles/Common.css'
 import './styles/SourcePanel.css'
@@ -54,15 +53,6 @@ function normalizeApiTree(apiFolders = []) {
     ],
   }))
 }
-=======
-import React, { useState, useEffect } from 'react';
-import './styles/Common.css';
-import './styles/SourcePanel.css';
-import './styles/Scrollbar.css';
-import './styles/FileView.css';
-import FileIcon from './FileIcon'
-import { TiUpload } from "react-icons/ti";
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 
 export default function FileView({
   brainId,
@@ -89,14 +79,15 @@ export default function FileView({
       const api = await listBrainFolders(brainId)
       setFiles(normalizeApiTree(api))
 
-      // 2) brainId 기준 전체 파일 가져오기 → folder_id null 만 루트로
+      // 2) 브레인 기준 전체 파일 조회
       const [pdfs, txts, voices] = await Promise.all([
         getPdfsByBrain(brainId),
         getTextfilesByBrain(brainId),
         getVoicesByBrain(brainId),
       ])
 
-      setRootFiles([
+      // 3) folder_id === null 인 것만 골라 루트 파일로
+      const roots = [
         ...pdfs
           .filter(p => p.folder_id == null)
           .map(p => ({ filetype: 'pdf', id: p.pdf_id, name: p.pdf_title })),
@@ -106,9 +97,9 @@ export default function FileView({
         ...voices
           .filter(v => v.folder_id == null)
           .map(v => ({ filetype: 'voice', id: v.voice_id, name: v.voice_title })),
-      ])
-
+      ]
       setRootFiles(roots)
+
       setRefreshKey(k => k + 1)
     } catch (err) {
       console.error('전체 로드 실패', err)
@@ -135,6 +126,7 @@ export default function FileView({
     e.stopPropagation()
     setIsRootDrag(false)
 
+    // 1) 내부 파일 이동
     const moved = e.dataTransfer.getData('application/json')
     if (moved) {
       const { id, filetype } = JSON.parse(moved)
@@ -142,6 +134,24 @@ export default function FileView({
       return
     }
 
+    // 2) 메모 드래그 (application/json-memo)
+    const memoData = e.dataTransfer.getData('application/json-memo')
+    if (memoData) {
+      const { name, content } = JSON.parse(memoData)
+      // 텍스트 파일로 생성
+      await createTextFile({
+        folder_id: null,
+        brain_id: brainId,
+        type: 'txt',
+        txt_title: name,
+        txt_path: name,
+        content,        // 만약 API가 content 필드를 지원하면
+      })
+      await refresh()
+      return
+    }
+
+    // 3) OS 파일 드롭
     const dropped = Array.from(e.dataTransfer.files)
     try {
       await Promise.all(dropped.map(f => createFileByType(f, null)))
@@ -152,6 +162,7 @@ export default function FileView({
       console.error('루트 파일 생성 실패', err)
     }
   }
+
 
   const handleDropToFolder = async (folderId, dropped) => {
     if (!Array.isArray(dropped)) return
@@ -169,14 +180,23 @@ export default function FileView({
     const toRoot = targetFolderId == null
     try {
       if (filetype === 'pdf') {
-        if (toRoot) await removePdfFromFolder(id)
-        else await movePdfToFolder(targetFolderId, id)
+        if (toRoot) {
+          await removePdfFromFolder(brainId, id)
+        } else {
+          await movePdfToFolder(brainId, targetFolderId, id)
+        }
       } else if (filetype === 'txt') {
-        if (toRoot) await removeTextFileFromFolder(id)
-        else await moveTextfileToFolder(targetFolderId, id)
+        if (toRoot) {
+          await removeTextFileFromFolder(brainId, id)
+        } else {
+          await moveTextfileToFolder(brainId, targetFolderId, id)
+        }
       } else if (filetype === 'voice') {
-        if (toRoot) await removeVoiceFromFolder(id)
-        else await moveVoiceToFolder(targetFolderId, id)
+        if (toRoot) {
+          await removeVoiceFromFolder(brainId, id)
+        } else {
+          await moveVoiceToFolder(brainId, targetFolderId, id)
+        }
       }
       await refresh()
     } catch (e) {
@@ -187,18 +207,11 @@ export default function FileView({
   return (
     <div
       className={`file-explorer modern-explorer${isRootDrag ? ' root-drag-over' : ''}`}
-      onDragEnter={e => {
-        e.preventDefault()
-        setIsRootDrag(true)
-      }}
-      onDragLeave={e => {
-        e.preventDefault()
-        setIsRootDrag(false)
-      }}
+      onDragEnter={e => { e.preventDefault(); setIsRootDrag(true) }}
+      onDragLeave={e => { e.preventDefault(); setIsRootDrag(false) }}
       onDragOver={e => e.preventDefault()}
       onDrop={handleRootDrop}
     >
-<<<<<<< HEAD
       {isRootDrag && (
         <div className="drop-overlay">
           <div className="drop-icon">
@@ -236,53 +249,6 @@ export default function FileView({
             e.dataTransfer.setData(
               'application/json',
               JSON.stringify({ id: f.id, filetype: f.filetype })
-=======
-      {isDragOver && <div className="drop-overlay"><div className="drop-icon"><TiUpload /></div></div>}
-      <div
-        className={`file-item folder-item ${isDragOver ? 'drag-over' : ''}`}
-        style={{ paddingLeft: `${depth * 16}px` }}
-        onClick={toggleFolder}
-        draggable
-        onDragStart={(e) => e.dataTransfer.setData('text/plain', item.name)}
-      >
-        <span className="tree-toggle">{isOpen ? '▼' : '▶ '}</span>
-        <span className="file-name folder-name">{item.name}</span>
-      </div>
-
-      {isOpen && (
-        <div className="tree-children">
-          {item.children?.map((child, index) =>
-            child.type === 'folder' ? (
-              <FolderView
-                key={index}
-                item={child}
-                depth={depth + 1}
-                selectedFile={selectedFile}
-                onSelectFile={onSelectFile}
-                onDropFileToFolder={onDropFileToFolder}
-                onOpenPDF={onOpenPDF}
-                fileMap={fileMap}
-                moveItem={moveItem}
-              />
-            ) : (
-              <div
-                key={index}
-                className={`file-item ${selectedFile === `${item.name}/${child.name}` ? 'selected' : ''}`}
-                style={{ paddingLeft: `${(depth + 1) * 16}px` }}
-                onClick={() => {
-                  const path = `${item.name}/${child.name}`;
-                  onSelectFile(path);
-                  if (child.name.endsWith('.pdf') && fileMap?.[child.name]) {
-                    onOpenPDF(fileMap[child.name]);
-                  }
-                }}
-                draggable
-                onDragStart={(e) => e.dataTransfer.setData('text/plain', child.name)}
-              >
-                <FileIcon fileName={child.name} />
-                <span className="file-name">{child.name}</span>
-              </div>
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
             )
           }
           onClick={() => {
@@ -306,180 +272,3 @@ export default function FileView({
     </div>
   )
 }
-<<<<<<< HEAD
-=======
-
-function FileView({ activeProject, files, setFiles, onOpenPDF, fileMap, setFileMap }) {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isDraggingOverRoot, setIsDraggingOverRoot] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(`brainTrace-files-${activeProject?.id}`);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setFiles(parsed);
-      } catch (err) {
-        console.error('파일 로딩 오류:', err);
-        setFiles(activeProject?.files || []);
-      }
-    } else {
-      setFiles(activeProject?.files || []);
-    }
-  }, [activeProject]);
-
-  const moveItem = (name, targetFolder) => {
-    let movedItem = null;
-    const newFiles = [];
-
-    files.forEach(item => {
-      if (item.name === name) {
-        movedItem = item;
-      } else if (item.type === 'folder') {
-        const filteredChildren = item.children?.filter(child => {
-          if (child.name === name) {
-            movedItem = child;
-            return false;
-          }
-          return true;
-        });
-        item.children = filteredChildren;
-      }
-    });
-
-    if (!movedItem) return;
-
-    const updated = files.map(item => {
-      if (item.name === targetFolder) {
-        return {
-          ...item,
-          children: [...(item.children || []), movedItem],
-        };
-      }
-      return item;
-    }).filter(item => item.name !== name);
-
-    if (!targetFolder) {
-      updated.push(movedItem);
-    }
-
-    setFiles(updated);
-  };
-
-  const handleDropFileToFolder = (folderName, droppedFiles) => {
-    const updated = files.map((folder) => {
-      if (folder.name === folderName) {
-        return {
-          ...folder,
-          children: [
-            ...(folder.children || []),
-            ...droppedFiles.map((file) => ({ name: file.name, type: 'file' })),
-          ],
-        };
-      }
-      return folder;
-    });
-    const newMap = {};
-    droppedFiles.forEach(file => {
-      newMap[file.name] = file;
-    });
-    setFileMap(prev => ({ ...prev, ...newMap }));
-    setFiles(updated);
-    localStorage.setItem(`brainTrace-files-${activeProject?.id}`, JSON.stringify(updated));
-  };
-
-  const handleRootDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingOverRoot(false);
-
-    const draggedName = e.dataTransfer.getData('text/plain');
-    if (draggedName) {
-      moveItem(draggedName, null);
-      return;
-    }
-
-    // ✅ 메모가 드롭된 경우 처리
-    const memoJson = e.dataTransfer.getData('application/json');
-    if (memoJson) {
-      try {
-        const memo = JSON.parse(memoJson);
-        if (memo?.type === 'memo') {
-          const file = new File([memo.content], memo.name, { type: 'text/plain' });
-          const newEntry = { name: memo.name, type: 'file' };
-          setFileMap(prev => ({ ...prev, [memo.name]: file }));
-          setFiles(prev => {
-            const updated = [...prev, newEntry];
-            localStorage.setItem(`brainTrace-files-${activeProject?.id}`, JSON.stringify(updated));
-            return updated;
-          });
-          return;
-        }
-      } catch (err) {
-        console.error('루트로 드롭된 메모 처리 중 오류:', err);
-      }
-    }
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    const newEntries = droppedFiles.map(file => ({ name: file.name, type: 'file' }));
-    const newMap = {};
-    droppedFiles.forEach(file => {
-      newMap[file.name] = file;
-    });
-    setFileMap(prev => ({ ...prev, ...newMap }));
-    setFiles(prev => {
-      const updated = [...prev, ...newEntries];
-      localStorage.setItem(`brainTrace-files-${activeProject?.id}`, JSON.stringify(updated));
-      return updated;
-    });
-  };
-
-  return (
-    <div
-      className={`file-explorer modern-explorer ${isDraggingOverRoot ? 'root-drag-over' : ''}`}
-      onDragEnter={(e) => { e.preventDefault(); setIsDraggingOverRoot(true); }}
-      onDragLeave={(e) => { e.preventDefault(); setIsDraggingOverRoot(false); }}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={handleRootDrop}
-    >
-      {isDraggingOverRoot && <div className="drop-overlay"><div className="drop-icon"><TiUpload /></div></div>}
-      {files.length > 0 ? (
-        files.map((item, index) =>
-          item.type === 'folder' ? (
-            <FolderView
-              key={index}
-              item={item}
-              selectedFile={selectedFile}
-              onSelectFile={setSelectedFile}
-              onDropFileToFolder={handleDropFileToFolder}
-              onOpenPDF={onOpenPDF}
-              fileMap={fileMap}
-              moveItem={moveItem}
-            />
-          ) : (
-            <div
-              key={index}
-              className={`file-item ${selectedFile === item.name ? 'selected' : ''}`}
-              style={{ paddingLeft: `8px` }}
-              onClick={() => {
-                setSelectedFile(item.name);
-                if (item.name.endsWith('.pdf') && fileMap?.[item.name]) {
-                  onOpenPDF(fileMap[item.name]);
-                }
-              }}
-              draggable
-              onDragStart={(e) => e.dataTransfer.setData('text/plain', item.name)}
-            >
-              <FileIcon fileName={item.name} />
-              <span className="file-name">{item.name}</span>
-            </div>
-          )
-        )
-      ) : (
-        <div className="empty-state"><p>파일이 없습니다.</p></div>
-      )}
-    </div>
-  );
-}
-
-export default FileView;
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e

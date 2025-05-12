@@ -13,7 +13,6 @@ import {
     getFolderVoices
 } from '../../../../backend/services/backend';
 
-
 export default function FolderView({
     item,
     depth = 0,

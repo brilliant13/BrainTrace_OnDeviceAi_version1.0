@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+// src/components/panels/ProjectListView.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -7,21 +7,15 @@ import {
     renameBrain,
 } from '../../../../backend/services/backend';
 
-import { iconByKey } from '../iconMap';
-import NewBrainModal from '../NewBrainModal';
-import ConfirmDialog from '../ConfirmDialog';
-=======
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import projectData from '../../data/projectData';
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 import AppHeader from './AppHeader';
 import AppFooter from './AppFooter';
 import { RiDeleteBinLine } from "react-icons/ri";
 import { GoPencil } from "react-icons/go";
+import { iconByKey } from '../iconMap';
+import NewBrainModal from '../NewBrainModal';
+import ConfirmDialog from '../ConfirmDialog';
 import './ProjectListView.css';
 
-<<<<<<< HEAD
 export default function ProjectListView() {
     const nav = useNavigate();
 
@@ -29,26 +23,10 @@ export default function ProjectListView() {
     const [sortOption, setSortOption] = useState('최신 항목');
     const [brains, setBrains] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [menuOpenId, setMenuOpenId] = useState(null);   // ⋮ 팝업
-    const [editingId, setEditingId] = useState(null);    // 제목 편집중 카드 id
+    const [menuOpenId, setMenuOpenId] = useState(null);
+    const [editingId, setEditingId] = useState(null);
     const [tempTitle, setTempTitle] = useState('');
-    const [confirmId, setConfirmId] = useState(null);    // 삭제 확인용
-=======
-function ProjectListView() {
-    const navigate = useNavigate();
-    const [sortOption, setSortOption] = useState('최신 항목');
-
-    const getSortedProjects = () => {
-        const sorted = [...projectData];
-        if (sortOption === '제목') {
-            return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-        } else if (sortOption === '공유 문서함') {
-            return sorted.filter(p => p.shared); // 예시: shared = true인 항목만
-        } else {
-            return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        }
-    };
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
+    const [confirmId, setConfirmId] = useState(null);
 
     /* ───────── DB 요청 ───────── */
     const fetchBrains = () => {
@@ -73,7 +51,7 @@ function ProjectListView() {
                 (a.brain_name || '').localeCompare(b.brain_name || '')
             );
         } else {
-            arr.sort((a, b) => b.brain_id - a.brain_id);;
+            arr.sort((a, b) => b.brain_id - a.brain_id);
         }
         return arr;
     }, [brains, sortOption]);
@@ -94,22 +72,12 @@ function ProjectListView() {
         }
     }
 
-    /* ───────── 화면 ───────── */
     return (
-<<<<<<< HEAD
-        <div className="project-list-page">
-            <AppHeader />
-
-            <div className="project-list-view">
-                <div className="project-header">
-                    <h1 className="page-highlight">당신의 두뇌 저장소..</h1>
-                </div>
-=======
         <div className="project-list-page" style={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <AppHeader />
 
             <div className="project-list-view" style={{ flex: 1 }}>
-                {/* 가운데 정렬된 문구 */}
+                {/* 페이지 헤더 */}
                 <div className="project-header" style={{ textAlign: 'center', margin: '35px 0 16px' }}>
                     <h1 className="page-highlight" style={{ fontSize: '35px' }}>
                         당신의 두뇌 저장소..
@@ -138,73 +106,25 @@ function ProjectListView() {
 
                 {/* 프로젝트 카드 그리드 */}
                 <div className="project-grid">
-                    {getSortedProjects().map(project => {
-                        const Icon = project.icon;
-                        return (
-                            <div
-                                key={project.id}
-                                className="project-card"
-                                onClick={() => navigate(`/project/${project.id}`)}
-                            >
-                                <div className="project-icon" style={{ fontSize: '33px' }}>
-                                    <Icon size={32} />
-                                </div>
-                                <div className="project-name">{project.name}</div>
-                                <div className="project-date">
-                                    {project.createdAt ?? '날짜 없음'}
-                                </div>
-                            </div>
-                        );
-                    })}
-
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
-
-                {/* 정렬 드롭다운 */}
-                <div className="project-header-controls">
-                    <div className="sort-dropdown">
-                        <button className="sort-button">{sortOption} ▼</button>
-                        <div className="sort-menu">
-                            {['최신 항목', '제목'].map(opt => (
-                                <div
-                                    key={opt}
-                                    className="sort-menu-item"
-                                    onClick={() => setSortOption(opt)}
-                                >
-                                    {opt}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* ───────── 카드 그리드 ───────── */}
-                <div className="project-grid">
                     {sorted.map(p => {
                         const Icon = iconByKey[p.icon_key] ?? iconByKey.BsGraphUp;
-
                         return (
                             <div
                                 key={p.brain_id}
                                 className="project-card"
                                 data-id={p.brain_id}
                                 onClick={e => {
-                                    // ⋮ 클릭 시 이동 금지
-                                    // 1) ⋮ 메뉴 클릭 무시
                                     if (e.target.closest('.card-menu')) return;
-
-                                    // 2) **편집 중**이거나 제목을 클릭했을 땐 이동하지 않음
                                     if (editingId === p.brain_id || e.target.closest('.project-name')) return;
-
-                                    // 그 외엔 정상 이동
                                     nav(`/project/${p.brain_id}`);
-                                    //nav(`/project/1`);
                                 }}
                             >
+                                {/* 아이콘 */}
                                 <div className="project-icon">
                                     <Icon size={32} />
                                 </div>
 
-                                {/* ─── 제목 (인라인 편집) ─── */}
+                                {/* 제목 (인라인 편집) */}
                                 <div
                                     className="project-name"
                                     contentEditable={editingId === p.brain_id}
@@ -220,53 +140,42 @@ function ProjectListView() {
                                             handleSaveTitle(p);
                                         }
                                     }}
-                                    onBlur={() =>
-                                        editingId === p.brain_id && handleSaveTitle(p)
-                                    }
+                                    onBlur={() => editingId === p.brain_id && handleSaveTitle(p)}
                                     style={{ cursor: editingId ? 'text' : 'pointer' }}
                                 >
                                     {p.brain_name}
                                 </div>
 
+                                {/* 생성일자 */}
                                 <div className="project-date">
                                     {p.created_at ?? '날짜 없음'}
                                 </div>
 
-                                {/* ─── ⋮ 메뉴 ─── */}
+                                {/* ⋮ 메뉴 */}
                                 <div
                                     className="card-menu"
                                     onClick={e => {
                                         e.stopPropagation();
-                                        setMenuOpenId(prev =>
-                                            prev === p.brain_id ? null : p.brain_id
-                                        );
+                                        setMenuOpenId(prev => prev === p.brain_id ? null : p.brain_id);
                                     }}
                                 >
                                     ⋮
                                     {menuOpenId === p.brain_id && (
-                                        <div
-                                            className="card-menu-popup"
-                                            onClick={e => e.stopPropagation()}
-                                        >
-                                            {/* 제목 수정 진입 */}
+                                        <div className="card-menu-popup" onClick={e => e.stopPropagation()}>
                                             <div
                                                 className="popup-item"
                                                 onClick={() => {
                                                     setEditingId(p.brain_id);
                                                     setTempTitle(p.brain_name);
                                                     setMenuOpenId(null);
-                                                    // ── 포커스 & 커서를 끝으로 이동 ──
                                                     setTimeout(() => {
-                                                        const el = document.querySelector(
-                                                            `.project-card[data-id="${p.brain_id}"] .project-name`
-                                                        );
+                                                        const el = document.querySelector(`.project-card[data-id="${p.brain_id}"] .project-name`);
                                                         if (el) {
-                                                            el.focus();                       // 먼저 포커스
-                                                            // ▼ 커서를 텍스트 끝으로 이동
+                                                            el.focus();
                                                             const sel = window.getSelection();
                                                             const range = document.createRange();
                                                             range.selectNodeContents(el);
-                                                            range.collapse(false);            // false ⇒ 끝 위치
+                                                            range.collapse(false);
                                                             sel.removeAllRanges();
                                                             sel.addRange(range);
                                                         }
@@ -276,8 +185,6 @@ function ProjectListView() {
                                                 <GoPencil size={14} style={{ marginRight: 4 }} />
                                                 제목 수정
                                             </div>
-
-                                            {/* 삭제 */}
                                             <div
                                                 className="popup-item"
                                                 onClick={() => {
@@ -295,17 +202,13 @@ function ProjectListView() {
                         );
                     })}
 
-                    {/* ➕ 카드 */}
-                    <div
-                        className="project-card add-card"
-                        onClick={() => setShowModal(true)}
-                    >
+                    {/* ➕ 새 프로젝트 카드 */}
+                    <div className="project-card add-card" onClick={() => setShowModal(true)}>
                         ➕ 새 프로젝트
                     </div>
                 </div>
             </div>
 
-<<<<<<< HEAD
             <AppFooter />
 
             {/* 새 브레인 모달 */}
@@ -316,7 +219,7 @@ function ProjectListView() {
                 />
             )}
 
-            {/* 삭제 확인 모달 */}
+            {/* 삭제 확인 다이얼로그 */}
             {confirmId !== null && (
                 <ConfirmDialog
                     message="이 프로젝트를 삭제하시겠습니까?"
@@ -332,22 +235,6 @@ function ProjectListView() {
                     }}
                 />
             )}
-=======
-            <footer
-                className="project-footer"
-                style={{
-                    padding: '30px 10px',
-                    textAlign: 'center',
-                    backgroundColor: '#e5e5e5', // 밝은 회색 배경
-                    color: '#333',              // 짙은 회색 텍스트
-                    fontSize: '14px'
-                }}
-            >
-                © 2025 당신의 두뇌 저장소. All rights reserved.
-            </footer>
-
-
->>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
         </div>
     );
 }

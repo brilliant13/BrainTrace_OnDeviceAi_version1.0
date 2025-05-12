@@ -48,8 +48,15 @@ export const createPdf = body => api.post('/pdfs', body).then(r => r.data);
 export const getPdf = id => api.get(`/pdfs/${id}`).then(r => r.data);
 export const updatePdf = (id, body) => api.put(`/pdfs/${id}`, body).then(r => r.data);
 export const deletePdf = id => api.delete(`/pdfs/${id}`);
-export const movePdfToFolder = (targetFolderId, pdfId) => api.put(`/pdfs/changeFolder/${targetFolderId}/${pdfId}`).then(r => r.data);
-export const removePdfFromFolder = pdfId => api.put(`/pdfs/MoveOutFolder/${pdfId}`).then(r => r.data);
+export const movePdfToFolder = (brainId, targetFolderId, pdfId) =>
+    api.put(
+        `/pdfs/brain/${brainId}/changeFolder/${targetFolderId}/${pdfId}`
+    ).then(r => r.data);
+
+export const removePdfFromFolder = (brainId, pdfId) =>
+    api.put(
+        `/pdfs/brain/${brainId}/MoveOutFolder/${pdfId}`
+    ).then(r => r.data);
 export const getPdfsByBrain = brainId => api.get(`/pdfs/brain/${brainId}`).then(r => r.data)
 
 /* ───────── TEXT FILES ───────── */
@@ -57,8 +64,15 @@ export const createTextFile = body => api.post('/textfiles', body).then(r => r.d
 export const getTextFile = id => api.get(`/textfiles/${id}`).then(r => r.data);
 export const updateTextFile = (id, body) => api.put(`/textfiles/${id}`, body).then(r => r.data);
 export const deleteTextFile = id => api.delete(`/textfiles/${id}`);
-export const moveTextfileToFolder = (targetFolderId, txtId) => api.put(`/textfiles/changeFolder/${targetFolderId}/${txtId}`).then(r => r.data);
-export const removeTextFileFromFolder = txtId => api.put(`/textfiles/MoveOutFolder/${txtId}`).then(r => r.data);
+export const moveTextfileToFolder = (brainId, targetFolderId, txtId) =>
+    api.put(
+        `/textfiles/brain/${brainId}/changeFolder/${targetFolderId}/${txtId}`
+    ).then(r => r.data);
+
+export const removeTextFileFromFolder = (brainId, txtId) =>
+    api.put(
+        `/textfiles/brain/${brainId}/MoveOutFolder/${txtId}`
+    ).then(r => r.data);
 export const getTextfilesByBrain = brainId => api.get(`/textfiles/brain/${brainId}`).then(r => r.data)
 
 /* ───────── VOICE FILES ───────── */
@@ -66,8 +80,15 @@ export const createVoice = body => api.post('/voices', body).then(r => r.data);
 export const getVoice = id => api.get(`/voices/${id}`).then(r => r.data);
 export const updateVoice = (id, body) => api.put(`/voices/${id}`, body).then(r => r.data);
 export const deleteVoice = id => api.delete(`/voices/${id}`);
-export const moveVoiceToFolder = (targetFolderId, voiceId) => api.put(`/voices/changeFolder/${targetFolderId}/${voiceId}`).then(r => r.data);
-export const removeVoiceFromFolder = voiceId => api.put(`/voices/MoveOutFolder/${voiceId}`).then(r => r.data);
+export const moveVoiceToFolder = (brainId, targetFolderId, voiceId) =>
+    api.put(
+        `/voices/brain/${brainId}/changeFolder/${targetFolderId}/${voiceId}`
+    ).then(r => r.data);
+
+export const removeVoiceFromFolder = (brainId, voiceId) =>
+    api.put(
+        `/voices/brain/${brainId}/MoveOutFolder/${voiceId}`
+    ).then(r => r.data);
 export const getVoicesByBrain = brainId => api.get(`/voices/brain/${brainId}`).then(r => r.data)
 
 // ───────── DEFAULT (루트) ───────── //

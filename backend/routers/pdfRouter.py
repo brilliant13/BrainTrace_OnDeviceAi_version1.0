@@ -114,29 +114,29 @@ async def delete_pdf(pdf_id: int):
         raise HTTPException(status_code=404, detail="PDF를 찾을 수 없습니다")
 
 # ───────── MOVE FOLDER ─────────
-@router.put("/changeFolder/{target_folder_id}/{pdf_id}", response_model=PdfResponse,
+@router.put("/brain/{brain_id}/changeFolder/{target_folder_id}/{pdf_id}", response_model=PdfResponse,
             summary="PDF 파일 폴더 이동")
-async def change_pdf_folder(target_folder_id: int, pdf_id: int):
+async def change_pdf_folder(brain_id: int,target_folder_id: int, pdf_id: int):
     if not sqlite_handler.get_pdf(pdf_id):
         raise HTTPException(status_code=404, detail="PDF를 찾을 수 없습니다")
     if not sqlite_handler.get_folder(target_folder_id):
         raise HTTPException(status_code=404, detail="대상 폴더를 찾을 수 없습니다")
 
     try:
-        sqlite_handler.update_pdf(pdf_id, None, None, target_folder_id, None, None)
+        sqlite_handler.update_pdf(pdf_id, None, None, target_folder_id, None, brain_id=brain_id )
         return sqlite_handler.get_pdf(pdf_id)
     except Exception as e:
         logging.error("PDF 폴더 변경 오류: %s", e)
         raise HTTPException(status_code=500, detail="내부 서버 오류")
 
 # ───────── REMOVE FROM FOLDER ─────────
-@router.put("/MoveOutFolder/{pdf_id}", response_model=PdfResponse,
+@router.put("/brain/{brain_id}/MoveOutFolder/{pdf_id}", response_model=PdfResponse,
             summary="PDF 파일 폴더 제거")
-async def move_pdf_out_of_folder(pdf_id: int):
+async def move_pdf_out_of_folder(brain_id: int,pdf_id: int):
     if not sqlite_handler.get_pdf(pdf_id):
         raise HTTPException(status_code=404, detail="PDF를 찾을 수 없습니다")
     try:
-        sqlite_handler.update_pdf(pdf_id, None, None, None, None, None)
+        sqlite_handler.update_pdf(pdf_id, None, None, None, None,brain_id=brain_id)
         return sqlite_handler.get_pdf(pdf_id)
     except Exception as e:
         logging.error("PDF 폴더 제거 오류: %s", e)
