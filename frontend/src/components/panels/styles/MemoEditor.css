@@ -22,7 +22,8 @@
     padding-bottom: 8px;
     transition: border-color 0.2s ease;
     color: black;
-    background-color: white;
+    <<<<<<< HEAD background-color: white;
+    =======>>>>>>>bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 }
 
 /* 본문 에디터 */

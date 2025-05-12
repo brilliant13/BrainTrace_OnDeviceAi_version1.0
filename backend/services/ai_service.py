@@ -1,5 +1,5 @@
 import logging
-import openai
+from openai import OpenAI           # OpenAI 클라이언트 임포트
 import json
 from .chunk_service import chunk_text
 
@@ -14,7 +14,9 @@ if not openai_api_key:
     raise ValueError("❌ OpenAI API Key가 설정되지 않았습니다. .env 파일을 확인하세요.")
 
 # ✅ OpenAI 클라이언트 설정 (노드/엣지 추출에 활용)
-client = openai.OpenAI(api_key=openai_api_key)
+client = OpenAI(api_key=openai_api_key)
+
+
 
 def extract_graph_components(text: str, source_id: str):
     """
@@ -49,39 +51,40 @@ def extract_graph_components(text: str, source_id: str):
     return all_nodes, all_edges
 
 def _extract_from_chunk(chunk: str, source_id: str):
-    """개별 청크에서 노드와 엣지 정보를 추출합니다."""
-    prompt = (
-    "다음 텍스트를 분석해서 노드와 엣지 정보를 추출해줘. "
-    "노드는 { \"label\": string, \"name\": string, \"description\": string } 형식의 객체 배열, "
-    "엣지는 { \"source\": string, \"target\": string, \"relation\": string } 형식의 객체 배열로 출력해줘. "
-    "여기서 source와 target은 노드의 name을 참조해야 하고, source_id는 사용하면 안 돼. "
-    "출력 결과는 반드시 아래 JSON 형식을 준수해야 해:\n"
-    "{\n"
-    '  "nodes": [ ... ],\n'
-    '  "edges": [ ... ]\n'
-    "}\n"
-    "문장에 있는 모든 개념을 노드로 만들어줘"
-    "각 노드의 description은 해당 노드를 간단히 설명하는 문장이어야 해. "
-    "만약 텍스트 내에 하나의 긴 description에 여러 개념이 섞여 있다면, 반드시 개념 단위로 나누어 여러 노드를 생성해줘. "
-    "description은 하나의 개념에 대한 설명만 들어가야 해"
-    "노드의 label과 name은 한글로 표현하고, 불필요한 내용이나 텍스트에 없는 정보는 추가하지 말아줘. "
-    "노드와 엣지 정보가 추출되지 않으면 빈 배열을 출력해줘.\n\n"
-    "json 형식 외에는 출력 금지"
-    f"텍스트: {chunk}"
-    )
+    # """개별 청크에서 노드와 엣지 정보를 추출합니다."""
+    # prompt = (
+    # "다음 텍스트를 분석해서 노드와 엣지 정보를 추출해줘. "
+    # "노드는 { \"label\": string, \"name\": string, \"description\": string } 형식의 객체 배열, "
+    # "엣지는 { \"source\": string, \"target\": string, \"relation\": string } 형식의 객체 배열로 출력해줘. "
+    # "여기서 source와 target은 노드의 name을 참조해야 하고, source_id는 사용하면 안 돼. "
+    # "출력 결과는 반드시 아래 JSON 형식을 준수해야 해:\n"
+    # "{\n"
+    # '  "nodes": [ ... ],\n'
+    # '  "edges": [ ... ]\n'
+    # "}\n"
+    # "문장에 있는 모든 개념을 노드로 만들어줘"
+    # "각 노드의 description은 해당 노드를 간단히 설명하는 문장이어야 해. "
+    # "만약 텍스트 내에 하나의 긴 description에 여러 개념이 섞여 있다면, 반드시 개념 단위로 나누어 여러 노드를 생성해줘. "
+    # "description은 하나의 개념에 대한 설명만 들어가야 해"
+    # "노드의 label과 name은 한글로 표현하고, 불필요한 내용이나 텍스트에 없는 정보는 추가하지 말아줘. "
+    # "노드와 엣지 정보가 추출되지 않으면 빈 배열을 출력해줘.\n\n"
+    # "json 형식 외에는 출력 금지"
+    # f"텍스트: {chunk}"
+    # )
     try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "너는 텍스트에서 구조화된 노드와 엣지를 추출하는 전문가야. 엣지의 source와 target은 반드시 노드의 name을 참조해야 해."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=5000,
-            temperature=0.3
-        )
-        result_text = response.choices[0].message.content.strip()
-        data = json.loads(result_text)
-        
+        # response = client.chat.completions.create(
+        #     model="gpt-4",
+        #     messages=[
+        #         {"role": "system", "content": "너는 텍스트에서 구조화된 노드와 엣지를 추출하는 전문가야. 엣지의 source와 target은 반드시 노드의 name을 참조해야 해."},
+        #         {"role": "user", "content": prompt}
+        #     ],
+        #     max_tokens=5000,
+        #     temperature=0.3
+        # )
+        response = get_response(chunk)
+        print("response: ", response)
+        data = json.loads(response)
+        print("data: ", data)
         # 각 노드에 source_id 추가 및 구조 검증
         valid_nodes = []
         for node in data.get("nodes", []):
@@ -165,16 +168,18 @@ def generate_answer(schema_text: str, question: str) -> str:
         "참고한 노드는 노드의 이름만 나열해줘"
     )
     try:
-        gpt_response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "너는 Neo4j 스키마 정보를 기반으로 질문에 답하는 AI 어시스턴트야. 항상 참고한 노드 정보도 함께 제공해야 해."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=512,
-            temperature=0.6
-        )
-        final_answer = gpt_response.choices[0].message.content.strip()
+    #     gpt_response = client.chat.completions.create(
+    #         model="gpt-4",
+    #         messages=[
+    #             {"role": "system", "content": "너는 Neo4j 스키마 정보를 기반으로 질문에 답하는 AI 어시스턴트야. 항상 참고한 노드 정보도 함께 제공해야 해."},
+    #             {"role": "user", "content": prompt}
+    #         ],
+    #         max_tokens=512,
+    #         temperature=0.6
+    #     )
+        response = get_answer(schema_text, question)
+        print("response: ", response)
+        final_answer = response
         return final_answer
     except Exception as e:
         logging.error("GPT 응답 오류: %s", str(e))
@@ -188,10 +193,10 @@ def generate_schema_text(nodes, related_nodes, relationships) -> str:
     노드-관계-노드 형식의 스키마 텍스트를 생성합니다.
     """
     try:
-        logging.info("스키마 텍스트 생성 시작: %d개 노드, %d개 관련 노드, %d개 관계",
-                     len(nodes) if isinstance(nodes, list) else 0,
-                     len(related_nodes) if isinstance(related_nodes, list) else 0,
-                     len(relationships) if isinstance(relationships, list) else 0)
+        logging.info("generating schema text: %d개 노드, %d개 관련 노드, %d개 관계",
+                    len(nodes) if isinstance(nodes, list) else 0,
+                    len(related_nodes) if isinstance(related_nodes, list) else 0,
+                    len(relationships) if isinstance(relationships, list) else 0)
 
         def filter_node(node):
             try:

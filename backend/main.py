@@ -1,33 +1,40 @@
+# src/main.py
 from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
 import os
 import signal
 import logging
+import sqlite3
 import uvicorn
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware  # CORS 미들웨어 import 추가
-from neo4j_db.utils import run_neo4j  # ✅ Neo4j 실행 함수
-from routers import brainGraph
-from routers import userRouter  # 사용자 관리 라우터 추가
-from routers import brainRouter  # 브레인 관리 라우터 추가
-from routers import folderRouter  # 폴더 관리 라우터 추가
-from routers import memoRouter  # 메모 관리 라우터 추가
-from routers import pdfRouter  # PDF 관리 라우터 추가
-from routers import voiceRouter  # 음성 파일 관리 라우터 추가
-from routers import textFileRouter  # 텍스트 파일 관리 라우터 추가
-# 로깅 설정
+
+from neo4j_db.utils import run_neo4j
+from sqlite_db.sqlite_handler import SQLiteHandler
+
+# 기존 라우터
+from routers import brainGraph, userRouter, brainRouter, folderRouter, memoRouter, pdfRouter, textFileRouter, voiceRouter
+# 새로 추가할 파일/텍스트/음성 라우터
+
+# ─── 로깅 설정 ─────────────────────────────────────
 logging.basicConfig(
-    level=logging.INFO, 
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     force=True
 )
-
-# 로깅 필터 설정 (Uvicorn 로그 레벨 조정)
 logging.getLogger("uvicorn").setLevel(logging.INFO)
 logging.getLogger("uvicorn.access").setLevel(logging.INFO)
 
+# ─── DB 핸들러 & 전역 변수 ──────────────────────────
+sqlite_handler = SQLiteHandler()
+neo4j_process = None
+
+# ─── 앱 수명 주기(lifespan) ──────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global neo4j_process
+    # 1) SQLite 스키마 초기화
+    sqlite_handler._init_db()
+    # 2) Neo4j 실행
     try:
         neo4j_process = run_neo4j()
         if neo4j_process:
@@ -35,49 +42,51 @@ async def lifespan(app: FastAPI):
         else:
             logging.error("❌ Neo4j 실행 실패")
     except Exception as e:
-        logging.error("Neo4j 실행 중 오류: %s", str(e))
+        logging.error("Neo4j 실행 중 오류: %s", e)
     yield
+    # 3) 종료 시 Neo4j 정리
     if neo4j_process:
         logging.info("🛑 Neo4j 프로세스를 종료합니다...")
         try:
-            if os.name == "nt":  # Windows
+            if os.name == "nt":
                 neo4j_process.send_signal(signal.CTRL_BREAK_EVENT)
             else:
                 neo4j_process.terminate()
             neo4j_process.wait(timeout=10)
             logging.info("✅ Neo4j 정상 종료 완료")
         except Exception as e:
-            logging.error("Neo4j 종료 중 오류 발생: %s", str(e))
+            logging.error("Neo4j 종료 중 오류 발생: %s", e)
 
+# ─── FastAPI 앱 생성 ─────────────────────────────────
 app = FastAPI(
-    title="BrainTrace API", 
+    title="BrainTrace API",
     description="지식 그래프 기반 질의응답 시스템 API",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan
 )
-# CORS 미들웨어 추가 - 이 부분을 추가
+
+# ─── CORS 설정 ──────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # 프론트엔드 주소
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["*"],  # 모든 HTTP 메서드 허용
-    allow_headers=["*"],  # 모든 헤더 허용
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-# API 라우터를 등록합니다.
-app.include_router(brainGraph.router)
-app.include_router(userRouter.router)  # 사용자 관리 라우터 등록
-app.include_router(brainRouter.router)  # 브레인 관리 라우터 등록
-app.include_router(folderRouter.router)  # 폴더 관리 라우터 등록
-app.include_router(memoRouter.router)  # 메모 관리 라우터 등록
-app.include_router(pdfRouter.router)  # PDF 관리 라우터 등록
-app.include_router(voiceRouter.router)  # 음성 파일 관리 라우터 등록
-app.include_router(textFileRouter.router)  # 텍스트 파일 관리 라우터 등록
-# Neo4j 프로세스 객체
-neo4j_process = None
 
-# ✅ FastAPI 앱 실행
+# ─── 라우터 등록 ────────────────────────────────────
+app.include_router(brainGraph.router)
+app.include_router(userRouter.router)
+app.include_router(brainRouter.router)
+app.include_router(folderRouter.router)
+app.include_router(memoRouter.router)
+app.include_router(pdfRouter.router)        
+app.include_router(textFileRouter.router)   
+app.include_router(voiceRouter.router)      
+
+# ─── 서버 실행 ──────────────────────────────────────
 if __name__ == "__main__":
     logging.info("🚀 FastAPI 서버 실행 중... http://127.0.0.1:8000")
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False, log_level="info")

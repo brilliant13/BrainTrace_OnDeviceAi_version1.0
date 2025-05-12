@@ -14,7 +14,9 @@ import ChatPanel from '../panels/ChatPanel';
 import MemoPanel from '../panels/MemoPanel';
 
 import { useParams, useNavigate } from 'react-router-dom';
-import projectData from '../../data/projectData';
+/* API ─ backend */
+import { listUserBrains } from '../../../../backend/services/backend'
+
 
 // 리사이즈 핸들 컴포넌트
 function ResizeHandle() {
@@ -28,14 +30,7 @@ function ResizeHandle() {
 function MainLayout() {
   const { projectId } = useParams();
   const navigate = useNavigate();
-
-  // 존재하는 프로젝트인지 확인
-  const selectedProject = projectData.find(p => p.id === Number(projectId));
-  useEffect(() => {
-    if (!selectedProject) {
-      navigate('/'); // 잘못된 projectId일 경우 홈으로 리디렉션
-    }
-  }, [selectedProject, navigate]);
+  const [hasProject, setHasProject] = useState(true);
 
   const DEFAULT_SOURCE_PANEL_SIZE = 16;
   const DEFAULT_CHAT_PANEL_SIZE = 50;  // 추가된 기본 채팅 패널 크기
@@ -82,6 +77,24 @@ function MainLayout() {
       setMemoPanelSize(size);
     }
   };
+
+  // 소스 패널 크기 변경 효과
+  useEffect(() => {
+    if (!projectId) return;                   // 루트 페이지일 때는 무시
+
+    const uid = Number(localStorage.getItem('userId'));
+    if (!uid) { navigate('/'); return; }
+
+    // 사용자 브레인 목록을 불러와서 해당 id 가 없으면 홈으로
+    listUserBrains(uid)
+      .then(list => {
+        const exist = list.some(b => b.brain_id === Number(projectId));
+        if (!exist) navigate('/');
+        setHasProject(exist);
+      })
+      .catch(() => navigate('/'));
+  }, [projectId, navigate]);
+
 
   // 소스 패널 크기 변경 효과
   useEffect(() => {

@@ -5,8 +5,7 @@
   flex-direction: column;
   height: 100%;
   padding: 16px;
-  /* background-color: #fff; */
-  /* background:  #fafafa; */
+  background-color: #fff;
   /* 추가: 전체 배경 흰색 */
 }
 
@@ -14,8 +13,7 @@
 .graph-area {
   height: 300px;
   position: relative;
-  /* background-color: white; */
-  /* background-color: #fafafa; */
+  background-color: white;
   border-radius: 6px;
   margin-bottom: 16px;
   overflow: hidden;
