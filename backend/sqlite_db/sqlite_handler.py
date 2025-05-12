@@ -1,4 +1,4 @@
-import sqlite3, json, logging, os, hashlib,datetime        
+import sqlite3, json, logging, os, hashlib,datetime
 from typing import List, Dict, Any, Optional
 
 
@@ -996,15 +996,20 @@ class SQLiteHandler:
             return []
 
     # PDF 관련 메서드
-    def create_pdf(self, pdf_title: str, pdf_path: str, folder_id: Optional[int] = None, type: Optional[str] = None) -> dict:
+    def create_pdf(self, pdf_title: str, pdf_path: str, folder_id: Optional[int] = None, type: Optional[str] = None, brain_id: Optional[int] = None) -> dict:
         """새 PDF 생성"""
         try:
-            # folder_id가 주어진 경우에만 폴더 존재 여부 확인
+            # 1) folder_id 유효성 검사
             if folder_id is not None:
                 folder = self.get_folder(folder_id)
                 if not folder:
                     raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
-                    
+
+            # 2) brain_id 유효성 검사
+            if brain_id is not None:
+                brain = self.get_brain(brain_id)
+                if not brain:
+                    raise ValueError(f"존재하지 않는 Brain ID: {brain_id}")
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
@@ -1012,8 +1017,8 @@ class SQLiteHandler:
             pdf_id = self._get_next_id()
             
             cursor.execute(
-                "INSERT INTO Pdf (pdf_id, pdf_title, pdf_path, folder_id, type) VALUES (?, ?, ?, ?, ?)",
-                (pdf_id, pdf_title, pdf_path, folder_id, type)
+                "INSERT INTO Pdf (pdf_id, pdf_title, pdf_path, folder_id, type, brain_id) VALUES (?, ?, ?, ?, ?, ?)",
+                (pdf_id, pdf_title, pdf_path, folder_id, type, brain_id)
             )
             
             # 현재 날짜 가져오기 (자동 생성됨)
@@ -1023,15 +1028,19 @@ class SQLiteHandler:
             conn.commit()
             conn.close()
             
-            logging.info("PDF 생성 완료: pdf_id=%s, pdf_title=%s, folder_id=%s", 
-                        pdf_id, pdf_title, folder_id)
+            logging.info(
+                "PDF 생성 완료: pdf_id=%s, pdf_title=%s, folder_id=%s, brain_id=%s",
+                pdf_id, pdf_title, folder_id, brain_id
+            )
+            
             return {
                 "pdf_id": pdf_id, 
                 "pdf_title": pdf_title, 
                 "pdf_path": pdf_path,
                 "pdf_date": pdf_date,
                 "type": type,
-                "folder_id": folder_id
+                "folder_id": folder_id,
+                "brain_id":  brain_id
             }
         except ValueError as e:
             logging.error("PDF 생성 실패: %s", str(e))
@@ -1047,7 +1056,7 @@ class SQLiteHandler:
             cursor = conn.cursor()
 
             cursor.execute("""
-                SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id
+                SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id, brain_id
                 FROM Pdf
                 WHERE folder_id = ?
                 ORDER BY pdf_date DESC
@@ -1062,7 +1071,8 @@ class SQLiteHandler:
                     "pdf_path": row[2],
                     "pdf_date": row[3],
                     "type": row[4],
-                    "folder_id": row[5]
+                    "folder_id": row[5],
+                    "brain_id":  row[6],
                 }
                 for row in rows
 
@@ -1093,20 +1103,37 @@ class SQLiteHandler:
         except Exception as e:
             logging.error("PDF 삭제 오류: %s", str(e))
             raise RuntimeError(f"PDF 삭제 오류: {str(e)}")
+        
+    def get_pdfs_by_brain(self, brain_id: int) -> List[dict]:
+        
+        conn   = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id, brain_id "
+            "FROM Pdf WHERE brain_id = ? AND folder_id IS NULL ORDER BY pdf_date DESC",
+            (brain_id,)
+        )
+        rows = cursor.fetchall()
+        conn.close()
+        return [ dict(zip([c[0] for c in cursor.description], r)) for r in rows ]
 
-    def update_pdf(self, pdf_id: int, pdf_title: str = None, pdf_path: str = None, folder_id: Optional[int] = None, type: Optional[str] = None) -> bool:
+    def update_pdf(self, pdf_id: int, pdf_title: str = None, pdf_path: str = None, folder_id: Optional[int] = None, type: Optional[str] = None, brain_id: Optional[int] = None) -> bool:
         """PDF 정보 업데이트"""
         try:
-            # PDF가 존재하는지 확인
+            # 1) 대상 PDF 존재 확인
             pdf = self.get_pdf(pdf_id)
             if not pdf:
                 raise ValueError(f"존재하지 않는 PDF ID: {pdf_id}")
-            
-            # folder_id가 주어진 경우에만 폴더 존재 여부 확인
+
+            # 2) folder_id 검사
             if folder_id is not None and folder_id != "null":
-                folder = self.get_folder(folder_id)
-                if not folder:
+                if not self.get_folder(folder_id):
                     raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+
+            # 3) brain_id 검사
+            if brain_id is not None and brain_id != "null":
+                if not self.get_brain(brain_id):
+                    raise ValueError(f"존재하지 않는 Brain ID: {brain_id}")
             
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -1132,11 +1159,19 @@ class SQLiteHandler:
                 update_fields.append("folder_id = NULL")
             elif folder_id is not None:
                 update_fields.append("folder_id = ?")
-                params.append(folder_id)
-                
+                params.append(folder_id)            
             if not update_fields:
                 return False  # 업데이트할 내용 없음
             
+            # brain_id 처리
+            if brain_id is None or brain_id == "null":
+                update_fields.append("brain_id = NULL")
+            else:
+                update_fields.append("brain_id = ?"); params.append(brain_id)
+            if not update_fields:
+                conn.close()
+                return False
+
             # 날짜 자동 업데이트
             update_fields.append("pdf_date = CURRENT_TIMESTAMP")
             
@@ -1170,7 +1205,7 @@ class SQLiteHandler:
             cursor = conn.cursor()
             
             cursor.execute(
-                "SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id FROM Pdf WHERE pdf_id = ?", 
+                "SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id, brain_id FROM Pdf WHERE pdf_id = ?", 
                 (pdf_id,)
             )
             pdf = cursor.fetchone()
@@ -1184,7 +1219,8 @@ class SQLiteHandler:
                     "pdf_path": pdf[2],
                     "pdf_date": pdf[3],
                     "type": pdf[4],
-                    "folder_id": pdf[5]
+                    "folder_id": pdf[5],
+                    "brain_id":  pdf[6],
                 }
             else:
                 return None
@@ -1199,7 +1235,7 @@ class SQLiteHandler:
             cursor = conn.cursor()
             
             cursor.execute(
-                "SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id FROM Pdf WHERE folder_id = ? ORDER BY pdf_date DESC", 
+                "SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id, brain_id FROM Pdf WHERE folder_id = ? ORDER BY pdf_date DESC", 
                 (folder_id,)
             )
             pdfs = cursor.fetchall()
@@ -1213,7 +1249,8 @@ class SQLiteHandler:
                     "pdf_path": pdf[2],
                     "pdf_date": pdf[3],
                     "type": pdf[4],
-                    "folder_id": pdf[5]
+                    "folder_id": pdf[5],
+                    "brain_id":  pdf[6],
                 } 
                 for pdf in pdfs
             ]
@@ -1222,13 +1259,17 @@ class SQLiteHandler:
             return []
 
     # Voice 관련 메서드
-    def create_voice(self, voice_title: str, voice_path: str, folder_id: Optional[int] = None, type: Optional[str] = None) -> dict:
+    def create_voice(self, voice_title: str, voice_path: str, folder_id: Optional[int] = None, type: Optional[str] = None, brain_id: Optional[int] = None) -> dict:
         """새 음성 파일 생성"""
         try:
+            # 1) folder_id 검사
             if folder_id is not None:
-                folder = self.get_folder(folder_id)
-                if not folder:
+                if not self.get_folder(folder_id):
                     raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+            # 2) brain_id 검사
+            if brain_id is not None:
+                if not self.get_brain(brain_id):
+                    raise ValueError(f"존재하지 않는 Brain ID: {brain_id}")
                     
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -1236,8 +1277,8 @@ class SQLiteHandler:
             voice_id = self._get_next_id()
             
             cursor.execute(
-                "INSERT INTO Voice (voice_id, voice_title, voice_path, folder_id, type) VALUES (?, ?, ?, ?, ?)",
-                (voice_id, voice_title, voice_path, folder_id, type)
+                "INSERT INTO Voice (voice_id, voice_title, voice_path, folder_id, type, brain_id) VALUES (?, ?, ?, ?, ?, ?)",
+                (voice_id, voice_title, voice_path, folder_id, type, brain_id)
             )
             
             cursor.execute("SELECT voice_date FROM Voice WHERE voice_id = ?", (voice_id,))
@@ -1246,15 +1287,16 @@ class SQLiteHandler:
             conn.commit()
             conn.close()
             
-            logging.info("음성 파일 생성 완료: voice_id=%s, voice_title=%s, folder_id=%s", 
-                        voice_id, voice_title, folder_id)
+            logging.info("음성 파일 생성 완료: voice_id=%s, voice_title=%s, folder_id=%s, brain_id=%s", 
+                        voice_id, voice_title, folder_id, brain_id)
             return {
                 "voice_id": voice_id, 
                 "voice_title": voice_title, 
                 "voice_path": voice_path,
                 "voice_date": voice_date,
                 "type": type,
-                "folder_id": folder_id
+                "folder_id": folder_id,
+                "brain_id": brain_id
             }
         except ValueError as e:
             logging.error("음성 파일 생성 실패: %s", str(e))
@@ -1262,6 +1304,25 @@ class SQLiteHandler:
         except Exception as e:
             logging.error("음성 파일 생성 오류: %s", str(e))
             raise RuntimeError(f"음성 파일 생성 오류: {str(e)}")
+    
+    def get_voices_by_brain(self, brain_id: int) -> List[dict]:
+        conn   = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id, brain_id
+              FROM Voice
+             WHERE brain_id = ? AND folder_id IS NULL
+          ORDER BY voice_date DESC
+            """,
+            (brain_id,)
+        )
+        rows = cursor.fetchall()
+        conn.close()
+        return [
+            dict(zip([c[0] for c in cursor.description], r))
+            for r in rows
+        ]
         
     def get_folder_voices(self, folder_id: int) -> List[dict]:
         """폴더에 속한 음성 파일 목록 조회"""
@@ -1270,7 +1331,7 @@ class SQLiteHandler:
             cursor = conn.cursor()
         
             cursor.execute(
-                "SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id FROM Voice WHERE folder_id = ? ORDER BY voice_date DESC", 
+                "SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id, brain_id FROM Voice WHERE folder_id = ? ORDER BY voice_date DESC", 
                 (folder_id,)
             )
             voices = cursor.fetchall()
@@ -1284,16 +1345,14 @@ class SQLiteHandler:
                     "voice_path": row[2],
                     "voice_date": row[3],
                     "type": row[4],
-                    "folder_id": row[5]
+                    "folder_id": row[5],
+                    "brain_id": row[6],
                 }
                 for row in voices
             ]
         except Exception as e:
             logging.error("폴더 음성 파일 목록 조회 오류: %s", str(e))
             return []
-
-
-
 
     def delete_voice(self, voice_id: int) -> bool:
         """음성 파일 삭제"""
@@ -1317,17 +1376,23 @@ class SQLiteHandler:
             logging.error("음성 파일 삭제 오류: %s", str(e))
             raise RuntimeError(f"음성 파일 삭제 오류: {str(e)}")
 
-    def update_voice(self, voice_id: int, voice_title: str = None, voice_path: str = None, folder_id: Optional[int] = None, type: Optional[str] = None) -> bool:
+    def update_voice(self, voice_id: int, voice_title: str = None, voice_path: str = None, folder_id: Optional[int] = None, type: Optional[str] = None, brain_id: Optional[int] = None) -> bool:
         """음성 파일 정보 업데이트"""
         try:
+            # 1) 대상 음성 파일 존재 확인
             voice = self.get_voice(voice_id)
             if not voice:
                 raise ValueError(f"존재하지 않는 음성 파일 ID: {voice_id}")
-            
+
+            # 2) folder_id 유효성 검사
             if folder_id is not None and folder_id != "null":
-                folder = self.get_folder(folder_id)
-                if not folder:
+                if not self.get_folder(folder_id):
                     raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+
+            # 3) brain_id 유효성 검사
+            if brain_id is not None and brain_id != "null":
+                if not self.get_brain(brain_id):
+                    raise ValueError(f"존재하지 않는 Brain ID: {brain_id}")
             
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -1347,14 +1412,24 @@ class SQLiteHandler:
                 update_fields.append("type = ?")
                 params.append(type)
 
+            # folder_id 처리: null 또는 값
             if folder_id is None or folder_id == "null":
                 update_fields.append("folder_id = NULL")
-            elif folder_id is not None:
+            else:
                 update_fields.append("folder_id = ?")
                 params.append(folder_id)
-                
+
+            # brain_id 처리: null 또는 값
+            if brain_id is None or brain_id == "null":
+                update_fields.append("brain_id = NULL")
+            else:
+                update_fields.append("brain_id = ?")
+                params.append(brain_id)
+
             if not update_fields:
-                return False
+                conn.close()
+                return False  # 변경할 내용 없음
+
             
             update_fields.append("voice_date = CURRENT_TIMESTAMP")
             
@@ -1387,7 +1462,7 @@ class SQLiteHandler:
             cursor = conn.cursor()
             
             cursor.execute(
-                "SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id FROM Voice WHERE voice_id = ?", 
+                "SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id, brain_id FROM Voice WHERE voice_id = ?", 
                 (voice_id,)
             )
             voice = cursor.fetchone()
@@ -1401,7 +1476,9 @@ class SQLiteHandler:
                     "voice_path": voice[2],
                     "voice_date": voice[3],
                     "type": voice[4],
-                    "folder_id": voice[5]
+                    "folder_id": voice[5],
+                    "brain_id": voice[6],
+
                 }
             else:
                 return None
@@ -1416,7 +1493,7 @@ class SQLiteHandler:
             cursor = conn.cursor()
             
             cursor.execute(
-                "SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id FROM Voice WHERE folder_id = ? ORDER BY voice_date DESC", 
+                "SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id, brain_id FROM Voice WHERE folder_id = ? ORDER BY voice_date DESC", 
                 (folder_id,)
             )
             voices = cursor.fetchall()
@@ -1430,7 +1507,8 @@ class SQLiteHandler:
                     "voice_path": voice[2],
                     "voice_date": voice[3],
                     "type": voice[4],
-                    "folder_id": voice[5]
+                    "folder_id": voice[5],
+                    "brain_id": voice[6],
                 } 
                 for voice in voices
             ]
@@ -1439,7 +1517,7 @@ class SQLiteHandler:
             return []
 
     # TextFile 관련 메서드
-    def create_textfile(self, txt_title: str, txt_path: str, folder_id: Optional[int] = None, type: Optional[str] = None) -> dict:
+    def create_textfile(self, txt_title: str, txt_path: str, folder_id: Optional[int] = None, type: Optional[str] = None, brain_id: Optional[int] = None) -> dict:
         """새 텍스트 파일 생성"""
         try:
             if folder_id is not None:
@@ -1453,8 +1531,8 @@ class SQLiteHandler:
             txt_id = self._get_next_id()
             
             cursor.execute(
-                "INSERT INTO TextFile (txt_id, txt_title, txt_path, folder_id, type) VALUES (?, ?, ?, ?, ?)",
-                (txt_id, txt_title, txt_path, folder_id, type)
+                "INSERT INTO TextFile (txt_id, txt_title, txt_path, folder_id, type, brain_id) VALUES (?, ?, ?, ?, ?, ?)",
+                (txt_id, txt_title, txt_path, folder_id, type, brain_id)
             )
             
             cursor.execute("SELECT txt_date FROM TextFile WHERE txt_id = ?", (txt_id,))
@@ -1463,15 +1541,17 @@ class SQLiteHandler:
             conn.commit()
             conn.close()
             
-            logging.info("텍스트 파일 생성 완료: txt_id=%s, txt_title=%s, folder_id=%s", 
-                        txt_id, txt_title, folder_id)
+            logging.info("텍스트 파일 생성 완료: txt_id=%s, txt_title=%s, folder_id=%s, brain_id=%s", 
+                        txt_id, txt_title, folder_id, brain_id)
             return {
                 "txt_id": txt_id, 
                 "txt_title": txt_title, 
                 "txt_path": txt_path,
                 "txt_date": txt_date,
                 "type": type,
-                "folder_id": folder_id
+                "folder_id": folder_id,
+                "brain_id": brain_id
+
             }
         except ValueError as e:
             logging.error("텍스트 파일 생성 실패: %s", str(e))
@@ -1479,6 +1559,25 @@ class SQLiteHandler:
         except Exception as e:
             logging.error("텍스트 파일 생성 오류: %s", str(e))
             raise RuntimeError(f"텍스트 파일 생성 오류: {str(e)}")
+    
+    def get_textfiles_by_brain(self, brain_id: int) -> List[dict]:
+        conn   = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id, brain_id
+              FROM TextFile
+             WHERE brain_id = ? AND folder_id IS NULL
+          ORDER BY txt_date DESC
+            """,
+            (brain_id,)
+        )
+        rows = cursor.fetchall()
+        conn.close()
+        return [
+            dict(zip([c[0] for c in cursor.description], r))
+            for r in rows
+        ]
         
     def get_folder_textfiles(self, folder_id: int) -> List[dict]:
         """폴더에 속한 텍스트 파일 목록 조회"""
@@ -1486,7 +1585,7 @@ class SQLiteHandler:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id "
+                "SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id, brain_id "
                 "FROM TextFile WHERE folder_id = ? ORDER BY txt_date DESC",
                 (folder_id,)
             )
@@ -1499,15 +1598,14 @@ class SQLiteHandler:
                     "txt_path": row[2],
                     "txt_date": row[3],
                     "type": row[4],
-                    "folder_id": row[5]
+                    "folder_id": row[5],
+                    "brain_id" : row[6]
                 }
                 for row in rows
             ]
         except Exception as e:
             logging.error("get_folder_textfiles 오류: %s", str(e))
             return []
-
-
 
     def delete_textfile(self, txt_id: int) -> bool:
         """텍스트 파일 삭제"""
@@ -1531,17 +1629,23 @@ class SQLiteHandler:
             logging.error("텍스트 파일 삭제 오류: %s", str(e))
             raise RuntimeError(f"텍스트 파일 삭제 오류: {str(e)}")
 
-    def update_textfile(self, txt_id: int, txt_title: str = None, txt_path: str = None, folder_id: Optional[int] = None, type: Optional[str] = None) -> bool:
+    def update_textfile(self, txt_id: int, txt_title: str = None, txt_path: str = None, folder_id: Optional[int] = None, type: Optional[str] = None, brain_id: Optional[int] = None) -> bool:
         """텍스트 파일 정보 업데이트"""
         try:
+            # 1) 대상 텍스트 파일 존재 확인
             textfile = self.get_textfile(txt_id)
             if not textfile:
                 raise ValueError(f"존재하지 않는 텍스트 파일 ID: {txt_id}")
-            
+
+            # 2) folder_id 유효성 검사
             if folder_id is not None and folder_id != "null":
-                folder = self.get_folder(folder_id)
-                if not folder:
+                if not self.get_folder(folder_id):
                     raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+
+            # 3) brain_id 유효성 검사
+            if brain_id is not None and brain_id != "null":
+                if not self.get_brain(brain_id):
+                    raise ValueError(f"존재하지 않는 Brain ID: {brain_id}")
             
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -1561,13 +1665,22 @@ class SQLiteHandler:
                 update_fields.append("type = ?")
                 params.append(type)
 
+            # folder_id 처리: null 또는 값
             if folder_id is None or folder_id == "null":
                 update_fields.append("folder_id = NULL")
-            elif folder_id is not None:
+            else:
                 update_fields.append("folder_id = ?")
                 params.append(folder_id)
+
+            # brain_id 처리: null 또는 값
+            if brain_id is None or brain_id == "null":
+                update_fields.append("brain_id = NULL")
+            else:
+                update_fields.append("brain_id = ?")
+                params.append(brain_id)
                 
             if not update_fields:
+                conn.close()
                 return False
             
             update_fields.append("txt_date = CURRENT_TIMESTAMP")
@@ -1601,7 +1714,7 @@ class SQLiteHandler:
             cursor = conn.cursor()
             
             cursor.execute(
-                "SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id FROM TextFile WHERE txt_id = ?", 
+                "SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id, brain_id FROM TextFile WHERE txt_id = ?", 
                 (txt_id,)
             )
             textfile = cursor.fetchone()
@@ -1615,7 +1728,8 @@ class SQLiteHandler:
                     "txt_path": textfile[2],
                     "txt_date": textfile[3],
                     "type": textfile[4],
-                    "folder_id": textfile[5]
+                    "folder_id": textfile[5],
+                    "brain_id" : textfile[6]
                 }
             else:
                 return None
@@ -1630,7 +1744,7 @@ class SQLiteHandler:
             cursor = conn.cursor()
             
             cursor.execute(
-                "SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id FROM TextFile WHERE folder_id = ? ORDER BY txt_date DESC", 
+                "SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id, brain_id FROM TextFile WHERE folder_id = ? ORDER BY txt_date DESC", 
                 (folder_id,)
             )
             textfiles = cursor.fetchall()
@@ -1644,7 +1758,8 @@ class SQLiteHandler:
                     "txt_path": textfile[2],
                     "txt_date": textfile[3],
                     "type": textfile[4],
-                    "folder_id": textfile[5]
+                    "folder_id": textfile[5],
+                    "brain_id" : textfile[6]
                 } 
                 for textfile in textfiles
             ]
@@ -1688,7 +1803,7 @@ class SQLiteHandler:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id
+                SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id, brain_id
                 FROM Pdf
                 WHERE folder_id IS NULL
                 ORDER BY pdf_date DESC
@@ -1703,7 +1818,8 @@ class SQLiteHandler:
                     "pdf_path":  row[2],
                     "pdf_date":  row[3],
                     "type":      row[4],
-                    "folder_id": row[5]
+                    "folder_id": row[5],
+                    "brain_id" : row[6]
                 }
                 for row in rows
             ]
@@ -1717,7 +1833,7 @@ class SQLiteHandler:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id
+                SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id, brain_id
                 FROM TextFile
                 WHERE folder_id IS NULL
                 ORDER BY txt_date DESC
@@ -1732,7 +1848,8 @@ class SQLiteHandler:
                     "txt_path":  row[2],
                     "txt_date":  row[3],
                     "type":      row[4],
-                    "folder_id": row[5]
+                    "folder_id": row[5],
+                    "brain_id" : row[6]
                 }
                 for row in rows
             ]
@@ -1746,7 +1863,7 @@ class SQLiteHandler:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id
+                SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id, brain_id
                 FROM Voice
                 WHERE folder_id IS NULL
                 ORDER BY voice_date DESC
@@ -1761,7 +1878,8 @@ class SQLiteHandler:
                     "voice_path":  row[2],
                     "voice_date":  row[3],
                     "type":        row[4],
-                    "folder_id":   row[5]
+                    "folder_id":   row[5],
+                    "brain_id" :   row[6]
                 }
                 for row in rows
             ]

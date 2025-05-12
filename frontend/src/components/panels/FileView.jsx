@@ -11,9 +11,9 @@ import { TiUpload } from 'react-icons/ti'
 
 import {
   listBrainFolders,
-  getDefaultPdfs,
-  getDefaultTextfiles,
-  getDefaultVoices,
+  getPdfsByBrain,
+  getTextfilesByBrain,
+  getVoicesByBrain,
   createPdf,
   createTextFile,
   createVoice,
@@ -70,9 +70,8 @@ export default function FileView({
 
   useEffect(() => {
     refresh()
-  }, [brainId, refreshTrigger]);
+  }, [brainId, refreshTrigger])
 
-  // 폴더 + 루트파일 동시 로드
   const refresh = async () => {
     if (!brainId) return
     try {
@@ -80,28 +79,35 @@ export default function FileView({
       const api = await listBrainFolders(brainId)
       setFiles(normalizeApiTree(api))
 
-      // 2) folder_id === null 파일들
+      // 2) brainId 기준 전체 파일 가져오기 → folder_id null 만 루트로
       const [pdfs, txts, voices] = await Promise.all([
-        getDefaultPdfs(),
-        getDefaultTextfiles(),
-        getDefaultVoices(),
-      ])
-      setRootFiles([
-        ...pdfs.map(p => ({ filetype: 'pdf', id: p.pdf_id, name: p.pdf_title })),
-        ...txts.map(t => ({ filetype: 'txt', id: t.txt_id, name: t.txt_title })),
-        ...voices.map(v => ({ filetype: 'voice', id: v.voice_id, name: v.voice_title })),
+        getPdfsByBrain(brainId),
+        getTextfilesByBrain(brainId),
+        getVoicesByBrain(brainId),
       ])
 
+      setRootFiles([
+        ...pdfs
+          .filter(p => p.folder_id == null)
+          .map(p => ({ filetype: 'pdf', id: p.pdf_id, name: p.pdf_title })),
+        ...txts
+          .filter(t => t.folder_id == null)
+          .map(t => ({ filetype: 'txt', id: t.txt_id, name: t.txt_title })),
+        ...voices
+          .filter(v => v.folder_id == null)
+          .map(v => ({ filetype: 'voice', id: v.voice_id, name: v.voice_title })),
+      ])
+
+      setRootFiles(roots)
       setRefreshKey(k => k + 1)
     } catch (err) {
       console.error('전체 로드 실패', err)
     }
   }
 
-  // 파일 생성 (모든 비-txt 도 txt로 저장하고, pdf/voice는 각각 저장)
   const createFileByType = async (f, folderId = null) => {
     const ext = f.name.split('.').pop().toLowerCase()
-    const common = { folder_id: folderId, type: ext }
+    const common = { folder_id: folderId, type: ext, brain_id: brainId }
 
     if (ext === 'pdf') {
       await createPdf({ ...common, pdf_title: f.name, pdf_path: f.name })
@@ -110,18 +116,15 @@ export default function FileView({
     } else if (['mp3', 'wav', 'm4a'].includes(ext)) {
       await createVoice({ ...common, voice_title: f.name, voice_path: f.name })
     } else {
-      // 나머지도 텍스트파일로 저장
       await createTextFile({ ...common, txt_title: f.name, txt_path: f.name })
     }
   }
 
-  // ── 루트에 드롭
   const handleRootDrop = async e => {
     e.preventDefault()
     e.stopPropagation()
     setIsRootDrag(false)
 
-    // 내부 이동 JSON 데이터
     const moved = e.dataTransfer.getData('application/json')
     if (moved) {
       const { id, filetype } = JSON.parse(moved)
@@ -129,7 +132,6 @@ export default function FileView({
       return
     }
 
-    // OS 파일 드롭
     const dropped = Array.from(e.dataTransfer.files)
     try {
       await Promise.all(dropped.map(f => createFileByType(f, null)))
@@ -141,7 +143,6 @@ export default function FileView({
     }
   }
 
-  // ── 폴더에 드롭 (새 파일 업로드만)
   const handleDropToFolder = async (folderId, dropped) => {
     if (!Array.isArray(dropped)) return
     try {
@@ -154,7 +155,6 @@ export default function FileView({
     }
   }
 
-  // ── 내부 이동 (폴더 ←→ 루트)
   const moveItem = async ({ id, filetype }, targetFolderId) => {
     const toRoot = targetFolderId == null
     try {

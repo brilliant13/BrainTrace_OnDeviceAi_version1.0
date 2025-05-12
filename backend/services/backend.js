@@ -50,6 +50,7 @@ export const updatePdf = (id, body) => api.put(`/pdfs/${id}`, body).then(r => r.
 export const deletePdf = id => api.delete(`/pdfs/${id}`);
 export const movePdfToFolder = (targetFolderId, pdfId) => api.put(`/pdfs/changeFolder/${targetFolderId}/${pdfId}`).then(r => r.data);
 export const removePdfFromFolder = pdfId => api.put(`/pdfs/MoveOutFolder/${pdfId}`).then(r => r.data);
+export const getPdfsByBrain = brainId => api.get(`/pdfs/brain/${brainId}`).then(r => r.data)
 
 /* ───────── TEXT FILES ───────── */
 export const createTextFile = body => api.post('/textfiles', body).then(r => r.data);
@@ -58,6 +59,7 @@ export const updateTextFile = (id, body) => api.put(`/textfiles/${id}`, body).th
 export const deleteTextFile = id => api.delete(`/textfiles/${id}`);
 export const moveTextfileToFolder = (targetFolderId, txtId) => api.put(`/textfiles/changeFolder/${targetFolderId}/${txtId}`).then(r => r.data);
 export const removeTextFileFromFolder = txtId => api.put(`/textfiles/MoveOutFolder/${txtId}`).then(r => r.data);
+export const getTextfilesByBrain = brainId => api.get(`/textfiles/brain/${brainId}`).then(r => r.data)
 
 /* ───────── VOICE FILES ───────── */
 export const createVoice = body => api.post('/voices', body).then(r => r.data);
@@ -66,8 +68,9 @@ export const updateVoice = (id, body) => api.put(`/voices/${id}`, body).then(r =
 export const deleteVoice = id => api.delete(`/voices/${id}`);
 export const moveVoiceToFolder = (targetFolderId, voiceId) => api.put(`/voices/changeFolder/${targetFolderId}/${voiceId}`).then(r => r.data);
 export const removeVoiceFromFolder = voiceId => api.put(`/voices/MoveOutFolder/${voiceId}`).then(r => r.data);
+export const getVoicesByBrain = brainId => api.get(`/voices/brain/${brainId}`).then(r => r.data)
 
 // ───────── DEFAULT (루트) ─────────
-export const getDefaultPdfs = () => api.get(`/pdfs/default/pp`).then(r => r.data);
+export const getDefaultPdfs = () => api.get(`/pdfs/default`).then(r => r.data);
 export const getDefaultTextfiles = () => api.get(`/textfiles/default`).then(r => r.data);
 export const getDefaultVoices = () => api.get(`/voices/default`).then(r => r.data);
