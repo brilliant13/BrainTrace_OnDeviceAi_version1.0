@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useEffect, useRef } from 'react';
 import {
   listBrainFolders,
@@ -15,10 +16,14 @@ import toggleIcon from '../../assets/icons/toggle-view.png';
 import addFolderIcon from '../../assets/icons/add-folder.png';
 import newFileIcon from '../../assets/icons/new-file.png';
 import './styles/Common.css';
+=======
+import React, { useState, useRef, useEffect } from 'react';
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 import './styles/SourcePanel.css';
 import './styles/PanelToggle.css';
 import './styles/Scrollbar.css';
 
+<<<<<<< HEAD
 function normalizeApiTree(apiFolders = []) {
   return apiFolders.map(folder => ({
     type: 'folder',
@@ -31,6 +36,12 @@ function normalizeApiTree(apiFolders = []) {
     }))
   }));
 }
+=======
+import toggleIcon from '../../assets/icons/toggle-view.png';
+import addFolderIcon from '../../assets/icons/add-folder.png';
+import newFileIcon from '../../assets/icons/new-file.png';
+import SourceQuotaBar from './SourceQuotaBar';
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 
 export default function SourcePanel({
   activeProject,
@@ -48,6 +59,7 @@ export default function SourcePanel({
   const [newFolderName, setNewFolderName] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
 
+<<<<<<< HEAD
   // 업로드 트리거 (바뀔 때마다 FileView가 다시 로드)
   const [uploadKey, setUploadKey] = useState(0);
 
@@ -58,6 +70,23 @@ export default function SourcePanel({
     });
     ro.observe(panelRef.current);
     return () => ro.disconnect();
+=======
+  const panelRef = useRef();
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  const [panelWidth, setPanelWidth] = useState(0);
+  const isIconMode = panelWidth > 0 && panelWidth < 193;
+
+  useEffect(() => {
+    if (!panelRef.current) return;
+    const resizeObserver = new ResizeObserver(() => {
+      const width = panelRef.current.offsetWidth;
+      setContainerWidth(width);
+      setPanelWidth(width);
+    });
+    resizeObserver.observe(panelRef.current);
+    return () => resizeObserver.disconnect();
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
   }, []);
 
   const refresh = async () => {
@@ -133,8 +162,13 @@ export default function SourcePanel({
         <img
           src={toggleIcon}
           alt="Toggle"
+<<<<<<< HEAD
           style={{ width: 23, height: 23, cursor: 'pointer' }}
           onClick={() => setCollapsed(c => !c)}
+=======
+          style={{ width: '23px', height: '23px', cursor: 'pointer' }}
+          onClick={() => setCollapsed(prev => !prev)}
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
         />
       </div>
 
@@ -187,6 +221,7 @@ export default function SourcePanel({
           <div className="panel-content" style={{ flexGrow: 1, overflow: 'auto' }}>
             {openedPDF ? (
               <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
+<<<<<<< HEAD
                 <button className="pdf-back-button" onClick={closePDF}>← 뒤로가기</button>
                 <PDFViewer file={openedPDF} containerWidth={panelWidth} />
               </div>
@@ -196,6 +231,28 @@ export default function SourcePanel({
                 files={folderTree}
                 setFiles={setFolderTree}
                 onOpenPDF={file => {
+=======
+                <button
+                  onClick={() => {
+                    setOpenedPDF(null);
+                    setIsPDFOpen(false);
+                    if (onBackFromPDF) onBackFromPDF();
+                  }}
+                  className="pdf-back-button"
+                >
+                  ← 뒤로가기
+                </button>
+                <div className="panel-container">
+                  <PDFViewer file={openedPDF} containerWidth={containerWidth} />
+                </div>
+              </div>
+            ) : (
+              <FileView
+                activeProject={project}
+                files={files}
+                setFiles={setFiles}
+                onOpenPDF={(file) => {
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
                   setOpenedPDF(file);
                   setIsPDFOpen(true);
                 }}
@@ -225,7 +282,10 @@ export default function SourcePanel({
           }
         }}
       />
+<<<<<<< HEAD
 
+=======
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
       {!collapsed && <SourceQuotaBar current={10} max={50} />}
     </div>
   );

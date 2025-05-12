@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -9,12 +10,18 @@ import {
 import { iconByKey } from '../iconMap';
 import NewBrainModal from '../NewBrainModal';
 import ConfirmDialog from '../ConfirmDialog';
+=======
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import projectData from '../../data/projectData';
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 import AppHeader from './AppHeader';
 import AppFooter from './AppFooter';
 import { RiDeleteBinLine } from "react-icons/ri";
 import { GoPencil } from "react-icons/go";
 import './ProjectListView.css';
 
+<<<<<<< HEAD
 export default function ProjectListView() {
     const nav = useNavigate();
 
@@ -26,6 +33,22 @@ export default function ProjectListView() {
     const [editingId, setEditingId] = useState(null);    // 제목 편집중 카드 id
     const [tempTitle, setTempTitle] = useState('');
     const [confirmId, setConfirmId] = useState(null);    // 삭제 확인용
+=======
+function ProjectListView() {
+    const navigate = useNavigate();
+    const [sortOption, setSortOption] = useState('최신 항목');
+
+    const getSortedProjects = () => {
+        const sorted = [...projectData];
+        if (sortOption === '제목') {
+            return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        } else if (sortOption === '공유 문서함') {
+            return sorted.filter(p => p.shared); // 예시: shared = true인 항목만
+        } else {
+            return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+    };
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 
     /* ───────── DB 요청 ───────── */
     const fetchBrains = () => {
@@ -73,6 +96,7 @@ export default function ProjectListView() {
 
     /* ───────── 화면 ───────── */
     return (
+<<<<<<< HEAD
         <div className="project-list-page">
             <AppHeader />
 
@@ -80,6 +104,60 @@ export default function ProjectListView() {
                 <div className="project-header">
                     <h1 className="page-highlight">당신의 두뇌 저장소..</h1>
                 </div>
+=======
+        <div className="project-list-page" style={{ backgroundColor: '#fff', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <AppHeader />
+
+            <div className="project-list-view" style={{ flex: 1 }}>
+                {/* 가운데 정렬된 문구 */}
+                <div className="project-header" style={{ textAlign: 'center', margin: '35px 0 16px' }}>
+                    <h1 className="page-highlight" style={{ fontSize: '35px' }}>
+                        당신의 두뇌 저장소..
+                    </h1>
+                </div>
+
+                {/* 정렬 드롭다운 */}
+                <div className="project-header-controls" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20, paddingRight: 20 }}>
+                    <div className="sort-dropdown">
+                        <button className="sort-button">
+                            {sortOption} ▼
+                        </button>
+                        <div className="sort-menu">
+                            {['최신 항목', '제목', '공유 문서함'].map(option => (
+                                <div
+                                    key={option}
+                                    className="sort-menu-item"
+                                    onClick={() => setSortOption(option)}
+                                >
+                                    {option}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 프로젝트 카드 그리드 */}
+                <div className="project-grid">
+                    {getSortedProjects().map(project => {
+                        const Icon = project.icon;
+                        return (
+                            <div
+                                key={project.id}
+                                className="project-card"
+                                onClick={() => navigate(`/project/${project.id}`)}
+                            >
+                                <div className="project-icon" style={{ fontSize: '33px' }}>
+                                    <Icon size={32} />
+                                </div>
+                                <div className="project-name">{project.name}</div>
+                                <div className="project-date">
+                                    {project.createdAt ?? '날짜 없음'}
+                                </div>
+                            </div>
+                        );
+                    })}
+
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 
                 {/* 정렬 드롭다운 */}
                 <div className="project-header-controls">
@@ -227,6 +305,7 @@ export default function ProjectListView() {
                 </div>
             </div>
 
+<<<<<<< HEAD
             <AppFooter />
 
             {/* 새 브레인 모달 */}
@@ -253,6 +332,22 @@ export default function ProjectListView() {
                     }}
                 />
             )}
+=======
+            <footer
+                className="project-footer"
+                style={{
+                    padding: '30px 10px',
+                    textAlign: 'center',
+                    backgroundColor: '#e5e5e5', // 밝은 회색 배경
+                    color: '#333',              // 짙은 회색 텍스트
+                    fontSize: '14px'
+                }}
+            >
+                © 2025 당신의 두뇌 저장소. All rights reserved.
+            </footer>
+
+
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
         </div>
     );
 }

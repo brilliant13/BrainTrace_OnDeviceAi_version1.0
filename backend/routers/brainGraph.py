@@ -4,11 +4,39 @@ from services import ai_service, embedding_service
 from neo4j_db.Neo4jHandler import Neo4jHandler
 import logging
 
+###임시 질답용 임포트
+from LLM.basic_chat import basic_chat
+###
+
 router = APIRouter(
     prefix="/brainGraph",
     tags=["brainGraph"],
     responses={404: {"description": "Not found"}}
 )
+
+# #임시 질답용 엔드포인트
+# @router.post("/basic_chat",
+#     summary="질문에 대한 답변 생성",
+#     description="사용자의 질문에 대해 답변을 생성합니다.",
+#     response_description="생성된 답변을 반환합니다. ")
+# async def basic_chat_endpoint(request_data: BasicChatRequest):
+#     text = request_data.question
+#     response = basic_chat(text)
+#     print("response: ", response)
+#     return response
+# #임시 질답용 엔드포인트 끝
+
+# #임시 질답용 엔드포인트
+# @router.post("/basic_chat",
+#     summary="질문에 대한 답변 생성",
+#     description="사용자의 질문에 대해 답변을 생성합니다.",
+#     response_description="생성된 답변을 반환합니다. ")
+# async def basic_chat_endpoint(request_data: BasicChatRequest):
+#     text = request_data.question
+#     response = basic_chat(text)
+#     print("response: ", response)
+#     return response
+# #임시 질답용 엔드포인트 끝
 
 @router.get("/getNodeEdge/{brain_id}", response_model=GraphResponse,
            summary="브레인의 그래프 데이터 조회",
@@ -120,8 +148,8 @@ async def answer_endpoint(request_data: AnswerRequest):
         
         # 노드 이름만 추출
         similar_node_names = [node["name"] for node in similar_nodes]
-        logging.info("유사 노드 이름: %s", similar_node_names)
-        logging.info("유사 노드 점수: %s", [f"{node['name']}:{node['score']:.2f}" for node in similar_nodes])
+        logging.info("sim node name: %s", similar_node_names)
+        logging.info("sim node score: %s", [f"{node['name']}:{node['score']:.2f}" for node in similar_nodes])
         
         # Step 4: 유사한 노드들의 2단계 깊이 스키마 조회
         neo4j_handler = Neo4jHandler()
@@ -136,7 +164,7 @@ async def answer_endpoint(request_data: AnswerRequest):
         related_nodes_result = result.get("relatedNodes", [])
         relationships_result = result.get("relationships", [])
         
-        logging.info("Neo4j 조회 결과: nodes=%d, related_nodes=%d, relationships=%d", 
+        logging.info("Neo4j search result: nodes=%d, related_nodes=%d, relationships=%d", 
                    len(nodes_result), len(related_nodes_result), len(relationships_result))
         
         # Step 5: 스키마 간결화 및 텍스트 구성

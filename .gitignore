@@ -9,6 +9,10 @@ frontend/node_modules
 
 backend/LLM/genie_bundle_3_2
 backend/data/
+<<<<<<< HEAD
 backnd/node_modules
 backend/data/qdrant/meta.json
 .env
+=======
+backnd/node_modules
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e

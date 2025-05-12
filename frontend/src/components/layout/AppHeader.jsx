@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AppHeader.css';
 import logo from '../../assets/logo.png';
+<<<<<<< HEAD
 import { FiShare2, FiSettings, FiLogOut } from 'react-icons/fi';
 
 export default function AppHeader() {
@@ -21,6 +22,10 @@ export default function AppHeader() {
         window.location.href = '/login';   // 로그인 페이지로 이동
     };
 
+=======
+import { FiShare2, FiSettings } from 'react-icons/fi';
+function AppHeader() {
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
     return (
         <header className="app-header">
             <div className="header-left">
@@ -38,6 +43,7 @@ export default function AppHeader() {
                     설정
                 </button>
 
+<<<<<<< HEAD
                 {/* 사용자 메뉴: 이름 표시 & 로그아웃 */}
                 <div className="avatar-wrapper">
                     <button className="avatar-round">{userName}</button>
@@ -47,6 +53,9 @@ export default function AppHeader() {
                         </span>
                     </div>
                 </div>
+=======
+                <button className="avatar-round">무무</button>
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
             </div>
         </header>
     );

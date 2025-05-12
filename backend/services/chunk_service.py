@@ -14,6 +14,7 @@ def chunk_text(text: str, chunk_size: int = 1000, chunk_overlap: int = 200) -> l
         list[str]: 분할된 텍스트 청크 리스트
     """
     try:
+        print("start chunking")
         # RecursiveCharacterTextSplitter 초기화
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,

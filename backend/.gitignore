@@ -1,3 +1,7 @@
+/LLM/genie_bundle_3_2
+/LLM/__pycache__
+/node_modules/
+/venv
 .venv/
 .data/
 /venv

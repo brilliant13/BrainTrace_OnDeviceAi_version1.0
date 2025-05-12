@@ -203,6 +203,23 @@ const projectData = [
         ]
       }
     ],
+<<<<<<< HEAD
+=======
+    chat: {
+      title: "로켓 엔진 효율 향상",
+      content: "로켓 엔진 효율을 높이기 위한 주요 전략은 다음과 같습니다:\n\n1. 연료 최적화\n2. 연소실 압력 개선\n3. 배기 시스템 간소화\n4. 재사용 가능한 부품 도입"
+    },
+    memo: {
+      title: "우주 프로젝트 회의록",
+      content: "# 우주 추진 회의\n\n- 차세대 액체 연료 엔진에 대한 논의\n- 열 손실 최소화를 위한 재료 제안\n- 프로젝트 마일스톤 확인"
+    },
+    nodes: [
+      { id: "main", label: "R", type: "main", x: 50, y: 50 },
+      { id: "eng", label: "Engine", type: "sub", x: 30, y: 30 },
+      { id: "fuel", label: "Fuel", type: "sub", x: 70, y: 30 },
+      { id: "sim", label: "Sim", type: "sub", x: 50, y: 70 }
+    ],
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
     createdAt: "2025. 4. 29."
   },
 
@@ -228,6 +245,23 @@ const projectData = [
         ]
       }
     ],
+<<<<<<< HEAD
+=======
+    chat: {
+      title: "대학생 커뮤니티 운영 가이드",
+      content: "성공적인 커뮤니티 운영을 위한 3가지:\n\n1. 소통 중심의 문화\n2. 꾸준한 콘텐츠 제작\n3. 참여 유도 캠페인"
+    },
+    memo: {
+      title: "운영진 회의 요약",
+      content: "# 5월 회의 요약\n\n- 신입부원 환영 행사 준비\n- 회비 사용 내역 보고\n- 여름방학 프로그램 기획 시작"
+    },
+    nodes: [
+      { id: "main", label: "U", type: "main", x: 50, y: 50 },
+      { id: "event", label: "Event", type: "sub", x: 30, y: 30 },
+      { id: "promo", label: "Promo", type: "sub", x: 70, y: 30 },
+      { id: "doc", label: "Doc", type: "sub", x: 50, y: 70 }
+    ],
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
     createdAt: "2025. 4. 30."
   }
 ];

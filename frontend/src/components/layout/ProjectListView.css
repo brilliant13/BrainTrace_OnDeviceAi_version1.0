@@ -150,6 +150,7 @@
 .project-header {
     text-align: center;
     margin-bottom: 40px;
+<<<<<<< HEAD
 }
 
 .project-header-controls {
@@ -157,6 +158,8 @@
     justify-content: flex-end;
     margin-bottom: 20px;
     padding-right: 20px;
+=======
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 }
 
 .page-highlight {
@@ -170,7 +173,10 @@
 .sort-dropdown {
     position: relative;
     display: inline-block;
+<<<<<<< HEAD
     z-index: 20;
+=======
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 }
 
 .sort-button {
@@ -179,7 +185,10 @@
     border-radius: 9999px;
     padding: 8px 14px;
     font-size: 14px;
+<<<<<<< HEAD
     color: #111;
+=======
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
     cursor: pointer;
 }
 
@@ -189,15 +198,25 @@
 
 .sort-menu {
     position: absolute;
+<<<<<<< HEAD
     top: 105%;
+=======
+    top: 110%;
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
     right: 0;
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+<<<<<<< HEAD
     width: 160px;
     display: none;
     z-index: 50;
+=======
+    z-index: 10;
+    width: 160px;
+    display: none;
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 }
 
 .sort-dropdown:hover .sort-menu {
@@ -212,6 +231,7 @@
 
 .sort-menu-item:hover {
     background-color: #f0f0f0;
+<<<<<<< HEAD
 }
 
 .card-menu {
@@ -253,4 +273,6 @@
 
 .popup-item:hover {
     background: #e9ecef;
+=======
+>>>>>>> bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
 }
