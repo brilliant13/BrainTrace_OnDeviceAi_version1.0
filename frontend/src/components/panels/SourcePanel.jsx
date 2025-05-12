@@ -1,9 +1,11 @@
-// src/components/layout/SourcePanel.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
   listBrainFolders,
   createFolder,
-  createMemo
+  createMemo,
+  createPdf,
+  createTextFile,
+  createVoice
 } from '../../../../backend/services/backend';
 import FileView from '../panels/FileView';
 import PDFViewer from '../panels/PDFViewer';
@@ -17,7 +19,6 @@ import './styles/SourcePanel.css';
 import './styles/PanelToggle.css';
 import './styles/Scrollbar.css';
 
-// apiFolders가 undefined여도 빈 배열로 취급
 function normalizeApiTree(apiFolders = []) {
   return apiFolders.map(folder => ({
     type: 'folder',
@@ -47,7 +48,9 @@ export default function SourcePanel({
   const [newFolderName, setNewFolderName] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
 
-  // 패널 너비 관찰
+  // 업로드 트리거 (바뀔 때마다 FileView가 다시 로드)
+  const [uploadKey, setUploadKey] = useState(0);
+
   useEffect(() => {
     if (!panelRef.current) return;
     const ro = new ResizeObserver(() => {
@@ -57,28 +60,21 @@ export default function SourcePanel({
     return () => ro.disconnect();
   }, []);
 
-  // 서버에서 폴더/메모 트리 불러오기
   const refresh = async () => {
     if (!activeProject) return;
     try {
       const api = await listBrainFolders(activeProject);
-      // 배열이 아닐 경우 빈 배열로
-      const arr = Array.isArray(api) ? api : [];
-      setFolderTree(normalizeApiTree(arr));
+      setFolderTree(normalizeApiTree(Array.isArray(api) ? api : []));
     } catch (e) {
       console.error('폴더/메모 로드 실패', e);
-      setFolderTree([]);  // 에러 시에도 빈 배열 유지
+      setFolderTree([]);
     }
   };
 
-  // 마운트 & activeProject 변경 시
   useEffect(() => {
-    // activeProject가 바뀔 때마다 폴더/메모 트리를 다시 로드
     refresh();
-    // cleanup 함수 없음
   }, [activeProject]);
 
-  // 새 폴더 생성
   const handleAddFolder = async e => {
     e.preventDefault();
     const name = newFolderName.trim();
@@ -88,16 +84,38 @@ export default function SourcePanel({
       setNewFolderName('');
       setShowAddFolderInput(false);
       await refresh();
+      setUploadKey(k => k + 1);
     } catch {
       alert('폴더 생성 실패');
     }
   };
 
-  // PDF 닫기
   const closePDF = () => {
     setOpenedPDF(null);
     setIsPDFOpen(false);
     onBackFromPDF?.();
+  };
+
+  // 확장자별 루트 저장 헬퍼
+  const createAtRoot = f => {
+    const ext = f.name.split('.').pop().toLowerCase();
+    if (ext === 'pdf') {
+      return createPdf({ pdf_title: f.name, pdf_path: f.name, folder_id: null, type: ext });
+    }
+    if (ext === 'txt') {
+      return createTextFile({ txt_title: f.name, txt_path: f.name, folder_id: null, type: ext });
+    }
+    if (['mp3', 'wav', 'm4a'].includes(ext)) {
+      return createVoice({ voice_title: f.name, voice_path: f.name, folder_id: null, type: ext });
+    }
+    return createMemo({
+      memo_title: f.name,
+      memo_text: '',
+      folder_id: null,
+      is_source: false,
+      brain_id: activeProject,
+      type: ext
+    });
   };
 
   return (
@@ -107,7 +125,10 @@ export default function SourcePanel({
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
     >
       {/* 헤더 */}
-      <div className="panel-header" style={{ justifyContent: collapsed ? 'center' : 'space-between' }}>
+      <div
+        className="panel-header"
+        style={{ justifyContent: collapsed ? 'center' : 'space-between' }}
+      >
         {!collapsed && <span className="header-title">Source</span>}
         <img
           src={toggleIcon}
@@ -119,29 +140,29 @@ export default function SourcePanel({
 
       {!collapsed && (
         <>
-          {/* 액션 버튼 */}
-          {!openedPDF && (
-            <div className="action-buttons">
-              <button
-                className={`pill-button ${panelWidth < 193 ? 'icon-only' : ''}`}
-                onClick={() => setShowAddFolderInput(true)}
-              >
-                {panelWidth < 193
-                  ? <img src={addFolderIcon} alt="폴더 추가" className="button-icon" />
-                  : <>＋ 폴더</>}
-              </button>
-              <button
-                className={`pill-button ${panelWidth < 193 ? 'icon-only' : ''}`}
-                onClick={() => setShowUploadModal(true)}
-              >
-                {panelWidth < 193
-                  ? <img src={newFileIcon} alt="소스 추가" className="button-icon" />
-                  : <>＋ 소스</>}
-              </button>
-            </div>
-          )}
+          <div className="action-buttons">
+            {!openedPDF && (
+              <>
+                <button
+                  className={`pill-button ${panelWidth < 193 ? 'icon-only' : ''}`}
+                  onClick={() => setShowAddFolderInput(true)}
+                >
+                  {panelWidth < 193
+                    ? <img src={addFolderIcon} alt="폴더 추가" className="button-icon" />
+                    : <>＋ 폴더</>}
+                </button>
+                <button
+                  className={`pill-button ${panelWidth < 193 ? 'icon-only' : ''}`}
+                  onClick={() => setShowUploadModal(true)}
+                >
+                  {panelWidth < 193
+                    ? <img src={newFileIcon} alt="소스 추가" className="button-icon" />
+                    : <>＋ 소스</>}
+                </button>
+              </>
+            )}
+          </div>
 
-          {/* 폴더 생성 입력폼 */}
           {showAddFolderInput && (
             <form className="add-form fancy-form" onSubmit={handleAddFolder}>
               <input
@@ -152,58 +173,54 @@ export default function SourcePanel({
               />
               <div className="form-buttons">
                 <button type="submit" className="primary">추가</button>
-                <button type="button" className="secondary" onClick={() => setShowAddFolderInput(false)}>취소</button>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => setShowAddFolderInput(false)}
+                >
+                  취소
+                </button>
               </div>
             </form>
           )}
 
-          {/* 메인 콘텐츠 */}
           <div className="panel-content" style={{ flexGrow: 1, overflow: 'auto' }}>
-            {openedPDF
-              ? (
-                <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
-                  <button className="pdf-back-button" onClick={closePDF}>← 뒤로가기</button>
-                  <PDFViewer file={openedPDF} containerWidth={panelWidth} />
-                </div>
-              )
-              : (
-                <FileView
-                  brainId={activeProject}
-                  files={folderTree}
-                  setFiles={setFolderTree}
-                  onOpenPDF={file => {
-                    setOpenedPDF(file);
-                    setIsPDFOpen(true);
-                  }}
-                  fileMap={fileMap}
-                  setFileMap={setFileMap}
-                />
-              )
-            }
+            {openedPDF ? (
+              <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
+                <button className="pdf-back-button" onClick={closePDF}>← 뒤로가기</button>
+                <PDFViewer file={openedPDF} containerWidth={panelWidth} />
+              </div>
+            ) : (
+              <FileView
+                brainId={activeProject}
+                files={folderTree}
+                setFiles={setFolderTree}
+                onOpenPDF={file => {
+                  setOpenedPDF(file);
+                  setIsPDFOpen(true);
+                }}
+                fileMap={fileMap}
+                setFileMap={setFileMap}
+                refreshTrigger={uploadKey}
+              />
+            )}
           </div>
         </>
       )}
 
-      {/* 업로드 모달 */}
       <SourceUploadModal
         visible={showUploadModal}
         onClose={() => setShowUploadModal(false)}
         onUpload={async uploadedFiles => {
           try {
-            const folderId = folderTree[0]?.folder_id ?? null;
-            await Promise.all(uploadedFiles.map(f =>
-              createMemo({
-                memo_title: f.name,
-                memo_text: '',
-                folder_id: folderId,
-                is_source: false,
-                brain_id: activeProject
-              })
-            ));
+            await Promise.all(uploadedFiles.map(f => createAtRoot(f)));
             await refresh();
-            const mapFrag = Object.fromEntries(uploadedFiles.map(f => [f.name, f]));
-            setFileMap(prev => ({ ...prev, ...mapFrag }));
-          } catch {
+            setUploadKey(k => k + 1);         // ← 업로드 후 키++
+            const frag = Object.fromEntries(uploadedFiles.map(f => [f.name, f]));
+            setFileMap(prev => ({ ...prev, ...frag }));
+            setShowUploadModal(false);
+          } catch (e) {
+            console.error(e);
             alert('파일 업로드 실패');
           }
         }}

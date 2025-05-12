@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import './styles/SourceUploadModal.css';
+//import { FaUpload } from "react-icons/fa";
+import { FaUpload } from "react-icons/fa6";
+import { IoCloudUploadOutline } from "react-icons/io5";
 
 function SourceUploadModal({ visible, onClose, onUpload }) {
   const [dragOver, setDragOver] = useState(false);
@@ -30,7 +33,7 @@ function SourceUploadModal({ visible, onClose, onUpload }) {
         <p className="description">소스를 추가하면 중요한 정보에 따라 응답을 제공합니다.</p>
 
         <div className={`drop-zone ${dragOver ? 'drag-over' : ''}`}>
-          <div className="upload-icon">⬆️</div>
+          <div className="upload-icon"><IoCloudUploadOutline /></div>
           <p>업로드할 <span className="highlight">파일을 선택</span>하거나 드래그 앤 드롭하세요.</p>
           <p className="file-types">지원 형식: PDF, TXT, Markdown, 오디오(mp3)</p>
         </div>

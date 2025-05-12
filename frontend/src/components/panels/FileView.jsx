@@ -61,6 +61,7 @@ export default function FileView({
   onOpenPDF,
   fileMap = {},
   setFileMap = () => { },
+  refreshTrigger
 }) {
   const [selectedFile, setSelectedFile] = useState(null)
   const [isRootDrag, setIsRootDrag] = useState(false)
@@ -69,7 +70,7 @@ export default function FileView({
 
   useEffect(() => {
     refresh()
-  }, [brainId])
+  }, [brainId, refreshTrigger]);
 
   // 폴더 + 루트파일 동시 로드
   const refresh = async () => {
