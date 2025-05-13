@@ -295,3 +295,9 @@
     opacity: 1;
   }
 }
+.chat-content,
+.empty-chat-content {        /* 대화 중 / 첫 화면 모두 */
+  width: 100%;              /* ← 부모 패널 가로폭에 맞춰 늘어남  */
+  flex: 1 1 auto;           /* ← flex-item이라도 ‘꽉’ 차도록     */
+  align-self: stretch;      /* ← 혹시 align-items:center 여파 방지 */
+}
