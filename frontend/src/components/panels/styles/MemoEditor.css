@@ -22,8 +22,7 @@
     padding-bottom: 8px;
     transition: border-color 0.2s ease;
     color: black;
-    <<<<<<< HEAD background-color: white;
-    =======>>>>>>>bd4809b5b92c8587ae68d8717c7d2ac8f664af1e
+    background-color: white;
 }
 
 /* 본문 에디터 */
@@ -60,13 +59,13 @@
 /* 뒤로가기 버튼 (상단 작게) */
 .back-button.small-top-left {
     position: absolute;
-    top: 0px;
+    top: 2px;
     right: 15px;
     font-size: 16px;
     background: none;
     border: none;
     cursor: pointer;
-    color: #666;
+    color: black;
     padding: 5px 6px;
     transition: color 0.2s ease;
 }
@@ -75,6 +74,22 @@
     color: #333;
 }
 
+.back-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    font-size: 22px;
+    border: none;
+    border-radius: 8px;
+    background-color: transparent;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
 .back-button:hover {
-    border-color: #999;
+    background-color: #f0f0f0;
+    transform: scale(1.05);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
