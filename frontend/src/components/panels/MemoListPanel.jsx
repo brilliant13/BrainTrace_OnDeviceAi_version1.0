@@ -5,6 +5,8 @@ import { CiMemoPad } from 'react-icons/ci';
 import { FaTrashAlt } from "react-icons/fa";
 import { HiOutlineMicrophone } from "react-icons/hi";
 import { HiMicrophone } from "react-icons/hi2";
+import { RiMic2Line } from "react-icons/ri";
+import { RiMic2Fill } from "react-icons/ri";
 function MemoListPanel({ memos, selectedId, highlightedId, onSelect, onAdd, onDelete }) {
     const [isRecording, setIsRecording] = useState(false);
     const handleMicClick = () => {
