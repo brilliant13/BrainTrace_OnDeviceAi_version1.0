@@ -47,7 +47,8 @@ export default function ProjectPanel({ activeProject, onProjectChange }) {
         <div className="sidebar-icons">
           {brains.slice().sort((a, b) => b.brain_id - a.brain_id)
             .map(b => {
-              const Icon = iconByKey[b.icon_key] ?? iconByKey.BsGraphUp;
+              //const Icon = activeProject ? iconByKey['Brain'] :  iconByKey['Brain']
+              //const Icon = iconByKey[b.icon_key] ?? iconByKey.BsGraphUp;
               return (
                 <div
                   key={b.brain_id}
@@ -55,7 +56,8 @@ export default function ProjectPanel({ activeProject, onProjectChange }) {
                   onClick={() => handleProjectClick(b.brain_id)}
                   title={b.brain_name}
                 >
-                  <Icon size={20} />
+                  <img width={30} src = {activeProject === b.brain_id ? '/brainbanzzak.png' : '/brain.png'} />  
+                  {/* <Icon size={20} /> */}
                 </div>
               );
             })}

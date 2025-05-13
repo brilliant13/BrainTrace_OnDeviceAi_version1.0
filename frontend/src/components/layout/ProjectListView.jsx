@@ -120,8 +120,9 @@ export default function ProjectListView() {
                                 }}
                             >
                                 {/* 아이콘 */}
-                                <div className="project-icon">
-                                    <Icon size={32} />
+                                <div className="project-icon" >
+                                    <img width={30} src = '/brainnormal.png'/>  
+                                    {/*<Icon size={32} />*/}
                                 </div>
 
                                 {/* 제목 (인라인 편집) */}

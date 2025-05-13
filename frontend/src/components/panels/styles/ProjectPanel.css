@@ -1,7 +1,11 @@
 /* ProjectPanel.css - 다크 모드 스타일 */
 
+:root {
+  --sidebar-radius: 40%;
+}
+
 .sidebar-container {
-  background-color: #363030;
+  background-color: #2c2929;
   padding: 0;
   height: 100%;
 }
@@ -25,7 +29,7 @@
 .sidebar-icon {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: var(--sidebar-radius);
   display: flex;
   margin-bottom: 15px;
   align-items: center;
@@ -33,27 +37,28 @@
   cursor: pointer;
   font-size: 22px;
   transition: all 0.2s ease;
-  background-color: rgba(255, 255, 255, 0.05);
+  /*background-color: rgba(255, 255, 255, 0.05);*/
   color: white;
 }
 
 .sidebar-icon:hover {
   background-color: rgba(255, 255, 255, 0.12);
   transform: translateY(-2px);
+  border-radius: var(--sidebar-radius);
 }
 
-.sidebar-icon.active {
+/* .sidebar-icon.active {
   background-color: rgba(129, 128, 128, 0.813);
   color: white;
   box-shadow: 1 3px 10px rgba(255, 255, 255, 0.1);
-}
+} */
 
 .add-icon {
   margin-top: auto;
   margin-bottom: 22px;
   font-size: 14px;
   font-weight: bold;
-  background-color: rgba(255, 255, 255, 0.08) !important;
+  /*background-color: rgba(255, 255, 255, 0.08) !important;*/
   color: white;
 }
 
@@ -73,13 +78,13 @@
 .sidebar-icon.home-icon {
   margin: 6px;
   padding: 10px;
-  border-radius: 18px;
-  background-color: #2c2c2c;
+  border-radius: var(--sidebar-radius);
+  /*background-color: #2c2c2c;*/
   cursor: pointer;
   justify-content: center;
   align-items: center;
   transition: all 0.2s ease;
-  box-shadow: 2px 5px 10px rgba(0, 0, 0, 0.3);
+  /*box-shadow: 2px 5px 10px rgba(0, 0, 0, 0.3);*/
 }
 
 .sidebar-icon.home-icon:hover {
