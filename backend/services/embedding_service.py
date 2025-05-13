@@ -1,222 +1,265 @@
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
-from sentence_transformers import SentenceTransformer
+import torch
+from transformers import AutoTokenizer, AutoModel
 import numpy as np
 import logging
 import os
 import uuid
 from typing import List, Dict, Optional
 
-# Qdrant 저장 경로 설정 (디스크 기반)
+# ================================================
+# Qdrant 및 KoE5 임베딩 모델 초기화
+# ================================================
+
+# 디스크 기반 Qdrant 저장 경로 설정
 QDRANT_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "qdrant")
 os.makedirs(QDRANT_PATH, exist_ok=True)
 
-# Qdrant 클라이언트 초기화 (디스크 기반 저장소 사용)
+# Qdrant 클라이언트 생성 (로컬 디스크 모드)
 client = QdrantClient(path=QDRANT_PATH)
 
-# SentenceTransformer 모델 초기화 (임베딩 차원: 384)
-# all-MiniLM-L6-v2: 경량화된 모델로, 384차원의 임베딩을 생성
-model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+# KoE5 임베딩 모델 로드
+MODEL_NAME = "nlpai-lab/KoE5"
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+model = AutoModel.from_pretrained(MODEL_NAME)
+# 모델의 hidden size를 벡터 차원으로 사용
+EMBED_DIM = model.config.hidden_size  # 예: 1024
+
 
 def get_collection_name(brain_id: str) -> str:
-    """브레인 ID에 해당하는 컬렉션 이름을 반환합니다.
-    
+    """
+    주어진 brain_id로부터 Qdrant 컬렉션 이름을 생성합니다.
     Args:
-        brain_id: 브레인의 고유 식별자
-        
+        brain_id: 브레인 고유 식별자
     Returns:
-        str: 'brain_{brain_id}' 형식의 컬렉션 이름
+        'brain_{brain_id}' 형식의 컬렉션 이름
     """
     return f"brain_{brain_id}"
 
+
 def initialize_collection(brain_id: str) -> None:
-    """브레인에 대한 새로운 컬렉션을 초기화하거나 기존 컬렉션을 재설정합니다.
-    
-    이 함수는:
-    1. 기존 컬렉션이 있으면 삭제
-    2. 지정된 벡터 설정으로 새 컬렉션 생성
-    
+    """
+    Qdrant에서 기존 컬렉션을 삭제하고 새로 생성합니다.
+    - 기존 컬렉션이 있으면 삭제
+    - EMBED_DIM 크기, 코사인 거리 기준으로 새 컬렉션 생성
     Args:
-        brain_id: 브레인의 고유 식별자
-        
+        brain_id: 브레인 고유 식별자
     Raises:
-        RuntimeError: 컬렉션 생성 실패 시
+        RuntimeError: 생성 실패 시
     """
     collection_name = get_collection_name(brain_id)
+    # 기존 컬렉션 삭제 시도
     try:
-        # 기존 컬렉션이 있으면 삭제
         client.delete_collection(collection_name)
         logging.info("기존 컬렉션 삭제 완료: %s", collection_name)
     except Exception as e:
-        logging.warning("컬렉션 %s가 존재하지 않을 수 있습니다: %s", collection_name, str(e))
-    
+        logging.warning("컬렉션 %s가 존재하지 않거나 삭제 실패: %s", collection_name, str(e))
+    # 새 컬렉션 생성
     try:
-        # 새 컬렉션 생성 (벡터 설정 포함)
-        # size=384: 임베딩 차원
-        # distance=COSINE: 벡터 비교를 위한 코사인 유사도 사용
         client.create_collection(
             collection_name=collection_name,
-            vectors_config=models.VectorParams(size=384, distance=models.Distance.COSINE),
+            vectors_config=models.VectorParams(
+                size=EMBED_DIM,
+                distance=models.Distance.COSINE
+            ),
         )
         logging.info("새 컬렉션 생성 완료: %s", collection_name)
     except Exception as e:
         logging.error("컬렉션 %s 생성 실패: %s", collection_name, str(e))
         raise RuntimeError(f"컬렉션 생성 실패: {str(e)}")
 
-def update_index_and_get_embeddings(nodes: List[Dict], brain_id: str) -> Dict[str, List[float]]:
-    """새로운 노드로 벡터 인덱스를 업데이트하고 임베딩을 반환합니다.
-    
-    이 함수는:
-    1. 각 노드와 설명을 처리
-    2. 각 설명에 대한 임베딩 생성
-    3. 메타데이터와 함께 Qdrant에 임베딩 저장
-    
-    Args:
-        nodes: 필수 필드(source_id, name, label, descriptions)가 포함된 노드 목록
-        brain_id: 브레인의 고유 식별자
-        
-    Returns:
-        Dict[str, List[float]]: source_id를 임베딩에 매핑하는 딕셔너리
-        
-    Raises:
-        RuntimeError: 인덱스 업데이트 실패 시
-    """
-    collection_name = get_collection_name(brain_id)
-    embeddings = {}
-    
-    try:
-        for node in nodes:
-            # 필수 필드 검증
-            if not all(key in node for key in ["source_id", "name", "label", "descriptions"]):
-                logging.warning("필수 필드가 누락된 노드: %s", node)
-                continue
-                
-            source_id = str(node["source_id"])
-            name = node["name"]
-            label = node["label"]
-            descriptions = node["descriptions"]
-            
-            # 각 설명 처리
-            for desc in descriptions:
-                if not isinstance(desc, dict) or "description" not in desc:
-                    logging.warning("잘못된 설명 형식: %s", desc)
-                    continue
-                    
-                description = desc["description"]
-                # 임베딩을 위한 텍스트 포맷
-                embedding_text = f"{name}는 {label}이며, {description}"
-                print("###############################################")
-                logging.info(f"[임베딩 텍스트] {embedding_text}")
-                print("###############################################")
-
-                try:
-                    # 임베딩 생성 및 Qdrant 저장
-                    embedding = encode_text(embedding_text)
-                    embeddings[source_id] = embedding
-                    
-                    # source_id를 기반으로 UUID 생성
-                    point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, source_id))
-                    
-                    client.upsert(
-                        collection_name=collection_name,
-                        points=[
-                            models.PointStruct(
-                                id=point_id,  # UUID 사용
-                                vector=embedding,
-                                payload={
-                                    "name": name,
-                                    "label": label,
-                                    "description": description,
-                                    "source_id": source_id,
-                                    "point_id": point_id  # UUID도 payload에 저장
-                                }
-                            )
-                        ]
-                    )
-                    logging.info("노드 %s의 임베딩 저장 완료 (UUID: %s)", source_id, point_id)
-                except Exception as e:
-                    logging.error("노드 %s의 설명 처리 실패: %s", source_id, str(e))
-                    continue
-                    
-        logging.info("컬렉션 %s에 %d개의 임베딩 저장 완료", collection_name, len(embeddings))
-        return embeddings
-    except Exception as e:
-        logging.error("인덱스 업데이트 실패: %s", str(e))
-        raise RuntimeError(f"인덱스 업데이트 실패: {str(e)}")
 
 def encode_text(text: str) -> List[float]:
-    """단일 텍스트에 대한 임베딩을 생성합니다.
-    
+    """
+    주어진 텍스트를 KoE5 모델로 임베딩하여 벡터 반환
+    - 토크나이저로 입력 전처리
+    - CLS 토큰 임베딩 추출
     Args:
-        text: 인코딩할 입력 텍스트
-        
+        text: 입력 텍스트
     Returns:
-        List[float]: 384차원 임베딩 벡터
-        
+        EMBED_DIM 차원의 벡터 리스트
     Raises:
-        RuntimeError: 임베딩 생성 실패 시
+        RuntimeError: 임베딩 실패 시
     """
     try:
-        # 임베딩 생성 및 리스트로 변환
-        return model.encode([text], convert_to_numpy=True)[0].tolist()
+        inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
+        with torch.no_grad():
+            outputs = model(**inputs)
+        # CLS 토큰 인덱스(0) 임베딩 반환
+        return outputs.last_hidden_state[:, 0].squeeze().tolist()
     except Exception as e:
         logging.error("텍스트 임베딩 생성 실패: %s", str(e))
         raise RuntimeError(f"텍스트 임베딩 생성 실패: {str(e)}")
 
-def search_similar_nodes(embedding: List[float], brain_id: str, limit: int = 5, threshold: float = 0.5) -> List[Dict]:
-    """벡터 데이터베이스에서 유사한 노드를 검색합니다.
-    
-    이 함수는:
-    1. 유사한 임베딩을 가진 노드 검색
-    2. 유사도 임계값으로 결과 필터링
-    3. 유사도 점수와 함께 노드 정보 반환
-    
+
+def update_index_and_get_embeddings(nodes: List[Dict], brain_id: str) -> Dict[str, List[List[float]]]:
+    """
+    노드 목록을 여러 표현 포맷으로 임베딩하고 Qdrant에 저장
+
+    처리 순서:
+    1. 필수 필드 검증(source_id, name, label, descriptions)
+    2. 여러 포맷으로 텍스트 생성
+    3. encode_text로 임베딩
+    4. uuid5로 point_id 생성
+    5. Qdrant upsert로 벡터 및 payload 저장
+
     Args:
-        embedding: 검색할 임베딩 벡터
-        brain_id: 브레인의 고유 식별자
-        limit: 반환할 최대 결과 수
-        threshold: 최소 유사도 점수 (0.0에서 1.0 사이)
-        
+        nodes: {source_id, name, label, descriptions} 포함 노드 리스트
+        brain_id: 브레인 고유 식별자
     Returns:
-        List[Dict]: 메타데이터와 점수가 포함된 유사 노드 목록
-        
-    Raises:
-        RuntimeError: 검색 실패 시
+        source_id별 생성된 벡터 리스트 딕셔너리
     """
     collection_name = get_collection_name(brain_id)
+    all_embeddings: Dict[str, List[List[float]]] = {}
+
+    # 사용할 표현 포맷 정의
+    formats = [
+        "{name}는 {label}이다. {description}",
+        "{name} ({label}): {description}",
+        "{label}인 {name}에 대한 설명: {description}",
+        "{description}"
+    ]
+
+    for node in nodes:
+        # 필수 키 확인
+        if not all(k in node for k in ["source_id", "name", "label", "descriptions"]):
+            logging.warning("필수 필드 누락된 노드: %s", node)
+            continue
+
+        source_id = str(node["source_id"])
+        name = node["name"]
+        label = node["label"]
+        embeddings_for_node: List[List[float]] = []
+
+        # 각 description마다 포맷별 벡터 생성
+        for desc in node["descriptions"]:
+            description = desc.get("description")
+            if not description:
+                logging.warning("빈 description 스킵: %s", desc)
+                continue
+
+            for idx, fmt in enumerate(formats):
+                # 텍스트 생성
+                text = fmt.format(name=name, label=label, description=description)
+                logging.info("[임베딩 텍스트] %s", text)
+
+                # 임베딩 생성
+                emb = encode_text(text)
+                embeddings_for_node.append(emb)
+
+                # 고유 point_id 생성(source_id + idx + description)
+                pid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{source_id}_{idx}_{description}"))
+
+                # Qdrant에 upsert: 벡터 및 payload 포함
+                client.upsert(
+                    collection_name=collection_name,
+                    points=[
+                        models.PointStruct(
+                            id=pid,
+                            vector=emb,
+                            payload={
+                                "source_id": source_id,
+                                "name": name,
+                                "label": label,
+                                "description": description,
+                                "point_id": pid
+                            }
+                        )
+                    ]
+                )
+                logging.info("노드 %s descriptor %d 저장 완료(UUID: %s)", source_id, idx, pid)
+
+        all_embeddings[source_id] = embeddings_for_node
+
+    logging.info("컬렉션 %s에 %d개의 노드 임베딩 저장 완료", collection_name, len(all_embeddings))
+    return all_embeddings
+
+
+def search_similar_nodes(
+    embedding: List[float],
+    brain_id: str,
+    limit: int = 3,
+    threshold: float = 0.1,
+    high_score_threshold: float = 0.8
+) -> List[Dict]:
+    """
+    Qdrant에서 유사 벡터 검색 후 source_id별 필터링
+
+    로직:
+    1. 검색 결과에서 threshold 미만 제거
+    2. high_score_threshold 이상은 모두 high_scores에 저장
+    3. 나머지는 source_id별 최고 점수로 그룹핑
+    4. 그룹핑 결과 상위 limit개 선택
+    5. high_scores + 상위 limit 반환
+
+    Args:
+        embedding: 검색할 임베딩 벡터
+        brain_id: 브레인 고유 식별자
+        limit: 소규모 그룹핑 결과 개수 제한
+        threshold: 최소 유사도 필터
+        high_score_threshold: 이 이상은 무제한 포함
+    Returns:
+        유사 노드 리스트
+    """
+    collection_name = get_collection_name(brain_id)
+
     try:
-        # 코사인 유사도를 사용하여 유사한 벡터 검색
+        # 검색: 충분히 많은 후보 요청 (limit * 10)
+        #   Qdrant에 query_vector와 유사도가 높은 순으로 상위 limit*10개 만큼 요청
+        #   예: limit=10 -> 상위 100개(0.8 이상이든 0.5~0.8 사이든 무조건 top100 가져옴)
+        #   이후 threshold 필터링 및 source_id 그룹핑 수행
         search_results = client.search(
             collection_name=collection_name,
             query_vector=embedding,
-            limit=limit
+            limit=limit * 10
         )
-        
-        # 임계값으로 결과 필터링 및 응답 포맷팅
-        filtered_results = []
+
+        grouped: Dict[str, Dict] = {}
+        high_scores: List[Dict] = []
+
         for result in search_results:
-            if result.score >= threshold:  # 유사도 임계값 적용
-                filtered_results.append({
-                    "source_id": result.payload.get("source_id", ""),
-                    "name": result.payload.get("name", ""),
-                    "label": result.payload.get("label", ""),
-                    "description": result.payload.get("description", ""),
-                    "point_id": result.payload.get("point_id", ""),  # UUID 포함
-                    "score": result.score  # 코사인 유사도 점수
-                })
-                
-        logging.info("검색 결과: %d개의 유사 노드 찾음 (임계값: %.2f)", len(filtered_results), threshold)
-        return filtered_results
+            score = result.score
+            if score < threshold:
+                # 임계값 미만 결과 스킵
+                continue
+
+            payload = result.payload or {}
+            sid = payload.get("source_id", "")
+
+            entry = {
+                "source_id": sid,
+                "point_id": payload.get("point_id", ""),
+                "name": payload.get("name", ""),
+                "label": payload.get("label", ""),
+                "description": payload.get("description", ""),
+                "score": score
+            }
+
+            if score >= high_score_threshold:
+                # 고유사도 항목은 모두 무제한 수집
+                high_scores.append(entry)
+            else:
+                # source_id별 최고 점수 항목만 그룹핑
+                prev = grouped.get(sid)
+                if not prev or score > prev["score"]:
+                    grouped[sid] = entry
+
+        # 그룹핑된 엔트리를 점수 내림차순으로 정렬, limit만큼 선택
+        top_grouped = sorted(grouped.values(), key=lambda x: -x["score"])[:limit]
+
+        # 최종 반환: 고유사도(high_scores) + 그룹핑된 상위 결과
+        return high_scores + top_grouped
+
     except Exception as e:
         logging.error("유사 노드 검색 실패: %s", str(e))
         raise RuntimeError(f"유사 노드 검색 실패: {str(e)}")
 
+
 def is_index_ready(brain_id: str) -> bool:
     """브레인에 대한 인덱스가 준비되었는지 확인합니다.
-    
     Args:
         brain_id: 브레인의 고유 식별자
-        
     Returns:
         bool: 컬렉션이 존재하면 True, 아니면 False
     """
@@ -228,21 +271,18 @@ def is_index_ready(brain_id: str) -> bool:
         logging.error("인덱스 준비 상태 확인 실패: %s", str(e))
         return False
 
+
 def delete_node(source_id: str, brain_id: str) -> None:
     """벡터 데이터베이스에서 노드를 삭제합니다.
-    
     Args:
         source_id: 노드의 고유 식별자
         brain_id: 브레인의 고유 식별자
-        
     Raises:
         RuntimeError: 삭제 실패 시
     """
     collection_name = get_collection_name(brain_id)
     try:
-        # source_id를 기반으로 UUID 생성
         point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, source_id))
-        
         client.delete(
             collection_name=collection_name,
             points_selector=models.PointIdsList(points=[point_id])
@@ -252,9 +292,9 @@ def delete_node(source_id: str, brain_id: str) -> None:
         logging.error("노드 %s 삭제 실패: %s", source_id, str(e))
         raise RuntimeError(f"노드 삭제 실패: {str(e)}")
 
+
 def delete_collection(brain_id: str) -> None:
     """벡터 데이터베이스에서 컬렉션을 삭제합니다.
-    
     Args:
         brain_id: 브레인의 고유 식별자
     """
