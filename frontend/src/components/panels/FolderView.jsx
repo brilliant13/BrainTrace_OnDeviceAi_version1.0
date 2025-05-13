@@ -6,6 +6,8 @@ import './styles/Common.css';
 import './styles/SourcePanel.css';
 import './styles/Scrollbar.css';
 import './styles/FileView.css';
+import { MdOutlineKeyboardArrowRight } from "react-icons/md";
+import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 
 import {
     getFolderTextfiles,
@@ -152,7 +154,7 @@ export default function FolderView({
                 draggable
                 onDragStart={e => e.dataTransfer.setData('text/plain', item.folder_id)}
             >
-                <span className="tree-toggle">{isOpen ? '▼' : '▶ '}</span>
+                <span className="tree-toggle">{isOpen ? <MdOutlineKeyboardArrowDown /> : <MdOutlineKeyboardArrowRight />}</span>
                 <span className="file-name folder-name">{item.name}</span>
             </div>
 
