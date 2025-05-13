@@ -90,8 +90,10 @@ class SQLiteHandler:
                 pdf_date DATETIME DEFAULT CURRENT_TIMESTAMP,
                 pdf_path TEXT,
                 folder_id INTEGER,
+                brain_id INTEGER,
                 type TEXT,
-                FOREIGN KEY (folder_id) REFERENCES Folder(folder_id)
+                FOREIGN KEY (folder_id) REFERENCES Folder(folder_id),
+                FOREIGN KEY (brain_id) REFERENCES Brain(brain_id)
             )
             ''')
 
@@ -103,8 +105,10 @@ class SQLiteHandler:
                 voice_date DATETIME DEFAULT CURRENT_TIMESTAMP,
                 voice_path TEXT,
                 folder_id INTEGER,
+                brain_id INTEGER,
                 type TEXT,
-                FOREIGN KEY (folder_id) REFERENCES Folder(folder_id)
+                FOREIGN KEY (folder_id) REFERENCES Folder(folder_id),
+                FOREIGN KEY (brain_id) REFERENCES Brain(brain_id)
             )
             ''')
 
@@ -116,11 +120,13 @@ class SQLiteHandler:
                 txt_date DATETIME DEFAULT CURRENT_TIMESTAMP,
                 txt_path TEXT,
                 folder_id INTEGER,
+                brain_id INTEGER,
                 type TEXT,
-                FOREIGN KEY (folder_id) REFERENCES Folder(folder_id)
+                FOREIGN KEY (folder_id) REFERENCES Folder(folder_id),
+                FOREIGN KEY (brain_id) REFERENCES Brain(brain_id)
             )
             ''')
-            
+
             conn.commit()
             conn.close()
             logging.info("SQLite 데이터베이스 초기화 완료: %s", self.db_path)
@@ -285,7 +291,6 @@ class SQLiteHandler:
                 (username, hashed_pw)
             )
             user = cursor.fetchone()
-            
             conn.close()
             
             if user:
@@ -308,7 +313,6 @@ class SQLiteHandler:
             # 2) created_at 기본값: 오늘
             if created_at is None:
                 created_at = datetime.date.today().isoformat()   # '2025-05-07'
-
 
             conn = sqlite3.connect(self.db_path)
             cur  = conn.cursor()
