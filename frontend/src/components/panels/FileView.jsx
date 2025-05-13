@@ -133,8 +133,8 @@ export default function FileView({
       const res = await createTextFile({ ...common, txt_title: f.name, txt_path: f.name })
       await createTextToGraph({
         text: content,
-        brain_id: brainId,
-        source_id: res.txt_id,
+        brain_id: String(brainId),
+        source_id: String(res.txt_id),
       });
     } else if (['mp3', 'wav', 'm4a'].includes(ext)) {
       await createVoice({ ...common, voice_title: f.name, voice_path: f.name })

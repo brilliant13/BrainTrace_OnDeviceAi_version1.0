@@ -87,8 +87,15 @@ export const removeTextFileFromFolder = (brainId, txtId) =>
         `/textfiles/brain/${brainId}/MoveOutFolder/${txtId}`
     ).then(r => r.data);
 export const getTextfilesByBrain = brainId => api.get(`/textfiles/brain/${brainId}`).then(r => r.data)
-export const createTextToGraph = (body) =>
-    api.post('/brainGraph/process_text', body).then(r => r.data);
+// 텍스트를 그래프로 변환
+export const createTextToGraph = body =>
+    api
+      .post(
+        '/brainGraph/process_text',
+        JSON.stringify(body),                    // ← JSON.stringify() 추가
+        { headers: { 'Content-Type': 'application/json' } }  // ← 헤더 명시
+      )
+      .then(r => r.data);
 
 /* ───────── VOICE FILES ───────── */
 export const createVoice = body => api.post('/voices', body).then(r => r.data);
