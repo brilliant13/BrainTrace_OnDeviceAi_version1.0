@@ -1,21 +1,38 @@
 // src/components/panels/MemoListPanel.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import './styles/MemoList.css';
 import { CiMemoPad } from 'react-icons/ci';
 import { FaTrashAlt } from "react-icons/fa";
+import { HiOutlineMicrophone } from "react-icons/hi";
+import { HiMicrophone } from "react-icons/hi2";
 function MemoListPanel({ memos, selectedId, highlightedId, onSelect, onAdd, onDelete }) {
+    const [isRecording, setIsRecording] = useState(false);
+    const handleMicClick = () => {
+        setIsRecording(prev => !prev);
+        // 추후 Whisper 녹음 시작 / 정지 로직 추가 예정
+    };
     return (
         <div className="memo-list-wrapper notebook-style">
             <div className="memo-list-header">
                 <div className="memo-list-header-left">
-                    <p className="memo-list-title">
+                    <div className="memo-list-title-row">
                         <CiMemoPad className="memo-title-icon" />
                         <span className="memo-title-text">note</span>
-                    </p>
+                    </div>
                     <span className="memo-count">총 {memos.length}개</span>
                 </div>
-                <button className="add-memo-button" onClick={onAdd}>+ 새 메모</button>
+
+                <div className="memo-list-header-right">
+                    {isRecording ? (
+                        <HiMicrophone className="mic-icon" onClick={handleMicClick} />
+                    ) : (
+                        <HiOutlineMicrophone className="mic-icon" onClick={handleMicClick} />
+                    )}
+                    <button className="add-memo-button" onClick={onAdd}>+ 새 메모</button>
+                </div>
             </div>
+
+
 
             <div className="memo-list">
                 {memos.map((memo) => {
