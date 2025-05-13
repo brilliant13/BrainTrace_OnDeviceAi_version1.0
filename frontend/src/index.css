@@ -1,5 +1,8 @@
+/* Pretendard 폰트 import */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Pretendard', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -13,6 +16,21 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 전체 앱에 Pretendard 적용 */
+* {
+  font-family: 'Pretendard', system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+/* 또는 body에만 적용해도 대부분 상속됨 */
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: 'Pretendard', system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -20,14 +38,6 @@ a {
 }
 a:hover {
   color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
 }
 
 h1 {
@@ -66,3 +76,4 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+

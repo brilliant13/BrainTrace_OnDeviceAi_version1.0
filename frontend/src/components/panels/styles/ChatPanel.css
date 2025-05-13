@@ -1,21 +1,44 @@
-/* ChatPanel.css - with added styles for empty chat state */
+/* ChatPanel.css - Modern Claude-style chat interface */
 
 .chat-content {
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  /* background-color: #fafafa; */
+  padding: 24px;
+  background-color: #FFFFFF;
   height: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 /* Style for the empty chat state */
 .empty-chat-content {
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  /* background-color: #fafafa; */
+  padding: 32px 24px;
   height: 100%;
   position: relative;
+  background-color: #FFFFFF;
+}
+
+/* Hero text section for empty chat */
+.hero-section {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.hero-title {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 32px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: 16px;
+  color: #6b7280;
+  font-weight: 400;
 }
 
 /* Centered input container */
@@ -25,12 +48,13 @@
   align-items: center;
   flex: 1;
   width: 100%;
+  flex-direction: column;
 }
 
 .input-wrapper {
   width: 100%;
-  max-width: 480px; /* Adjust as needed */
-  padding: 20px;
+  max-width: 750px;
+  padding: 24px;
 }
 
 /* Input with button inside */
@@ -40,151 +64,234 @@
   display: flex;
   align-items: center;
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 24px;
-  padding: 8px 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  border-radius: 32px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  min-height: 56px;
+}
+
+.input-with-button:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.06);
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.input-with-button:focus-within {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), 0 4px 16px rgba(0, 0, 0, 0.15);
+  border-color: #3b82f6;
+  transform: translateY(-1px);
 }
 
 .input-with-button.rounded {
-  border-radius: 24px;
+  border-radius: 32px;
 }
 
 .chat-input {
   flex: 1;
   border: none;
   resize: none;
-  padding: 8px 40px 8px 8px;
+  padding: 8px 60px 8px 12px;
   background: transparent;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #1a202c;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #1f2937;
   outline: none;
-  min-height: 24px;
+  min-height: 32px;
   max-height: 120px;
+  font-family: inherit;
+  font-weight: 400;
+}
+
+.chat-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+  font-size: 16px;
 }
 
 .submit-circle-button {
   position: absolute;
   right: 8px;
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background-color: #363030;
+  background: linear-gradient(135deg, #363030 0%, #2d2525 100%);
   color: white;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .submit-circle-button:hover {
-  background-color: #555;
+  background: linear-gradient(135deg, #252525 0%, #1a1a1a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.submit-circle-button:active {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .send-icon {
-  font-size: 12px;
+  font-size: 16px;
   padding-left: 2px;
 }
 
 .chat-header {
-  font-size: 18px;
+  margin-bottom: 24px;
+}
+
+.message-title {
   font-weight: 600;
-  margin-bottom: 16px;
-  color: #222;
+  font-size: 18px;
+  color: #111827;
+  letter-spacing: -0.025em;
 }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
   padding-right: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  scroll-behavior: smooth;
 }
 
-.user-presence {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 12px;
+/* ─── 공통 레이아웃(변경 없음) ─── */
+.message-wrapper         { display:flex; margin-bottom:40px; padding:0 16px; width:100%; overflow:visible; }
+.user-message            { justify-content:flex-end; }
+.bot-message             { justify-content:flex-start; }
+
+.message                 { position:relative; max-width:70%; min-width:200px; padding:16px 20px;
+                           border-radius:18px; word-wrap:break-word; overflow-wrap:break-word; }
+
+.user-message .message   { background:#F4F4F4; border:1px solid #e5e7eb;
+                           border-radius:18px 18px 4px 18px; }
+.bot-message  .message   { background:#F8F9FA; border:1px solid #f1f3f4;
+                           border-radius:18px 18px 18px 4px; }
+
+.message-body            { font-size:16px; line-height:1.7; color:#1f2937; white-space:pre-wrap; }
+
+/* ─── 복사 버튼 ─── */
+.message-actions         { position:absolute; bottom:-14px; opacity:0; transition:opacity .2s ease; }
+
+.user-message .message-actions { right:0;  }  /* 말풍선 아래 오른쪽 */
+.bot-message  .message-actions { left :0;  }  /* 말풍선 아래 왼쪽  */
+
+.message:hover .message-actions,
+.message-actions:hover   { opacity:1; }
+
+.copy-button             { width:30px; height:30px; border-radius:8px; background:#fff;
+                           border:1px solid #e5e7eb; display:flex; align-items:center;
+                           justify-content:center; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.12);
+                           transition:all .18s ease; }
+.copy-button:hover       { background:#f9fafb; box-shadow:0 2px 6px rgba(0,0,0,.14); }
+
+/* .copy-icon               { width:14px; height:14px; } */
+.copy-icon { width:16px; height:16px; }   /* 필요 시 20px 등으로 변경 */
+
+
+/* 빈 공간이 생기지 않도록 메시지 간 간격 ↑20px 증가 → margin-bottom:40px (위) */
+
+
+
+
+
+/* Chat controls */
+.chat-controls {
+  position: sticky;
+  bottom: 0;
+  background-color: #FFFFFF;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+  margin-top: auto;
 }
 
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #ddd;
+.chat-controls .input-with-button {
+  border-radius: 24px;
+  min-height: 48px;
+  padding: 12px 16px;
+}
+
+.chat-controls .submit-circle-button {
+  width: 40px;
+  height: 40px;
+  right: 6px;
+}
+
+/* Scrollbar styling */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Animation for new messages */
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-wrapper {
+  animation: messageSlideIn 0.3s ease-out;
+}
+
+/* Thinking indicator */
+.thinking-indicator {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  color: #666;
-  margin-right: 10px;
-  flex-shrink: 0;
-}
-
-.message {
-  border-radius: 12px;
-  padding: 14px 18px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  max-width: 75%;
-  word-break: break-word;
+  gap: 8px;
+  padding: 16px 0;
+  color: #6b7280;
   font-size: 14px;
-  line-height: 1.6;
 }
 
-.message-body {
-  color: #333;
-  font-size: 14px;
-  line-height: 1.6;
-  white-space: pre-line;
-}
-
-.message-title {
-  font-weight: bold;
-  font-size: 16px;
-  margin-bottom: 8px;
-  color: #222;
-}
-
-.chat-controls {
+.thinking-dots {
   display: flex;
-  justify-content: space-between;
-  margin-top: 12px;
+  gap: 4px;
 }
 
-.chat-input-container {
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid #ddd;
-  background-color: #fafafa;
+.thinking-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9ca3af;
+  animation: thinkingPulse 1.4s infinite ease-in-out;
 }
 
-/* 사용자/봇 메시지 분리 */
-.message-wrapper {
-  display: flex;
-  margin-bottom: 14px;
-}
+.thinking-dot:nth-child(1) { animation-delay: 0s; }
+.thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+.thinking-dot:nth-child(3) { animation-delay: 0.4s; }
 
-.user-message {
-  flex-direction: row-reverse;
-  text-align: right;
-}
-
-.bot-message {
-  flex-direction: row;
-  text-align: left;
-}
-
-.user-message .message {
-  background-color: #f3f4f6;
-  /* 연파랑 */
-  color: black;
-  align-self: flex-end;
-}
-
-.bot-message .message {
-  background-color: #f3f4f6;
-  color: #111827;
-  align-self: flex-start;
+@keyframes thinkingPulse {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
