@@ -211,10 +211,15 @@
   border-bottom: 1px solid #eaeaea;
 }
 
-.header-actions2 {
+.header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.header-actions img:last-child {
+  margin-left: 10px;
+  /* 토글 아이콘 왼쪽 여백 추가 */
 }
 
 /* 반응형 조정 */

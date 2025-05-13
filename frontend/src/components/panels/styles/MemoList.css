@@ -115,15 +115,17 @@
 .delete-button {
     background: none;
     border: none;
-    font-size: 20px;
-    color: #888;
+    font-size: 16px;
+    color: black;
     cursor: pointer;
-    padding: 4px;
-    transition: color 0.2s ease;
+    padding: 0;
+    border-radius: 4px;
 }
 
 .delete-button:hover {
+    background: #f0f0f0;
     color: #e53935;
+    /* 약간 붉은색으로 강조 */
 }
 
 /* 메모 추가 시 하이라이팅 효과 */
