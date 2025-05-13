@@ -74,20 +74,20 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
     data.links.forEach(link => {
       const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
       const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-
+      
       linkCounts[sourceId] = (linkCounts[sourceId] || 0) + 1;
       linkCounts[targetId] = (linkCounts[targetId] || 0) + 1;
     });
-
+    
     // 링크 수에 따라 노드 정렬하여 색상 결정
     const processedData = {
       nodes: data.nodes.map((n, index) => {
         const nodeId = n.id || n.name;
         let nodeColor;
-
+        
         // 명확한 임계값에 기반한 색상 할당: 연결이 3개 이상인 노드만 파란색으로
         const linkCount = linkCounts[nodeId] || 0;
-
+        
         if (linkCount >= 3) {
           nodeColor = colorPalette[4]; // 파란색 포인트 색상 (연결 3개 이상)
         } else if (linkCount == 2) {
@@ -96,7 +96,7 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
           // 나머지는 회색 계열
           nodeColor = colorPalette[2]; // 연한 회색 (연결 1개 이하)
         }
-
+        
         return {
           ...n,
           id: nodeId || Math.random().toString(36).substr(2, 9),
@@ -112,7 +112,7 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
         relation: l.relation || l.label || '연결'
       }))
     };
-
+    
     setGraphData(processedData);
     setLoading(false);
   };
@@ -164,7 +164,7 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
         </div>
       )}
       {!loading && graphData.nodes.length > 0 && dimensions.width > 0 && (
-
+        
         <ForceGraph2D
           width={dimensions.width}
           height={dimensions.height}
@@ -188,32 +188,32 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
             const label = node.name || node.id;
             const fontSize = 10 / globalScale;
             ctx.font = `${fontSize}px Sans-Serif`;
-
+            
             // 노드 크기 - 연결이 많을수록 더 큰 노드로 표시
             const baseSize = 5;
             const sizeFactor = Math.min(node.linkCount * 0.5, 3); // 최대 3의 추가 크기
             const nodeSize = baseSize + sizeFactor;
             const nodeRadius = nodeSize / globalScale;
-
+            
             // 노드 그리기
             ctx.beginPath();
             ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI, false);
             ctx.fillStyle = node.color;
             ctx.fill();
-
+            
             // 노드 테두리 그리기
             const isImportantNode = node.linkCount >= 3;
             ctx.strokeStyle = isImportantNode ? 'white' : '#f0f0f0';
             ctx.lineWidth = 0.5 / globalScale;
             ctx.stroke();
-
+            
             // 노드 아래에 텍스트 그리기
             const textColor = isImportantNode ? '#222' : '#555';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             ctx.fillStyle = textColor;
             ctx.fillText(label, node.x, node.y + nodeRadius + 1);
-
+            
             // 마우스 오버시 크기 확대
             node.__bckgDimensions = [nodeRadius * 2, fontSize].map(n => n + fontSize * 0.2);
           }}
