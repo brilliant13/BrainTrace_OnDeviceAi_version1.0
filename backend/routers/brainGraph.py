@@ -172,8 +172,8 @@ async def answer_endpoint(request_data: AnswerRequest):
         
         # Step 6: LLM을을 사용해 최종 답변 생성
         final_answer = ai_service.generate_answer(raw_schema_text, question)
-        
-        return {"answer": final_answer}
+        referenced_nodes = ai_service.extract_referenced_nodes(final_answer)
+        return {"answer": final_answer,"referenced_nodes":referenced_nodes}
     except Exception as e:
         logging.error("answer 오류: %s", str(e))
         raise HTTPException(status_code=500, detail=str(e))
