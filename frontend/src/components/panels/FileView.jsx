@@ -27,6 +27,7 @@ import {
   removeTextFileFromFolder,
   moveVoiceToFolder,
   removeVoiceFromFolder,
+  createTextToGraph ,
 } from '../../../../backend/services/backend'
 
 // ✅ 메모 텍스트를 그래프 지식으로 변환하는 함수
@@ -128,7 +129,13 @@ export default function FileView({
     if (ext === 'pdf') {
       await createPdf({ ...common, pdf_title: f.name, pdf_path: f.name })
     } else if (ext === 'txt') {
-      await createTextFile({ ...common, txt_title: f.name, txt_path: f.name })
+      const content = await f.text();
+      const res = await createTextFile({ ...common, txt_title: f.name, txt_path: f.name })
+      await createTextToGraph({
+        text: content,
+        brain_id: brainId,
+        source_id: res.txt_id,
+      });
     } else if (['mp3', 'wav', 'm4a'].includes(ext)) {
       await createVoice({ ...common, voice_title: f.name, voice_path: f.name })
     } else {
