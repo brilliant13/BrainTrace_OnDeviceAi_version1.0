@@ -17,10 +17,12 @@ import memoOffIcon from '../../assets/icons/memo-off.png';
 function MemoPanel({ activeProject, collapsed, setCollapsed }) {
   const projectId = activeProject;
   const MEMO_STORAGE_KEY = `brainTrace-memos-${projectId}`;
+  const DELETED_MEMO_STORAGE_KEY = `brainTrace-deleted-${projectId}`;
 
   const [showGraph, setShowGraph] = useState(true);
   const [showMemo, setShowMemo] = useState(true);
   const [memos, setMemos] = useState([]);
+  const [deletedMemos, setDeletedMemos] = useState([]);
   const [selectedMemoId, setSelectedMemoId] = useState(null);
   const [highlightedMemoId, setHighlightedMemoId] = useState(null);
   const [graphHeight, setGraphHeight] = useState(350);
@@ -28,16 +30,12 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
 
   useEffect(() => {
     const saved = localStorage.getItem(MEMO_STORAGE_KEY);
-    if (saved) {
-      const loaded = JSON.parse(saved);
-      setMemos(loaded);
-    } else {
-      const initial = [];
-      setMemos(initial);
-      localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(initial));
-    }
+    const deleted = localStorage.getItem(DELETED_MEMO_STORAGE_KEY);
+
+    setMemos(saved ? JSON.parse(saved) : []);
+    setDeletedMemos(deleted ? JSON.parse(deleted) : []);
     setSelectedMemoId(null);
-  }, [MEMO_STORAGE_KEY]);
+  }, [MEMO_STORAGE_KEY, DELETED_MEMO_STORAGE_KEY]);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -60,12 +58,11 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
     };
   }, [isResizing]);
 
-
   const selectedMemo = memos.find(m => m.id === selectedMemoId);
 
   const handleAddMemo = () => {
     const newId = Date.now();
-    const newMemo = { id: newId, title: ``, content: '' };
+    const newMemo = { id: newId, title: '', content: '' };
     const updated = [newMemo, ...memos];
     setMemos(updated);
     localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updated));
@@ -78,12 +75,36 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
   };
 
   const handleDeleteMemo = (id) => {
-    const updated = memos.filter((memo) => memo.id !== id);
+    const target = memos.find(m => m.id === id);
+    const updated = memos.filter(m => m.id !== id);
+
+    if (!target) return;
+
     setMemos(updated);
+    setDeletedMemos(prev => {
+      const next = [target, ...prev];
+      localStorage.setItem(DELETED_MEMO_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+
     localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updated));
     if (selectedMemoId === id) {
       setSelectedMemoId(null);
     }
+  };
+
+  const handleRestoreMemo = (id) => {
+    const target = deletedMemos.find(m => m.id === id);
+    if (!target) return;
+
+    const updatedTrash = deletedMemos.filter(m => m.id !== id);
+    const updatedMemos = [target, ...memos];
+
+    setDeletedMemos(updatedTrash);
+    setMemos(updatedMemos);
+
+    localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updatedMemos));
+    localStorage.setItem(DELETED_MEMO_STORAGE_KEY, JSON.stringify(updatedTrash));
   };
 
   return (
@@ -101,7 +122,7 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
       >
         {!collapsed && (
           <div className="header-actions2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="header-title" style={{ fontSize: '17px' }}>Insight </span>
+            <span className="header-title" style={{ fontSize: '17px' }}>Insight</span>
           </div>
         )}
         <div className="header-actions">
@@ -134,13 +155,13 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
         <div className="panel-content" style={{
           display: 'flex',
           flexDirection: 'column',
-          height: 'calc(100%)',
+          height: '100%',
           overflow: 'hidden'
         }}>
           {showGraph && (
             <div
               style={{
-                height: showMemo ? `${graphHeight}px` : 'calc(100%)',
+                height: showMemo ? `${graphHeight}px` : '100%',
                 transition: isResizing ? 'none' : 'height 0.3s ease'
               }}
             >
@@ -164,7 +185,6 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
             />
           )}
 
-
           {showMemo && (
             <div className="memo-body" style={{
               flex: 1,
@@ -174,11 +194,13 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
               {selectedMemoId == null ? (
                 <MemoListPanel
                   memos={memos}
+                  deletedMemos={deletedMemos}
                   selectedId={selectedMemoId}
                   highlightedId={highlightedMemoId}
                   onSelect={setSelectedMemoId}
                   onAdd={handleAddMemo}
                   onDelete={handleDeleteMemo}
+                  onRestore={handleRestoreMemo}
                 />
               ) : (
                 <MemoEditor
