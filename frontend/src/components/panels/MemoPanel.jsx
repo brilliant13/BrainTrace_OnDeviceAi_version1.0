@@ -158,7 +158,6 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
                 height: '10px',
                 cursor: 'row-resize',
                 borderBottom: '2px solid #ccc',
-                // backgroundColor: 'transparent', // ✅ 완전 투명
                 backgroundColor: '#fafafa',
               }}
               onMouseDown={() => setIsResizing(true)}

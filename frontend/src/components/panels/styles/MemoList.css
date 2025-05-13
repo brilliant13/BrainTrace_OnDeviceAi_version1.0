@@ -15,43 +15,79 @@
 .memo-list-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #ddd;
+    align-items: flex-start;
+    /* 상단 기준 정렬 */
+    padding: 8px 12px;
 }
 
 .memo-list-header-left {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
 }
 
-.memo-list-title {
-    margin-bottom: 20px;
-    font-size: 20px;
+.memo-list-title-row {
+    display: flex;
+    align-items: center;
+    /* note + 아이콘을 수평 가운데 정렬 */
+    gap: 6px;
+}
+
+.memo-title-icon {
+    font-size: 22px;
+    color: #444;
+}
+
+.memo-title-text {
+    font-size: 24px;
     font-weight: 700;
     color: #222;
 }
 
 .memo-count {
-    font-size: 13px;
-    color: #888;
+    font-size: 14px;
+    color: #777;
+    margin-top: 4px;
+    padding: 4px;
+}
+
+.memo-list-header-right {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    padding-top: 4px;
+}
+
+.mic-icon {
+    font-size: 33px;
+    color: #444;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.mic-icon:hover {
+    background-color: #ddd;
+    color: #111;
+    border-radius: 8px;
+    transform: scale(1.05);
+    /* 약간 커지는 효과로 인터랙션 강화 */
 }
 
 .add-memo-button {
-    background-color: #f3f3f3;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 14px;
+    background-color: #f1f1f1;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s ease;
-    margin-bottom: 40px;
-    color: black;
+    transition: background 0.2s ease;
 }
 
 .add-memo-button:hover {
-    border: 1px solid #ccc;
-    background-color: #dcdcdc;
+    background-color: #ddd;
 }
 
 .memo-list {
