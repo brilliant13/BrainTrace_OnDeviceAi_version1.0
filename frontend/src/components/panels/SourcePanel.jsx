@@ -225,6 +225,7 @@ export default function SourcePanel({
             alert('파일 업로드 실패');
           }
         }}
+        brainId={activeProject}
       />
       {!collapsed && <SourceQuotaBar current={10} max={50} />}
     </div >

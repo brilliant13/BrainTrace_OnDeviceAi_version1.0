@@ -161,3 +161,58 @@ async def get_pdfs_by_brain(brain_id: int):
     except Exception as e:
         logging.error("PDF Brain 조회 오류: %s", e)
         raise HTTPException(status_code=500, detail="서버 오류")
+
+
+# … 기존 import 구문 위에 다음 두 줄만 추가
+import os
+import uuid
+from fastapi import File, UploadFile, Form
+
+# ───────── 기존 router 정의와 CRUD 엔드포인트 그대로 ─────────
+router = APIRouter(
+    prefix="/pdfs",
+    tags=["pdfs"],
+    responses={404: {"description": "Not found"}}
+)
+
+# ───────── NEW: 파일 업로드 + PDF 생성 엔드포인트 ─────────
+@router.post(
+    "/upload",
+    response_model=List[PdfResponse],
+    summary="파일 업로드 → PDF 생성 및 URL 저장",
+)
+async def upload_and_create_pdfs(
+    files: List[UploadFile] = File(...),
+    folder_id: Optional[int] = Form(None),
+    brain_id:  Optional[int] = Form(None),
+):
+    saved_pdfs = []
+
+    # 1) 저장할 디렉토리 생성
+    upload_dir = os.path.join("uploads", "pdfs")
+    os.makedirs(upload_dir, exist_ok=True)
+
+    for f in files:
+        # 2) UUID 기반 새 파일명 + 확장자
+        ext = f.filename.split(".")[-1].lower()
+        new_name = f"{uuid.uuid4()}.{ext}"
+        dest_path = os.path.join(upload_dir, new_name)
+
+        # 3) 디스크에 쓰기
+        with open(dest_path, "wb") as out_file:
+            out_file.write(await f.read())
+
+        # 4) 공개 URL 경로 (StaticFiles 와 매핑됨)
+        public_url = f"/uploads/pdfs/{new_name}"
+
+        # 5) DB에 메타데이터 저장
+        pdf = sqlite_handler.create_pdf(
+            pdf_title = f.filename,
+            pdf_path  = public_url,
+            folder_id = folder_id,
+            type      = ext,
+            brain_id  = brain_id
+        )
+        saved_pdfs.append(pdf)
+
+    return saved_pdfs
