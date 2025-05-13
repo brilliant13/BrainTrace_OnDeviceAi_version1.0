@@ -2,6 +2,7 @@ import logging
 from openai import OpenAI           # OpenAI 클라이언트 임포트
 import json
 from .chunk_service import chunk_text
+from typing import List
 
 import os
 from dotenv import load_dotenv  # dotenv 추가
@@ -17,6 +18,30 @@ if not openai_api_key:
 client = OpenAI(api_key=openai_api_key)
 
 
+
+def extract_referenced_nodes(llm_response: str) -> List[str]:
+    """
+    LLM 응답 문자열에서 EOF 뒤의 JSON을 파싱해
+    referenced_nodes만 추출한 뒤,
+    '레이블-노드' 형식일 경우 레이블과 '-'을 제거하고
+    노드 이름만 반환합니다.
+    """
+    parts = llm_response.split("EOF")
+    if len(parts) < 2:
+        return []
+
+    json_part = parts[-1].strip()
+    try:
+        payload = json.loads(json_part)
+    except json.JSONDecodeError:
+        return []
+
+    raw_nodes = payload.get("referenced_nodes", [])
+    cleaned = [
+        node.split("-", 1)[1] if "-" in node else node
+        for node in raw_nodes
+    ]
+    return cleaned
 
 def extract_graph_components(text: str, source_id: str):
     """
@@ -51,37 +76,37 @@ def extract_graph_components(text: str, source_id: str):
     return all_nodes, all_edges
 
 def _extract_from_chunk(chunk: str, source_id: str):
-    # """개별 청크에서 노드와 엣지 정보를 추출합니다."""
-    # prompt = (
-    # "다음 텍스트를 분석해서 노드와 엣지 정보를 추출해줘. "
-    # "노드는 { \"label\": string, \"name\": string, \"description\": string } 형식의 객체 배열, "
-    # "엣지는 { \"source\": string, \"target\": string, \"relation\": string } 형식의 객체 배열로 출력해줘. "
-    # "여기서 source와 target은 노드의 name을 참조해야 하고, source_id는 사용하면 안 돼. "
-    # "출력 결과는 반드시 아래 JSON 형식을 준수해야 해:\n"
-    # "{\n"
-    # '  "nodes": [ ... ],\n'
-    # '  "edges": [ ... ]\n'
-    # "}\n"
-    # "문장에 있는 모든 개념을 노드로 만들어줘"
-    # "각 노드의 description은 해당 노드를 간단히 설명하는 문장이어야 해. "
-    # "만약 텍스트 내에 하나의 긴 description에 여러 개념이 섞여 있다면, 반드시 개념 단위로 나누어 여러 노드를 생성해줘. "
-    # "description은 하나의 개념에 대한 설명만 들어가야 해"
-    # "노드의 label과 name은 한글로 표현하고, 불필요한 내용이나 텍스트에 없는 정보는 추가하지 말아줘. "
-    # "노드와 엣지 정보가 추출되지 않으면 빈 배열을 출력해줘.\n\n"
-    # "json 형식 외에는 출력 금지"
-    # f"텍스트: {chunk}"
-    # )
+    """개별 청크에서 노드와 엣지 정보를 추출합니다."""
+    prompt = (
+    "다음 텍스트를 분석해서 노드와 엣지 정보를 추출해줘. "
+    "노드는 { \"label\": string, \"name\": string, \"description\": string } 형식의 객체 배열, "
+    "엣지는 { \"source\": string, \"target\": string, \"relation\": string } 형식의 객체 배열로 출력해줘. "
+    "여기서 source와 target은 노드의 name을 참조해야 하고, source_id는 사용하면 안 돼. "
+    "출력 결과는 반드시 아래 JSON 형식을 준수해야 해:\n"
+    "{\n"
+    '  "nodes": [ ... ],\n'
+    '  "edges": [ ... ]\n'
+    "}\n"
+    "문장에 있는 모든 개념을 노드로 만들어줘"
+    "각 노드의 description은 해당 노드를 간단히 설명하는 문장이어야 해. "
+    "만약 텍스트 내에 하나의 긴 description에 여러 개념이 섞여 있다면, 반드시 개념 단위로 나누어 여러 노드를 생성해줘. "
+    "description은 하나의 개념에 대한 설명만 들어가야 해"
+    "노드의 label과 name은 한글로 표현하고, 불필요한 내용이나 텍스트에 없는 정보는 추가하지 말아줘. "
+    "노드와 엣지 정보가 추출되지 않으면 빈 배열을 출력해줘.\n\n"
+    "json 형식 외에는 출력 금지"
+    f"텍스트: {chunk}"
+    )
     try:
-        # response = client.chat.completions.create(
-        #     model="gpt-4",
-        #     messages=[
-        #         {"role": "system", "content": "너는 텍스트에서 구조화된 노드와 엣지를 추출하는 전문가야. 엣지의 source와 target은 반드시 노드의 name을 참조해야 해."},
-        #         {"role": "user", "content": prompt}
-        #     ],
-        #     max_tokens=5000,
-        #     temperature=0.3
-        # )
-        response = get_response(chunk)
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "너는 텍스트에서 구조화된 노드와 엣지를 추출하는 전문가야. 엣지의 source와 target은 반드시 노드의 name을 참조해야 해."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=5000,
+            temperature=0.3
+        )
+
         print("response: ", response)
         data = json.loads(response)
         print("data: ", data)
@@ -159,25 +184,26 @@ def generate_answer(schema_text: str, question: str) -> str:
     스키마 텍스트와 질문을 기반으로 AI를 호출하여 최종 답변을 생성합니다.
     """
     prompt = (
-        "다음 스키마와 질문을 바탕으로 AI를 호출하여 최종 답변을 생성해줘.\n\n"
-        "스키마:\n" + schema_text + "\n\n"
-        "질문: " + question + "\n\n"
-        "답변할 때 반드시 참고한 핵심 노드 정보도 함께 제공해줘. 다음 형식으로 응답해줘:\n\n"
-        "답변: [여기에 질문에 대한 상세 답변 제공]\n\n"
-        "참고한 노드: [답변 생성에 사용한 핵심 노드 이름들을 쉼표로 구분하여 나열]"
-        "참고한 노드는 노드의 이름만 나열해줘"
-    )
+    "다음 스키마와 질문을 바탕으로 AI를 호출하여 자연어 답변을 작성한 뒤, "
+    "마지막에 참고한 지식 그래프의 노드 이름만 JSON 배열 형식으로 EOF 뒤에 출력해줘.\n\n"
+    "스키마:\n" + schema_text + "\n\n"
+    "질문: " + question + "\n\n"
+    "출력 형식:\n"
+    "[여기에 질문에 대한 상세 답변 작성]\n\n"
+    "EOF\n"
+    "{\n"
+    '  "referenced_nodes": ["노드 이름1", "노드 이름2", ...]\n'
+    "}\n"
+    "반드시 노드 이름만 배열로 나열하고, 도메인 정보, 노드간 관계, 설명은 포함하지 마. 정확한 JSON만 출력해줘."
+)
     try:
-    #     gpt_response = client.chat.completions.create(
-    #         model="gpt-4",
-    #         messages=[
-    #             {"role": "system", "content": "너는 Neo4j 스키마 정보를 기반으로 질문에 답하는 AI 어시스턴트야. 항상 참고한 노드 정보도 함께 제공해야 해."},
-    #             {"role": "user", "content": prompt}
-    #         ],
-    #         max_tokens=512,
-    #         temperature=0.6
-    #     )
-        response = get_answer(schema_text, question)
+    
+        response = client.ChatCompletion.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        response = response.choices[0].message.content
+
         print("response: ", response)
         final_answer = response
         return final_answer
