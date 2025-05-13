@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from sqlite_db.sqlite_handler import SQLiteHandler
 import logging
+import sqlite3
 from datetime import date
 
 sqlite_handler = SQLiteHandler()
