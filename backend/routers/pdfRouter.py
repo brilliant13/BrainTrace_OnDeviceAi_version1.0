@@ -161,3 +161,4 @@ async def get_pdfs_by_brain(brain_id: int):
     except Exception as e:
         logging.error("PDF Brain 조회 오류: %s", e)
         raise HTTPException(status_code=500, detail="서버 오류")
+

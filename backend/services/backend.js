@@ -49,15 +49,29 @@ export const getPdf = id => api.get(`/pdfs/${id}`).then(r => r.data);
 export const updatePdf = (id, body) => api.put(`/pdfs/${id}`, body).then(r => r.data);
 export const deletePdf = id => api.delete(`/pdfs/${id}`);
 export const movePdfToFolder = (brainId, targetFolderId, pdfId) =>
-    api.put(
-        `/pdfs/brain/${brainId}/changeFolder/${targetFolderId}/${pdfId}`
-    ).then(r => r.data);
-
+    api.put(`/pdfs/brain/${brainId}/changeFolder/${targetFolderId}/${pdfId}`).then(r => r.data);
 export const removePdfFromFolder = (brainId, pdfId) =>
-    api.put(
-        `/pdfs/brain/${brainId}/MoveOutFolder/${pdfId}`
-    ).then(r => r.data);
+    api.put(`/pdfs/brain/${brainId}/MoveOutFolder/${pdfId}`).then(r => r.data);
 export const getPdfsByBrain = brainId => api.get(`/pdfs/brain/${brainId}`).then(r => r.data)
+/**
+ * files: File[] 드래그·드롭 혹은 파일 선택으로 받은 File 객체 배열
+ * folderId, brainId: (선택) 기존 createFolder 등에서 쓰던 ID
+ * 반환: Promise<PdfResponse[]> — 방금 업로드된 PDF 메타데이터 목록
+ */
+export const uploadPdfs = (files, folderId = null, brainId = null) => {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    if (folderId != null) formData.append('folder_id', folderId);
+    if (brainId != null) formData.append('brain_id', brainId);
+
+    return api.post(
+        '/pdfs/upload',
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+    ).then(res => res.data);
+};
+
+
 
 /* ───────── TEXT FILES ───────── */
 export const createTextFile = body => api.post('/textfiles', body).then(r => r.data);
