@@ -266,9 +266,10 @@ export default function FileView({
       {/* 비어 있을 때 */}
       {files.length === 0 && rootFiles.length === 0 && (
         <div className="empty-state">
-          <p>파일이 없습니다.</p>
+          <p className="empty-sub">이 영역에 파일을 <strong>드래그해서 추가</strong>해보세요!</p>
         </div>
       )}
+
     </div>
   )
 }

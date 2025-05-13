@@ -19,6 +19,10 @@ import './styles/SourcePanel.css';
 import './styles/PanelToggle.css';
 import './styles/Scrollbar.css';
 
+import { TbCylinderPlus } from "react-icons/tb";
+import { TbDatabasePlus } from "react-icons/tb";
+import { TbFolderPlus } from "react-icons/tb";
+
 function normalizeApiTree(apiFolders = []) {
   return apiFolders.map(folder => ({
     type: 'folder',
@@ -139,28 +143,29 @@ export default function SourcePanel({
 
       {!collapsed && (
         <>
-          <div className="action-buttons">
+          <div className="source-actions-fixed">
             {!openedPDF && (
-              <>
+              <div className="action-buttons">
                 <button
-                  className={`pill-button ${panelWidth < 193 ? 'icon-only' : ''}`}
+                  className={`pill-button ${panelWidth < 250 ? 'icon-only' : ''}`}
                   onClick={() => setShowAddFolderInput(true)}
                 >
-                  {panelWidth < 193
-                    ? <img src={addFolderIcon} alt="폴더 추가" className="button-icon" />
+                  {panelWidth < 250
+                    ? <TbFolderPlus size={25} />
                     : <>＋ 폴더</>}
                 </button>
                 <button
-                  className={`pill-button ${panelWidth < 193 ? 'icon-only' : ''}`}
+                  className={`pill-button ${panelWidth < 220 ? 'icon-only' : ''}`}
                   onClick={() => setShowUploadModal(true)}
                 >
-                  {panelWidth < 193
-                    ? <img src={newFileIcon} alt="소스 추가" className="button-icon" />
+                  {panelWidth < 250
+                    ? <TbCylinderPlus size={25} />
                     : <>＋ 소스</>}
                 </button>
-              </>
+              </div>
             )}
           </div>
+
 
           {showAddFolderInput && (
             <form className="add-form fancy-form" onSubmit={handleAddFolder}>
@@ -216,7 +221,7 @@ export default function SourcePanel({
           try {
             await Promise.all(uploadedFiles.map(f => createAtRoot(f)));
             await refresh();
-            setUploadKey(k => k + 1);         // ← 업로드 후 키++
+            setUploadKey(k => k + 1);
             const frag = Object.fromEntries(uploadedFiles.map(f => [f.name, f]));
             setFileMap(prev => ({ ...prev, ...frag }));
             setShowUploadModal(false);

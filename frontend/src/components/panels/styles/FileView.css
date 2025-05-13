@@ -129,18 +129,44 @@
   margin-right: 8px;
 }
 
-/* 트리 화살표 (Obsidian-style) */
 .tree-toggle {
-  font-size: 12px;
-  width: 16px;
-  display: inline-block;
-  text-align: center;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #777;
+  margin: 0;
+  /* margin이 정렬을 깨트릴 수 있으므로 제거 */
 }
 
 /* 트리 자식 영역에 세로선 추가 */
 .tree-children {
   border-left: 1px solid #ddd;
-  margin-left: 6px;
-  padding-left: 10px;
+  margin-left: 9px;
+  padding-left: 12px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 80px 20px;
+  border: 2px dashed #d0d0d0;
+  border-radius: 12px;
+  background-color: #fafafa;
+  color: #777;
+  transition: background-color 0.3s;
+  text-align: center;
+}
+
+.empty-state:hover {
+  background-color: #f0f0f0;
+}
+
+.empty-sub {
+  font-size: 13px;
+  color: #666;
 }
