@@ -173,6 +173,12 @@ async def answer_endpoint(request_data: AnswerRequest):
         # Step 6: LLM을을 사용해 최종 답변 생성
         final_answer = ai_service.generate_answer(raw_schema_text, question)
         referenced_nodes = ai_service.extract_referenced_nodes(final_answer)
+        final_answer = final_answer.split("EOF")[0].strip()
+                # referenced_nodes 내용을 텍스트로 final_answer 뒤에 추가
+        if referenced_nodes:
+            nodes_text = "\n\n[참고된 노드 목록]\n" + "\n".join(f"- {node}" for node in referenced_nodes)
+            final_answer += nodes_text
+
         return {"answer": final_answer,"referenced_nodes":referenced_nodes}
     except Exception as e:
         logging.error("answer 오류: %s", str(e))
