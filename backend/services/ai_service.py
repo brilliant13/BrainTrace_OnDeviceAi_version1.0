@@ -15,6 +15,7 @@ if not openai_api_key:
     raise ValueError("❌ OpenAI API Key가 설정되지 않았습니다. .env 파일을 확인하세요.")
 
 # ✅ OpenAI 클라이언트 설정 (노드/엣지 추출에 활용)
+# client = OpenAI(api_key=openai_api_key)
 client = OpenAI(api_key=openai_api_key)
 
 
@@ -97,19 +98,26 @@ def _extract_from_chunk(chunk: str, source_id: str):
     f"텍스트: {chunk}"
     )
     try:
-        response = client.chat.completions.create(
-            model="gpt-4",
+        completion = client.chat.completions.create(
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "너는 텍스트에서 구조화된 노드와 엣지를 추출하는 전문가야. 엣지의 source와 target은 반드시 노드의 name을 참조해야 해."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=5000,
-            temperature=0.3
+            temperature=0.3,
+            # JSON만 돌려주도록 강제
+            response_format={"type": "json_object"}
         )
 
-        print("response: ", response)
-        data = json.loads(response)
-        print("data: ", data)
+        # print("response: ", response)
+        # data = json.loads(response)
+        # print("data: ", data)
+         # ⬇️  문자열만 추출!
+        content = completion.choices[0].message.content.strip()
+        data = json.loads(content)
+            
+            
         # 각 노드에 source_id 추가 및 구조 검증
         valid_nodes = []
         for node in data.get("nodes", []):
@@ -198,7 +206,7 @@ def generate_answer(schema_text: str, question: str) -> str:
 )
     try:
     
-        response = client.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt}]
         )
