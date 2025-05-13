@@ -2,6 +2,7 @@
 import React from 'react';
 import './styles/MemoList.css';
 import { CiMemoPad } from 'react-icons/ci';
+import { FaTrashAlt } from "react-icons/fa";
 function MemoListPanel({ memos, selectedId, highlightedId, onSelect, onAdd, onDelete }) {
     return (
         <div className="memo-list-wrapper notebook-style">
@@ -38,7 +39,6 @@ function MemoListPanel({ memos, selectedId, highlightedId, onSelect, onAdd, onDe
                                     'application/json-memo',
                                     JSON.stringify(dragData)
                                 );
-                                // 옵션: 복사만 허용
                                 e.dataTransfer.effectAllowed = 'copy';
                                 e.currentTarget.classList.add('dragging');
                             }}
@@ -62,7 +62,7 @@ function MemoListPanel({ memos, selectedId, highlightedId, onSelect, onAdd, onDe
                                 className="delete-button"
                                 onClick={e => { e.stopPropagation(); onDelete(memo.id); }}
                             >
-                                🗑
+                                <FaTrashAlt />
                             </button>
                         </div>
                     );
