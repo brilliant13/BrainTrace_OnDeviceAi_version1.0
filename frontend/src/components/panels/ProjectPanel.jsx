@@ -16,6 +16,8 @@ import './styles/Scrollbar.css';
 import { IoHomeOutline } from 'react-icons/io5';
 import { AiOutlinePlus } from 'react-icons/ai';
 
+import NewBrainModal from '../NewBrainModal';
+
 /**
  * 왼쪽 세로 사이드바 (프로젝트/브레인 아이콘 목록)
  * @param {number}   activeProject   – 현재 열린 브레인 id
@@ -24,6 +26,7 @@ import { AiOutlinePlus } from 'react-icons/ai';
 export default function ProjectPanel({ activeProject, onProjectChange }) {
   const nav = useNavigate();
   const [brains, setBrains] = useState([]);
+  const [showModal, setShowModal] = useState(false);
 
   /* ───────── DB 호출 ───────── */
   useEffect(() => {
@@ -56,7 +59,7 @@ export default function ProjectPanel({ activeProject, onProjectChange }) {
                   onClick={() => handleProjectClick(b.brain_id)}
                   title={b.brain_name}
                 >
-                  <img width={30} src = {activeProject === b.brain_id ? '/brainbanzzak.png' : '/brain.png'} />  
+                  <img width={30} src={activeProject === b.brain_id ? '/brainbanzzak.png' : '/brain.png'} />
                   {/* <Icon size={20} /> */}
                 </div>
               );
@@ -65,7 +68,8 @@ export default function ProjectPanel({ activeProject, onProjectChange }) {
           {/* + 버튼 – 새 프로젝트(홈) */}
           <div
             className="sidebar-icon add-icon"
-            onClick={() => nav('/')}
+            // onClick={() => nav('/')}
+            onClick={() => setShowModal(true)}
             title="새 프로젝트"
           >
             <AiOutlinePlus size={25} style={{ margin: 'auto' }} />
@@ -80,6 +84,14 @@ export default function ProjectPanel({ activeProject, onProjectChange }) {
       >
         <IoHomeOutline size={20} />
       </div>
+      {/* 새 브레인 모달 */}
+      {showModal && (
+        <NewBrainModal
+          onClose={() => setShowModal(false)}
+          onCreated={brain => setBrains(prev => [brain, ...prev])}
+        />
+      )}
     </div>
+
   );
 }
