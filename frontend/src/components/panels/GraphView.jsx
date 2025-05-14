@@ -7,7 +7,8 @@ function GraphView({
   brainId = 'default-brain-id', 
   height = '550px', 
   graphData: initialGraphData = null,
-  referencedNodes = [] 
+  referencedNodes = [],
+  graphRefreshTrigger // 그래프 새로고침 트리거 prop 추가
 }) {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -72,6 +73,25 @@ function GraphView({
 
     loadGraphData();
   }, [brainId, initialGraphData]);
+
+    // graphRefreshTrigger가 변경될 때마다 그래프 새로고침
+    useEffect(() => {
+      if (graphRefreshTrigger !== undefined && graphRefreshTrigger > 0) {
+        console.log('그래프 새로고침 트리거:', graphRefreshTrigger);
+        const loadGraphData = async () => {
+          try {
+            setLoading(true);
+            const data = await fetchGraphData(brainId);
+            processGraphData(data);
+          } catch (err) {
+            console.error('그래프 새로고침 실패:', err);
+            setError('그래프 데이터를 불러오는 데 실패했습니다.');
+            setLoading(false);
+          }
+        };
+        loadGraphData();
+      }
+    }, [graphRefreshTrigger, brainId]);
 
   // referencedNodes가 변경될 때 Set 업데이트
   useEffect(() => {
