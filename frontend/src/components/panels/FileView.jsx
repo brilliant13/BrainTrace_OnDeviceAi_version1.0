@@ -189,6 +189,9 @@ export default function FileView({
     } else {
       await createTextFile({ ...common, txt_title: f.name, txt_path: f.name })
     }
+
+    await refresh();
+    if (onGraphRefresh) onGraphRefresh();
   }
 
   const handleDelete = async f => {
