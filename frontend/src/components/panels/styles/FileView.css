@@ -171,3 +171,68 @@
   font-size: 13px;
   color: #666;
 }
+
+.file-menu-button {
+  position: relative;
+  padding: 0 8px;
+  margin-left: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.file-menu-popup {
+  position: absolute;
+  top: 24px;
+  /* 아래로 떨어뜨리기 */
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  min-width: 150px;
+}
+
+/* 기본적으로 점점점 안 보이게 */
+.file-item .file-menu-button {
+  visibility: hidden;
+  cursor: pointer;
+  padding-left: 8px;
+  color: #999;
+  font-size: 18px;
+  transition: color 0.2s ease;
+}
+
+/* 파일 항목 hover 시 점점점 표시 */
+.file-item:hover .file-menu-button {
+  visibility: visible;
+}
+
+/* 점점점 hover 시 효과 */
+.file-menu-button:hover {
+  color: #333;
+}
+
+.popup-item {
+  padding: 8px 12px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.popup-item:hover {
+  background-color: #f2f2f2;
+}
+
+.rename-input {
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+  color: inherit;
+}
