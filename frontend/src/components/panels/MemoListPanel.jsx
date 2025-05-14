@@ -11,6 +11,7 @@ import { FaRegTrashAlt } from "react-icons/fa";
 import { RiDeleteBin2Line } from "react-icons/ri"; // 휴지통
 import { MdOutlineDeleteForever } from "react-icons/md"; // 휴지통
 
+import { MdKeyboardBackspace } from "react-icons/md";
 function MemoListPanel({
     memos,
     deletedMemos,
@@ -40,7 +41,7 @@ function MemoListPanel({
                         <CiMemoPad className="memo-title-icon" />
                         <span className="memo-title-text">note</span>
                     </div>
-                    <span className="memo-count">총 {displayedMemos.length}개</span>
+                    {/* <span className="memo-count">총 {displayedMemos.length}개</span> */}
                 </div>
 
                 <div className="memo-list-header-right">
@@ -54,7 +55,7 @@ function MemoListPanel({
             </div>
 
             {/* 리스트 / 휴지통 토글 */}
-            <div className="memo-list-header-toggle" style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 16px' }}>
+            {/* <div className="memo-list-header-toggle" style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 16px' }}>
                 <div className="memo-header-icons">
                     <HiQueueList
                         className={`header-icon ${!isTrash ? 'active' : ''}`}
@@ -68,7 +69,8 @@ function MemoListPanel({
                         title="휴지통 보기"
                     />
                 </div>
-            </div>
+            </div> */}
+
 
             <div className="memo-list">
                 {displayedMemos.map((memo) => {
@@ -118,6 +120,29 @@ function MemoListPanel({
                     );
                 })}
             </div>
+            <div className="memo-footer">
+                <div className="memo-count-footer">총 {displayedMemos.length}개</div>
+                <div className="memo-list-header-toggle" style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 16px' }}>
+                    <div className="memo-header-icons">
+                        {!showTrash ? (
+                            <FaRegTrashAlt
+                                className="header-icon"
+                                onClick={() => setShowTrash(true)}
+                                title="휴지통 보기"
+                            />
+                        ) : (
+                            <MdKeyboardBackspace
+                                className="header-icon"
+                                onClick={() => setShowTrash(false)}
+                                title="메모 목록으로"
+                                size={22}
+                            />
+                        )}
+                    </div>
+                </div>
+
+            </div>
+
         </div>
     );
 }
