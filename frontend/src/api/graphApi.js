@@ -157,11 +157,17 @@ function getDefaultGraphData() {
 
 export const processText = async (text, sourceId, brainId) => {
   try {
-    const response = await axios.post(`${BASE_URL}/brainGraph/process_text`, {
-      text,
-      source_id: sourceId,
-      brain_id: brainId
-    });
+    const response = await axios.post(
+      `${BASE_URL}/brainGraph/process_text`,
+      JSON.stringify({
+        text,
+        source_id: sourceId,
+        brain_id: brainId
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
     return response.data;
   } catch (error) {
     console.error('텍스트 처리 실패:', error);
