@@ -43,7 +43,6 @@ async function processMemoTextAsGraph(content, sourceId, brainId) {
     console.error("❌ 그래프 생성 실패:", error);
   }
 }
->>>>>>> 30c2a2b4df758de54a1c3fc77f6b75e0556feadb
 
 // API 에서 넘어온 폴더/파일들을 트리 형태로 변환
 function normalizeApiTree(apiFolders = []) {
@@ -202,21 +201,13 @@ export default function FileView({
         content,        // 만약 API가 content 필드를 지원하면
       })
       // 텍스트를 지식 그래프로 처리
-<<<<<<< HEAD
-      await createTextToGraph(content, name, brainId);
 
-      // ✅ 1. 그래프가 갱신됐다고 전역 이벤트 발행
-      window.dispatchEvent(
-        new CustomEvent('GRAPH_UPDATED', { detail: { brainId } })
-      );
-
-=======
-      await processMemoTextAsGraph(content, name, brainId);
+    await processMemoTextAsGraph(content, name, brainId);
           // 그래프 새로고침 트리거
     if (onGraphRefresh) {
       onGraphRefresh();
     }
->>>>>>> 30c2a2b4df758de54a1c3fc77f6b75e0556feadb
+
 
       await refresh()
       return
