@@ -42,6 +42,14 @@ export default function NewBrainModal({ onClose, onCreated }) {
                     required
                 />
 
+                {/* <label>소개</label>
+                <input
+                    value={description}
+                    onChange={e => setDescription(e.target.value)}
+                    placeholder="이 프로젝트는 어떤 내용을 다루나요?"
+                    maxLength={100}
+                /> */}
+
                 <label>아이콘</label>
                 <div className="icon-grid">
                     {ICONS.map(({ key, cmp: Icon }) => (

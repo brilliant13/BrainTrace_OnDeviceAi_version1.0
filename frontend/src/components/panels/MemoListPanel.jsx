@@ -1,5 +1,5 @@
 // src/components/panels/MemoListPanel.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './styles/MemoList.css';
 import { CiMemoPad } from 'react-icons/ci';
 import { FaTrashAlt } from "react-icons/fa"; // 휴지통
@@ -10,8 +10,18 @@ import { MdOutlineRestore } from "react-icons/md";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { RiDeleteBin2Line } from "react-icons/ri"; // 휴지통
 import { MdOutlineDeleteForever } from "react-icons/md"; // 휴지통
-
 import { MdKeyboardBackspace } from "react-icons/md";
+
+import micOff from '../../assets/icons/mic_off.png'
+import micOn from '../../assets/icons/mic_on.png'
+
+function formatTime(seconds) {
+    const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const sec = String(seconds % 60).padStart(2, '0');
+    return `${min}:${sec}`;
+}
+
+
 function MemoListPanel({
     memos,
     deletedMemos,
@@ -25,9 +35,27 @@ function MemoListPanel({
     const [isRecording, setIsRecording] = useState(false);
     const [showTrash, setShowTrash] = useState(false);
 
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [showOnIcon, setShowOnIcon] = useState(true);
+    const intervalRef = useRef(null);
+    const blinkRef = useRef(null);
+
     const handleMicClick = () => {
+        if (!isRecording) {
+            // 녹음 시작
+            setElapsedTime(0);
+            intervalRef.current = setInterval(() => {
+                setElapsedTime(prev => prev + 1);
+            }, 1000);
+            blinkRef.current = setInterval(() => {
+                setShowOnIcon(prev => !prev);
+            }, 1000);
+        } else {
+            // 녹음 중지
+            clearInterval(intervalRef.current);
+            clearInterval(blinkRef.current);
+        }
         setIsRecording(prev => !prev);
-        // 추후 Whisper 녹음 기능 연결 예정
     };
 
     const isTrash = showTrash;
@@ -41,36 +69,27 @@ function MemoListPanel({
                         <CiMemoPad className="memo-title-icon" />
                         <span className="memo-title-text">note</span>
                     </div>
-                    {/* <span className="memo-count">총 {displayedMemos.length}개</span> */}
                 </div>
 
                 <div className="memo-list-header-right">
-                    {isRecording ? (
-                        <HiMicrophone className="mic-icon" onClick={handleMicClick} />
-                    ) : (
-                        <HiOutlineMicrophone className="mic-icon" onClick={handleMicClick} />
-                    )}
+                    <div className="mic-wrapper">
+                        {isRecording && (
+                            <div className="recording-indicator-timer">
+                                {formatTime(elapsedTime)}
+                            </div>
+                        )}
+                        <img
+                            src={isRecording ? (showOnIcon ? micOn : micOff) : micOff}
+                            alt="mic"
+                            className={`mic-icon ${isRecording ? 'recording' : ''}`}
+                            onClick={handleMicClick}
+                        />
+                    </div>
+
+
                     <button className="add-memo-button" onClick={onAdd}>+ 새 메모</button>
                 </div>
             </div>
-
-            {/* 리스트 / 휴지통 토글 */}
-            {/* <div className="memo-list-header-toggle" style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 16px' }}>
-                <div className="memo-header-icons">
-                    <HiQueueList
-                        className={`header-icon ${!isTrash ? 'active' : ''}`}
-                        onClick={() => setShowTrash(false)}
-                        title="메모 목록"
-                    />
-                    <div className="icon-divider" />
-                    <FaRegTrashAlt
-                        className={`header-icon ${isTrash ? 'active' : ''}`}
-                        onClick={() => setShowTrash(true)}
-                        title="휴지통 보기"
-                    />
-                </div>
-            </div> */}
-
 
             <div className="memo-list">
                 {displayedMemos.map((memo) => {

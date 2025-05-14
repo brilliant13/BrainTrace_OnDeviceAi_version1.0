@@ -54,24 +54,47 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 11px;
+    gap: 25px;
     padding-top: 4px;
 }
 
 .mic-icon {
-    font-size: 33px;
-    color: #444;
+    width: 22px;
+    height: 22px;
     cursor: pointer;
-    padding: 6px;
-    border-radius: 8px;
-    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    transition: transform 0.2s;
 }
 
 .mic-icon:hover {
-    background-color: #ddd;
-    color: #111;
-    border-radius: 8px;
-    transform: scale(1.06);
+    transform: scale(1.08);
+}
+
+.mic-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.recording-indicator-timer {
+    position: absolute;
+    top: -20px;
+    font-size: 0.75rem;
+    color: gray;
+    font-weight: bold;
+    animation: blink 1.2s infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
 }
 
 .add-memo-button {
