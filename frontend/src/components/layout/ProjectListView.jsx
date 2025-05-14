@@ -15,6 +15,7 @@ import { iconByKey } from '../iconMap';
 import NewBrainModal from '../NewBrainModal';
 import ConfirmDialog from '../ConfirmDialog';
 import './ProjectListView.css';
+import { FaPlus } from "react-icons/fa";
 
 export default function ProjectListView() {
     const nav = useNavigate();
@@ -121,8 +122,7 @@ export default function ProjectListView() {
                             >
                                 {/* 아이콘 */}
                                 <div className="project-icon" >
-                                    <img width={30} src = '/brainnormal.png'/>  
-                                    {/*<Icon size={32} />*/}
+                                    <img width={30} src='/brainnormal.png' />
                                 </div>
 
                                 {/* 제목 (인라인 편집) */}
@@ -203,10 +203,13 @@ export default function ProjectListView() {
                         );
                     })}
 
-                    {/* ➕ 새 프로젝트 카드 */}
                     <div className="project-card add-card" onClick={() => setShowModal(true)}>
-                        ➕ 새 프로젝트
+                        <div className="add-card-content">
+                            <FaPlus size={26} />
+                            <span>새 프로젝트</span>
+                        </div>
                     </div>
+
                 </div>
             </div>
 
