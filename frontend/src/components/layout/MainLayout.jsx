@@ -40,6 +40,10 @@ function MainLayout() {
   const [sourceCollapsed, setSourceCollapsed] = useState(false);
   const [memoCollapsed, setMemoCollapsed] = useState(false);
 
+  // 참고된 노드 목록을 위한 state 추가
+  const [referencedNodes, setReferencedNodes] = useState([]);
+
+
   const sourcePanelRef = useRef(null);
   const chatPanelRef = useRef(null);  // 추가된 채팅 패널 ref
   const memoPanelRef = useRef(null);
@@ -59,6 +63,8 @@ function MainLayout() {
   const handleProjectChange = (projectId) => {
     setActiveProject(projectId);
     navigate(`/project/${projectId}`);
+    // 프로젝트가 변경되면 참고된 노드 초기화
+    setReferencedNodes([]);
   };
 
   // 패널 리사이즈 핸들러들
@@ -188,7 +194,11 @@ function MainLayout() {
           onResize={handleChatResize}
         >
           <div className="layout-inner chat-inner">
-            <ChatPanel activeProject={Number(activeProject)} />
+            {/* <ChatPanel activeProject={Number(activeProject)} /> */}
+            <ChatPanel 
+              activeProject={Number(activeProject)}
+              onReferencedNodesUpdate={setReferencedNodes} // ChatPanel에 함수 전달
+            />
           </div>
         </Panel>
 
@@ -203,10 +213,16 @@ function MainLayout() {
           onResize={handleMemoResize}
         >
           <div className="layout-inner memo-inner">
+            {/* <MemoPanel
+              activeProject={Number(activeProject)}
+              collapsed={memoCollapsed}
+              setCollapsed={setMemoCollapsed}
+            /> */}
             <MemoPanel
               activeProject={Number(activeProject)}
               collapsed={memoCollapsed}
               setCollapsed={setMemoCollapsed}
+              referencedNodes={referencedNodes} // MemoPanel에 참고된 노드 목록 전달
             />
           </div>
         </Panel>
