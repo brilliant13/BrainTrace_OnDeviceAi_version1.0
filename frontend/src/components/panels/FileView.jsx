@@ -32,7 +32,7 @@ import {
 // ✅ 메모 텍스트를 그래프 지식으로 변환하는 함수
 async function processMemoTextAsGraph(content, sourceId, brainId) {
   try {
-    const response = await processText(content, sourceId, brainId);
+    const response = await processText(content, String(sourceId), String(brainId));
     console.log("✅ 그래프 생성 완료:", response);
   } catch (error) {
     console.error("❌ 그래프 생성 실패:", error);
@@ -164,10 +164,10 @@ export default function FileView({
       })
       // 텍스트를 지식 그래프로 처리
       await processMemoTextAsGraph(content, name, brainId);
-          // 그래프 새로고침 트리거
-    if (onGraphRefresh) {
-      onGraphRefresh();
-    }
+      // 그래프 새로고침 트리거
+      if (onGraphRefresh) {
+        onGraphRefresh();
+      }
 
       await refresh()
       return

@@ -12,15 +12,12 @@ import PDFViewer from '../panels/PDFViewer';
 import SourceUploadModal from '../panels/SourceUploadModal';
 import SourceQuotaBar from '../panels/SourceQuotaBar';
 import toggleIcon from '../../assets/icons/toggle-view.png';
-import addFolderIcon from '../../assets/icons/add-folder.png';
-import newFileIcon from '../../assets/icons/new-file.png';
 import './styles/Common.css';
 import './styles/SourcePanel.css';
 import './styles/PanelToggle.css';
 import './styles/Scrollbar.css';
 
 import { TbCylinderPlus } from "react-icons/tb";
-import { TbDatabasePlus } from "react-icons/tb";
 import { TbFolderPlus } from "react-icons/tb";
 
 function normalizeApiTree(apiFolders = []) {
