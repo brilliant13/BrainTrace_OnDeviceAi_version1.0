@@ -30,7 +30,6 @@ import {
   createTextToGraph ,
 } from '../../../../backend/services/backend'
 
-<<<<<<< HEAD
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
