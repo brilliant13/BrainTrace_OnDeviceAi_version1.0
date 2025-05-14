@@ -3,7 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import './styles/Common.css';
 import './styles/ChatPanel.css';
 import './styles/Scrollbar.css';
-import { requestAnswer } from '../../tmpAPI';
+// import { requestAnswer } from '../../tmpAPI';
+import {requestAnswer} from '../../api/tmpAPI'; // API 요청 함수
 import projectData from '../../data/projectData';
 import copyIcon from '../../assets/icons/copy.png';   // 경로는 jsx 파일 → icons 폴더까지 상대경로
 

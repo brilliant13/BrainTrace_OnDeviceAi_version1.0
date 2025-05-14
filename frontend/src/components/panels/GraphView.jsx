@@ -10,6 +10,32 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
+// ✅ 그래프 새로고침 함수
+  const refreshGraph = async () => {
+    try {
+      const data = await fetchGraphData(brainId);
+      setGraphData(data);
+      console.log("✅ 그래프 새로고침 완료:", data);
+    } catch (err) {
+      console.error("❌ 그래프 새로고침 실패:", err);
+    }
+  };
+
+  // const refreshGraph = useCallback(async () => {
+  //   try {
+  //     const data = await fetchGraphData(brainId);
+  //     setGraphData(data);
+  //   } catch (err) {
+  //     console.error('그래프 새로고침 실패:', err);
+  //   }
+  //    }, [brainId]);
+
+
+  // useEffect(() => {
+  //   refreshGraph();
+  // }, [brainId]);
+
   // 앱 디자인에 맞는 모노크로매틱 + 포인트 색상 팔레트
   const colorPalette = [
     '#444444', // 진한 회색 (주요 노드)

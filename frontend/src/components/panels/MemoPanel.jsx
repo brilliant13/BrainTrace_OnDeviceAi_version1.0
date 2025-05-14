@@ -1,3 +1,4 @@
+// src/components/panels/MemoPanel.jsx
 import React, { useState, useEffect } from 'react';
 import './styles/Common.css';
 import './styles/MemoPanel.css';

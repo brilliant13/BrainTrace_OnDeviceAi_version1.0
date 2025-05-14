@@ -9,6 +9,10 @@ import FolderView from './FolderView'
 import FileIcon from './FileIcon'
 import { TiUpload } from 'react-icons/ti'
 
+import { processText } from '../../api/graphApi'; // graphApi.js에서 processText API 가져오기
+import { fetchGraphData } from '../../api/graphApi'; // 그래프 데이터 API 불러오기
+
+
 import {
   listBrainFolders,
   getPdfsByBrain,
@@ -24,6 +28,26 @@ import {
   moveVoiceToFolder,
   removeVoiceFromFolder,
 } from '../../../../backend/services/backend'
+
+// ✅ 메모 텍스트를 그래프 지식으로 변환하는 함수
+async function processMemoTextAsGraph(content, sourceId, brainId) {
+  try {
+    const response = await processText(content, sourceId, brainId);
+    console.log("✅ 그래프 생성 완료:", response);
+  } catch (error) {
+    console.error("❌ 그래프 생성 실패:", error);
+  }
+}
+// ✅ 메모 텍스트를 그래프 지식으로 변환하는 함수
+// async function processMemoTextAsGraph(content, sourceId, brainId, refreshGraph) {
+//   try {
+//     const response = await processText(content, sourceId, brainId);
+//     console.log("✅ 그래프 생성 완료:", response);
+//     await refreshGraph(); // 그래프 새로고침
+//   } catch (error) {
+//     console.error("❌ 그래프 생성 실패:", error);
+//   }
+// }
 
 // API 에서 넘어온 폴더/파일들을 트리 형태로 변환
 function normalizeApiTree(apiFolders = []) {
@@ -61,7 +85,8 @@ export default function FileView({
   onOpenPDF,
   fileMap = {},
   setFileMap = () => { },
-  refreshTrigger
+  refreshTrigger,
+  // refreshGraph // ✅ Insight 그래프 새로고침 함수
 }) {
   const [selectedFile, setSelectedFile] = useState(null)
   const [isRootDrag, setIsRootDrag] = useState(false)
@@ -147,6 +172,18 @@ export default function FileView({
         txt_path: name,
         content,        // 만약 API가 content 필드를 지원하면
       })
+      // 텍스트를 지식 그래프로 처리
+      await processMemoTextAsGraph(content, name, brainId);
+      // ✅ 텍스트를 지식 그래프로 처리 및 Insight 그래프 새로고침
+      // await processMemoTextAsGraph(content, name, brainId, refreshGraph);
+
+
+      + // ✅ 1. 그래프가 갱신됐다고 전역 이벤트 발행
+ window.dispatchEvent(
+   new CustomEvent('GRAPH_UPDATED', { detail: { brainId } })
+ );
+
+
       await refresh()
       return
     }
