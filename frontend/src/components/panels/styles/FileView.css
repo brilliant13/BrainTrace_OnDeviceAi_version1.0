@@ -48,9 +48,10 @@
 }
 
 .file-item:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(148, 148, 148, 0.05);
   outline: 2px dotted #999;
   outline-offset: -2px;
+  transform: translateY(-1px);
 }
 
 .file-item.selected {
