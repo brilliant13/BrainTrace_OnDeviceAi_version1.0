@@ -38,16 +38,6 @@ async function processMemoTextAsGraph(content, sourceId, brainId) {
     console.error("❌ 그래프 생성 실패:", error);
   }
 }
-// ✅ 메모 텍스트를 그래프 지식으로 변환하는 함수
-// async function processMemoTextAsGraph(content, sourceId, brainId, refreshGraph) {
-//   try {
-//     const response = await processText(content, sourceId, brainId);
-//     console.log("✅ 그래프 생성 완료:", response);
-//     await refreshGraph(); // 그래프 새로고침
-//   } catch (error) {
-//     console.error("❌ 그래프 생성 실패:", error);
-//   }
-// }
 
 // API 에서 넘어온 폴더/파일들을 트리 형태로 변환
 function normalizeApiTree(apiFolders = []) {
@@ -86,7 +76,7 @@ export default function FileView({
   fileMap = {},
   setFileMap = () => { },
   refreshTrigger,
-  // refreshGraph // ✅ Insight 그래프 새로고침 함수
+  onGraphRefresh, // GraphView 새로고침 함수 추가
 }) {
   const [selectedFile, setSelectedFile] = useState(null)
   const [isRootDrag, setIsRootDrag] = useState(false)
@@ -174,15 +164,10 @@ export default function FileView({
       })
       // 텍스트를 지식 그래프로 처리
       await processMemoTextAsGraph(content, name, brainId);
-      // ✅ 텍스트를 지식 그래프로 처리 및 Insight 그래프 새로고침
-      // await processMemoTextAsGraph(content, name, brainId, refreshGraph);
-
-
-      + // ✅ 1. 그래프가 갱신됐다고 전역 이벤트 발행
- window.dispatchEvent(
-   new CustomEvent('GRAPH_UPDATED', { detail: { brainId } })
- );
-
+          // 그래프 새로고침 트리거
+    if (onGraphRefresh) {
+      onGraphRefresh();
+    }
 
       await refresh()
       return

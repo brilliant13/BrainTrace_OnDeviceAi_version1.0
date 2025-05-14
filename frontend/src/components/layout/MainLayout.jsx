@@ -43,6 +43,13 @@ function MainLayout() {
   // 참고된 노드 목록을 위한 state 추가
   const [referencedNodes, setReferencedNodes] = useState([]);
 
+  // 그래프 Refresh 용도
+  const [graphRefreshTrigger, setGraphRefreshTrigger] = useState(0);
+  // FileView에서 호출할 함수
+  const handleGraphRefresh = () => {
+    setGraphRefreshTrigger(prev => prev + 1);
+  };
+
 
   const sourcePanelRef = useRef(null);
   const chatPanelRef = useRef(null);  // 추가된 채팅 패널 ref
@@ -181,6 +188,7 @@ function MainLayout() {
               setCollapsed={setSourceCollapsed}
               setIsPDFOpen={setIsPDFOpen}
               onBackFromPDF={handleBackFromPDF}
+              onGraphRefresh={handleGraphRefresh} // 그래프 refresh 용도
             />
           </div>
         </Panel>
@@ -195,7 +203,7 @@ function MainLayout() {
         >
           <div className="layout-inner chat-inner">
             {/* <ChatPanel activeProject={Number(activeProject)} /> */}
-            <ChatPanel 
+            <ChatPanel
               activeProject={Number(activeProject)}
               onReferencedNodesUpdate={setReferencedNodes} // ChatPanel에 함수 전달
             />
@@ -223,6 +231,7 @@ function MainLayout() {
               collapsed={memoCollapsed}
               setCollapsed={setMemoCollapsed}
               referencedNodes={referencedNodes} // MemoPanel에 참고된 노드 목록 전달
+              graphRefreshTrigger={graphRefreshTrigger} // 그래프 refesh 용도
             />
           </div>
         </Panel>

@@ -40,7 +40,8 @@ export default function SourcePanel({
   collapsed,
   setCollapsed,
   setIsPDFOpen,
-  onBackFromPDF
+  onBackFromPDF,
+  onGraphRefresh // 그래프 새로고침 함수 추가
 }) {
   const panelRef = useRef();
   const [panelWidth, setPanelWidth] = useState(0);
@@ -207,6 +208,7 @@ export default function SourcePanel({
                 fileMap={fileMap}
                 setFileMap={setFileMap}
                 refreshTrigger={uploadKey}
+                onGraphRefresh={onGraphRefresh} // 그래프 refesh 용도로 FileView에 전달
               />
             )
             }
