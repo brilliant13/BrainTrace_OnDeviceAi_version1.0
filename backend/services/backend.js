@@ -72,7 +72,6 @@ export const uploadPdfs = (files, folderId = null, brainId = null) => {
 };
 
 
-
 /* ───────── TEXT FILES ───────── */
 export const createTextFile = body => api.post('/textfiles', body).then(r => r.data);
 export const getTextFile = id => api.get(`/textfiles/${id}`).then(r => r.data);

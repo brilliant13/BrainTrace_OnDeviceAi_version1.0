@@ -12,15 +12,12 @@ import PDFViewer from '../panels/PDFViewer';
 import SourceUploadModal from '../panels/SourceUploadModal';
 import SourceQuotaBar from '../panels/SourceQuotaBar';
 import toggleIcon from '../../assets/icons/toggle-view.png';
-import addFolderIcon from '../../assets/icons/add-folder.png';
-import newFileIcon from '../../assets/icons/new-file.png';
 import './styles/Common.css';
 import './styles/SourcePanel.css';
 import './styles/PanelToggle.css';
 import './styles/Scrollbar.css';
 
 import { TbCylinderPlus } from "react-icons/tb";
-import { TbDatabasePlus } from "react-icons/tb";
 import { TbFolderPlus } from "react-icons/tb";
 
 function normalizeApiTree(apiFolders = []) {
@@ -103,13 +100,13 @@ export default function SourcePanel({
   const createAtRoot = f => {
     const ext = f.name.split('.').pop().toLowerCase();
     if (ext === 'pdf') {
-      return createPdf({ pdf_title: f.name, pdf_path: f.name, folder_id: null, type: ext });
+      return createPdf({ pdf_title: f.name, pdf_path: f.pdf_path, folder_id: null, type: ext });
     }
     if (ext === 'txt') {
-      return createTextFile({ txt_title: f.name, txt_path: f.name, folder_id: null, type: ext });
+      return createTextFile({ txt_title: f.name, txt_path: f.txt_path, folder_id: null, type: ext });
     }
     if (['mp3', 'wav', 'm4a'].includes(ext)) {
-      return createVoice({ voice_title: f.name, voice_path: f.name, folder_id: null, type: ext });
+      return createVoice({ voice_title: f.name, voice_path: f.voice_path, folder_id: null, type: ext });
     }
     return createMemo({
       memo_title: f.name,
