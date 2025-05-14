@@ -101,13 +101,13 @@ export default function SourcePanel({
   const createAtRoot = f => {
     const ext = f.name.split('.').pop().toLowerCase();
     if (ext === 'pdf') {
-      return createPdf({ pdf_title: f.name, pdf_path: f.pdf_path, folder_id: null, type: ext });
+      return createPdf({ pdf_title: f.name, pdf_path: f.name, folder_id: null, type: ext });
     }
     if (ext === 'txt') {
-      return createTextFile({ txt_title: f.name, txt_path: f.txt_path, folder_id: null, type: ext });
+      return createTextFile({ txt_title: f.name, txt_path: f.name, folder_id: null, type: ext });
     }
     if (['mp3', 'wav', 'm4a'].includes(ext)) {
-      return createVoice({ voice_title: f.name, voice_path: f.voice_path, folder_id: null, type: ext });
+      return createVoice({ voice_title: f.name, voice_path: f.name, folder_id: null, type: ext });
     }
     return createMemo({
       memo_title: f.name,

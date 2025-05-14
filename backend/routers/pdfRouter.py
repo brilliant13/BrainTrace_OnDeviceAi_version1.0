@@ -166,49 +166,49 @@ async def get_pdfs_by_brain(brain_id: int):
 
 
 
-UPLOAD_DIR = "uploaded_pdfs"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# UPLOAD_DIR = "uploaded_pdfs"
+# os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-def sanitize_filename(name):
-    return re.sub(r'[^\w\-_\. ]', '_', name)
+# def sanitize_filename(name):
+#     return re.sub(r'[^\w\-_\. ]', '_', name)
 
-@router.post("/upload", response_model=List[PdfResponse])
-async def upload_pdfs(
-    files: List[UploadFile] = File(...),
-    folder_id: Optional[int] = Form(None),
-    brain_id: Optional[int] = Form(None)
-):
-    uploaded_pdfs = []
+# @router.post("/upload", response_model=List[PdfResponse])
+# async def upload_pdfs(
+#     files: List[UploadFile] = File(...),
+#     folder_id: Optional[int] = Form(None),
+#     brain_id: Optional[int] = Form(None)
+# ):
+#     uploaded_pdfs = []
 
-    if folder_id is not None and not sqlite_handler.get_folder(folder_id):
-        raise HTTPException(status_code=404, detail="해당 폴더가 존재하지 않습니다.")
-    if brain_id is not None and not sqlite_handler.get_brain(brain_id):
-        raise HTTPException(status_code=404, detail="해당 Brain이 존재하지 않습니다.")
+#     if folder_id is not None and not sqlite_handler.get_folder(folder_id):
+#         raise HTTPException(status_code=404, detail="해당 폴더가 존재하지 않습니다.")
+#     if brain_id is not None and not sqlite_handler.get_brain(brain_id):
+#         raise HTTPException(status_code=404, detail="해당 Brain이 존재하지 않습니다.")
 
-    for file in files:
-        try:
-            ext = os.path.splitext(file.filename)[1].lower()
-            if ext != ".pdf":
-                continue
+#     for file in files:
+#         try:
+#             ext = os.path.splitext(file.filename)[1].lower()
+#             if ext != ".pdf":
+#                 continue
 
-            safe_name = sanitize_filename(file.filename)
-            unique_name = f"{uuid.uuid4().hex}_{safe_name}"
-            file_path = os.path.join(UPLOAD_DIR, unique_name)
+#             safe_name = sanitize_filename(file.filename)
+#             unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+#             file_path = os.path.join(UPLOAD_DIR, unique_name)
 
-            content = await file.read()
-            with open(file_path, "wb") as f:
-                f.write(content)
+#             content = await file.read()
+#             with open(file_path, "wb") as f:
+#                 f.write(content)
 
-            created = sqlite_handler.create_pdf(
-                pdf_title=safe_name,
-                pdf_path=file_path,
-                folder_id=folder_id,
-                type="pdf",
-                brain_id=brain_id
-            )
+#             created = sqlite_handler.create_pdf(
+#                 pdf_title=safe_name,
+#                 pdf_path=file_path,
+#                 folder_id=folder_id,
+#                 type="pdf",
+#                 brain_id=brain_id
+#             )
 
-            uploaded_pdfs.append(created)
-        except Exception as e:
-            logging.error("PDF 업로드 실패 (%s): %s", file.filename, e)
+#             uploaded_pdfs.append(created)
+#         except Exception as e:
+#             logging.error("PDF 업로드 실패 (%s): %s", file.filename, e)
 
-    return uploaded_pdfs
+#     return uploaded_pdfs
