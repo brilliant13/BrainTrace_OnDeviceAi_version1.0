@@ -3,12 +3,18 @@ import ForceGraph2D from 'react-force-graph-2d';
 import * as d3 from 'd3';
 import { fetchGraphData } from '../../api/graphApi';
 
-function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: initialGraphData = null }) {
+function GraphView({ 
+  brainId = 'default-brain-id', 
+  height = '550px', 
+  graphData: initialGraphData = null,
+  referencedNodes = [] 
+}) {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [referencedSet, setReferencedSet] = useState(new Set()); // 참고된 노드들을 Set으로 관리
 
   // 앱 디자인에 맞는 모노크로매틱 + 포인트 색상 팔레트
   const colorPalette = [
@@ -67,6 +73,12 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
     loadGraphData();
   }, [brainId, initialGraphData]);
 
+  // referencedNodes가 변경될 때 Set 업데이트
+  useEffect(() => {
+    console.log('referencedNodes:', referencedNodes); // 디버깅용
+    setReferencedSet(new Set(referencedNodes));
+  }, [referencedNodes]);
+
   // 그래프 데이터 처리 함수
   const processGraphData = (data) => {
     // 중요 노드 탐지 (링크가 많은 노드)
@@ -96,13 +108,16 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
           // 나머지는 회색 계열
           nodeColor = colorPalette[2]; // 연한 회색 (연결 1개 이하)
         }
-        
+
+        // 참고된 노드인지 확인
+        const nodeName = n.name || n.label || n.id;
+
         return {
           ...n,
           id: nodeId || Math.random().toString(36).substr(2, 9),
-          name: n.name || n.label || n.id,
+          name: nodeName,
           color: nodeColor,
-          linkCount: linkCount // 디버깅 및 참조용으로 링크 수 추가
+          linkCount: linkCount
         };
       }),
       links: data.links.map(l => ({
@@ -128,10 +143,25 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
         borderRadius: '8px',
         overflow: 'hidden',
         position: 'relative',
-        // backgroundColor: 'white'
         backgroundColor: '#fafafa'
       }}
     >
+      {/* 참고된 노드가 있을 때 디버깅 정보 표시 */}
+      {referencedNodes.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          padding: '8px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          zIndex: 20
+        }}>
+          참고된 노드: {referencedNodes.join(', ')}
+        </div>
+      )}
+      {/* 로딩 및 에러 처리 */}
       {loading && (
         <div style={{
           position: 'absolute',
@@ -141,7 +171,6 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          // backgroundColor: 'rgba(255,255,255,0.7)',
           backgroundColor: '#fafafa',
           zIndex: 10
         }}>
@@ -169,10 +198,14 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
           width={dimensions.width}
           height={dimensions.height}
           graphData={graphData}
-          nodeLabel={node => `${node.name} (연결: ${node.linkCount})`} // 노드 호버시 연결 수 표시
+          nodeLabel={node => {
+            const baseLabel = `${node.name} (연결: ${node.linkCount})`;
+            const isReferenced = referencedSet.has(node.name);
+            return isReferenced ? `${baseLabel} - 참고됨` : baseLabel;
+          }}
           linkLabel={link => link.relation}
           nodeRelSize={6}
-          linkColor={() => "#dedede"} // 연한 회색 링크
+          linkColor={() => "#dedede"}
           linkWidth={1}
           linkDirectionalArrowLength={3.5}
           linkDirectionalArrowRelPos={1}
@@ -191,7 +224,7 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
             
             // 노드 크기 - 연결이 많을수록 더 큰 노드로 표시
             const baseSize = 5;
-            const sizeFactor = Math.min(node.linkCount * 0.5, 3); // 최대 3의 추가 크기
+            const sizeFactor = Math.min(node.linkCount * 0.5, 3);
             const nodeSize = baseSize + sizeFactor;
             const nodeRadius = nodeSize / globalScale;
             
@@ -200,15 +233,23 @@ function GraphView({ brainId = 'default-brain-id', height = '550px', graphData: 
             ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI, false);
             ctx.fillStyle = node.color;
             ctx.fill();
-            
-            // 노드 테두리 그리기
+
+            // 노드 테두리 그리기 - 참고된 노드는 주황색 테두리
             const isImportantNode = node.linkCount >= 3;
-            ctx.strokeStyle = isImportantNode ? 'white' : '#f0f0f0';
-            ctx.lineWidth = 0.5 / globalScale;
+            const isReferenced = referencedSet.has(node.name); // Set에서 직접 확인
+            
+            if (isReferenced) {
+              // ctx.strokeStyle = '#ff6b35'; // 주황색 테두리 (참고된 노드)
+              ctx.strokeStyle = '#EBB20C'; // 주황색 테두리 (참고된 노드)
+              ctx.lineWidth = 2 / globalScale; // 더 굵은 테두리
+            } else {
+              ctx.strokeStyle = isImportantNode ? 'white' : '#f0f0f0';
+              ctx.lineWidth = 0.5 / globalScale;
+            }
             ctx.stroke();
             
             // 노드 아래에 텍스트 그리기
-            const textColor = isImportantNode ? '#222' : '#555';
+            const textColor = (isImportantNode || isReferenced) ? '#222' : '#555';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             ctx.fillStyle = textColor;

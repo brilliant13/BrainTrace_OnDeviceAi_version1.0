@@ -1,3 +1,4 @@
+// src/components/panels/MemoPanel.jsx
 import React, { useState, useEffect } from 'react';
 import './styles/Common.css';
 import './styles/MemoPanel.css';
@@ -14,7 +15,8 @@ import graphOffIcon from '../../assets/icons/graph-off.png';
 import memoOnIcon from '../../assets/icons/memo-on.png';
 import memoOffIcon from '../../assets/icons/memo-off.png';
 
-function MemoPanel({ activeProject, collapsed, setCollapsed }) {
+// function MemoPanel({ activeProject, collapsed, setCollapsed }) {
+  function MemoPanel({ activeProject, collapsed, setCollapsed, referencedNodes = [] }) {
   const projectId = activeProject;
   const MEMO_STORAGE_KEY = `brainTrace-memos-${projectId}`;
   const DELETED_MEMO_STORAGE_KEY = `brainTrace-deleted-${projectId}`;
@@ -168,6 +170,7 @@ function MemoPanel({ activeProject, collapsed, setCollapsed }) {
               <GraphView
                 brainId={projectId || 'default-brain-id'}
                 height={showMemo ? graphHeight : undefined}
+                referencedNodes={referencedNodes} // MainLayout에서 받은 참고된 노드 목록 전달
               />
             </div>
           )}

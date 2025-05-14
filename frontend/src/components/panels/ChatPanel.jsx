@@ -3,11 +3,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import './styles/Common.css';
 import './styles/ChatPanel.css';
 import './styles/Scrollbar.css';
-import { requestAnswer } from '../../tmpAPI';
+// import { requestAnswer } from '../../tmpAPI';
+import { requestAnswer } from '../../api/tmpAPI'; // API 요청 함수
 import projectData from '../../data/projectData';
 import copyIcon from '../../assets/icons/copy.png';   // 경로는 jsx 파일 → icons 폴더까지 상대경로
 
-function ChatPanel({ activeProject }) {
+// function ChatPanel({ activeProject }) {
+function ChatPanel({ activeProject, onReferencedNodesUpdate }) {
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,7 +34,14 @@ function ChatPanel({ activeProject }) {
 
     try {
       // ② LLM 호출
-      const { answer = '' } = await requestAnswer(inputText, '1');
+      // const { answer = '' } = await requestAnswer(inputText, '1');
+      // const { answer = '' } = await requestAnswer(inputText, activeProject.toString());
+      const response = await requestAnswer(inputText, activeProject.toString());
+      const { answer = '', referenced_nodes = [] } = response;
+      // 참고된 노드 목록 업데이트 (MainLayout로 전달)
+      if (referenced_nodes && onReferencedNodesUpdate) {
+        onReferencedNodesUpdate(referenced_nodes);
+      }
       const botMessage = { text: answer, isUser: false };
       setMessages(prev => [...prev, botMessage]);
     } catch (err) {
