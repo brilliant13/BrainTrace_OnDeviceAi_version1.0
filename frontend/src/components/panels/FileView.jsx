@@ -1,14 +1,14 @@
 // src/components/panels/FileView.jsx
 import React, { useState, useEffect } from 'react'
+import { pdfjs } from 'react-pdf';
+import workerSrc from 'pdfjs-dist/build/pdf.worker.min?url';
 import './styles/Common.css'
 import './styles/SourcePanel.css'
 import './styles/Scrollbar.css'
 import './styles/FileView.css'
-
 import FolderView from './FolderView'
 import FileIcon from './FileIcon'
 import { TiUpload } from 'react-icons/ti'
-
 import { processText } from '../../api/graphApi'; // graphApi.js에서 processText API 가져오기
 import { fetchGraphData } from '../../api/graphApi'; // 그래프 데이터 API 불러오기
 
@@ -30,6 +30,7 @@ import {
   createTextToGraph ,
 } from '../../../../backend/services/backend'
 
+
 // ✅ 메모 텍스트를 그래프 지식으로 변환하는 함수
 async function processMemoTextAsGraph(content, sourceId, brainId) {
   try {
@@ -39,6 +40,9 @@ async function processMemoTextAsGraph(content, sourceId, brainId) {
     console.error("❌ 그래프 생성 실패:", error);
   }
 }
+
+pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+
 
 // API 에서 넘어온 폴더/파일들을 트리 형태로 변환
 function normalizeApiTree(apiFolders = []) {
@@ -121,13 +125,40 @@ export default function FileView({
       console.error('전체 로드 실패', err)
     }
   }
-
   const createFileByType = async (f, folderId = null) => {
     const ext = f.name.split('.').pop().toLowerCase()
     const common = { folder_id: folderId, type: ext, brain_id: brainId }
 
     if (ext === 'pdf') {
-      await createPdf({ ...common, pdf_title: f.name, pdf_path: f.name })
+    // 1) PDF ArrayBuffer 로 읽기
+    console.log('PDF 처리 시작:', f.name);
+    const arrayBuffer = await f.arrayBuffer();
+    console.log('→ ArrayBuffer 로딩 OK');
+
+    // 2) PDF.js 로 문서 로드
+    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+    console.log('→ PDF 로드 OK, 페이지 수:', pdf.numPages);
+    // 3) 페이지별 텍스트 추출
+    let content = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const strings = textContent.items.map(item => item.str);
+      content += strings.join(' ') + '\n\n';
+    }
+    console.log('→ 텍스트 추출 완료, 길이:', content.length);
+    // 4) 메타데이터로 PDF 저장
+    const res = await createPdf({
+      ...common,
+      pdf_title: f.name,
+      pdf_path: f.name,
+    });
+    // 5) 추출한 텍스트로 그래프 생성 API 호출
+    await createTextToGraph({
+      text: content,
+      brain_id: String(brainId),
+      source_id: String(res.pdf_id),
+    });
     } else if (ext === 'txt') {
       const content = await f.text();
       const res = await createTextFile({ ...common, txt_title: f.name, txt_path: f.name })
