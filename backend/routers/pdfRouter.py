@@ -97,7 +97,7 @@ async def update_pdf(pdf_id: int, pdf_data: PdfUpdate):
             pdf_id=pdf_id,
             pdf_title=pdf_data.pdf_title,
             pdf_path=pdf_data.pdf_path,
-            folder_id=None,
+            folder_id=pdf.get("folder_id"),  # ✅ 기존 folder_id 유지
             type=pdf_data.type,
             brain_id=pdf_data.brain_id
         )

@@ -8,11 +8,20 @@ import './styles/Scrollbar.css';
 import './styles/FileView.css';
 import { MdOutlineKeyboardArrowRight } from "react-icons/md";
 import { MdOutlineKeyboardArrowDown } from "react-icons/md";
+import { GoPencil } from 'react-icons/go';
+import { RiDeleteBinLine } from 'react-icons/ri';
+import ConfirmDialog from '../ConfirmDialog';
 
 import {
     getFolderTextfiles,
     getFolderPdfs,
-    getFolderVoices
+    getFolderVoices,
+    deletePdf,
+    deleteTextFile,
+    deleteVoice,
+    updatePdf,
+    updateTextFile,
+    updateVoice
 } from '../../../../backend/services/backend';
 
 export default function FolderView({
@@ -25,12 +34,17 @@ export default function FolderView({
     fileMap,
     moveItem,      // 부모 FileView의 moveItem
     refreshParent, // 부모 FileView의 전체 트리 갱신 함수
-    refreshKey
+    refreshKey,
+    brainId
 }) {
     const [isOpen, setIsOpen] = useState(depth === 1);
     const [isDragOver, setIsDragOver] = useState(false);
     const [dragEnterCount, setDragEnterCount] = useState(0);
     const [childrenFiles, setChildrenFiles] = useState([]);
+    const [menuOpenId, setMenuOpenId] = useState(null);
+    const [editingId, setEditingId] = useState(null);
+    const [tempName, setTempName] = useState('');
+    const [fileToDelete, setFileToDelete] = useState(null);
 
     // 폴더 열 때, 자식 파일들 API 호출
     const fetchFolderFiles = async () => {
@@ -126,6 +140,42 @@ export default function FolderView({
         }
     };
 
+    const handleNameChange = async (file) => {
+        const newName = tempName.trim();
+        if (!newName || newName === file.name) {
+            setEditingId(null);
+            return;
+        }
+
+        try {
+            if (file.filetype === 'pdf') await updatePdf(file.id, { pdf_title: newName, brain_id: brainId });
+            if (file.filetype === 'txt') await updateTextFile(file.id, { txt_title: newName, brain_id: brainId });
+            if (file.filetype === 'voice') await updateVoice(file.id, { voice_title: newName, brain_id: brainId });
+            await fetchFolderFiles();
+        } catch (e) {
+            alert('이름 변경 실패');
+        } finally {
+            setEditingId(null);
+        }
+    };
+
+    const handleDelete = async file => {
+        try {
+            if (file.filetype === 'pdf') await deletePdf(file.id);
+            else if (file.filetype === 'txt') await deleteTextFile(file.id);
+            else if (file.filetype === 'voice') await deleteVoice(file.id);
+            await fetchFolderFiles();
+        } catch (e) {
+            alert('삭제 실패');
+        }
+    };
+
+    const openDeleteConfirm = (f) => {
+        setFileToDelete(f); // 삭제할 파일 지정
+        setMenuOpenId(null); // 점점점 메뉴 닫기
+    };
+
+
     const handleDragStart = (e, child) => {
         e.dataTransfer.setData('application/json', JSON.stringify({
             id: child.id,
@@ -181,11 +231,56 @@ export default function FolderView({
                             }}
                         >
                             <FileIcon fileName={child.name} />
-                            <span className="file-name">{child.name}</span>
+                            {editingId === child.id ? (
+                                <input
+                                    className="rename-input"
+                                    autoFocus
+                                    defaultValue={child.name}
+                                    onChange={e => setTempName(e.target.value)}
+                                    onBlur={() => handleNameChange(child)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') handleNameChange(child);
+                                        if (e.key === 'Escape') setEditingId(null);
+                                    }}
+                                />
+                            ) : (
+                                <span className="file-name">{child.name}</span>
+                            )}
+                            <div
+                                className="file-menu-button"
+                                onClick={e => {
+                                    e.stopPropagation();
+                                    setMenuOpenId(prev => prev === child.id ? null : child.id);
+                                }}
+                            >
+                                ⋮
+                                {menuOpenId === child.id && (
+                                    <div className="file-menu-popup" onClick={e => e.stopPropagation()}>
+                                        <div className="popup-item" onClick={() => { setEditingId(child.id); setTempName(child.name); setMenuOpenId(null); }}>
+                                            <GoPencil size={14} style={{ marginRight: 4 }} /> 이름 바꾸기
+                                        </div>
+                                        <div className="popup-item" onClick={() => openDeleteConfirm(child)}>
+                                            <RiDeleteBinLine size={14} style={{ marginRight: 4 }} /> 삭제
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
             )}
+            {fileToDelete && (
+                <ConfirmDialog
+                    message={`"${fileToDelete.name}" 파일을 삭제하시겠습니까?`}
+                    onCancel={() => setFileToDelete(null)}
+                    onOk={async () => {
+                        await handleDelete(fileToDelete); // 실제 삭제
+                        setFileToDelete(null);
+                    }}
+                />
+            )}
+
         </div>
+
     );
 }

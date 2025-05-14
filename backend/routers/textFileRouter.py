@@ -104,7 +104,7 @@ async def update_textfile(txt_id: int, textfile_data: TextFileUpdate):
             txt_id=txt_id,
             txt_title=textfile_data.txt_title,
             txt_path=textfile_data.txt_path,
-            folder_id=None,            # 폴더 변경 없을 때
+            folder_id=textfile.get("folder_id"),  # ✅ 기존 folder_id 유
             type=textfile_data.type,
             brain_id=textfile_data.brain_id
         )

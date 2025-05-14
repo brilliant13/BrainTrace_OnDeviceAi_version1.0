@@ -103,7 +103,7 @@ async def update_voice(voice_id: int, voice_data: VoiceUpdate):
             voice_id=voice_id,
             voice_title=voice_data.voice_title,
             voice_path=voice_data.voice_path,
-            folder_id=None,            # 폴더 변경 없을 때
+            folder_id=voice.get("folder_id"),  # ✅ 기존 folder_id 유지
             type=voice_data.type,
             brain_id=voice_data.brain_id
         )
