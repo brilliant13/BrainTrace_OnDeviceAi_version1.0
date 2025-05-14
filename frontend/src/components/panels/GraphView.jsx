@@ -3,9 +3,9 @@ import ForceGraph2D from 'react-force-graph-2d';
 import * as d3 from 'd3';
 import { fetchGraphData } from '../../api/graphApi';
 
-function GraphView({ 
-  brainId = 'default-brain-id', 
-  height = '550px', 
+function GraphView({
+  brainId = 'default-brain-id',
+  height = '550px',
   graphData: initialGraphData = null,
   referencedNodes = [],
   graphRefreshTrigger // 그래프 새로고침 트리거 prop 추가
@@ -74,24 +74,24 @@ function GraphView({
     loadGraphData();
   }, [brainId, initialGraphData]);
 
-    // graphRefreshTrigger가 변경될 때마다 그래프 새로고침
-    useEffect(() => {
-      if (graphRefreshTrigger !== undefined && graphRefreshTrigger > 0) {
-        console.log('그래프 새로고침 트리거:', graphRefreshTrigger);
-        const loadGraphData = async () => {
-          try {
-            setLoading(true);
-            const data = await fetchGraphData(brainId);
-            processGraphData(data);
-          } catch (err) {
-            console.error('그래프 새로고침 실패:', err);
-            setError('그래프 데이터를 불러오는 데 실패했습니다.');
-            setLoading(false);
-          }
-        };
-        loadGraphData();
-      }
-    }, [graphRefreshTrigger, brainId]);
+  // graphRefreshTrigger가 변경될 때마다 그래프 새로고침
+  useEffect(() => {
+    if (graphRefreshTrigger !== undefined && graphRefreshTrigger > 0) {
+      console.log('그래프 새로고침 트리거:', graphRefreshTrigger);
+      const loadGraphData = async () => {
+        try {
+          setLoading(true);
+          const data = await fetchGraphData(brainId);
+          processGraphData(data);
+        } catch (err) {
+          console.error('그래프 새로고침 실패:', err);
+          setError('그래프 데이터를 불러오는 데 실패했습니다.');
+          setLoading(false);
+        }
+      };
+      loadGraphData();
+    }
+  }, [graphRefreshTrigger, brainId]);
 
   // referencedNodes가 변경될 때 Set 업데이트
   useEffect(() => {
@@ -106,20 +106,20 @@ function GraphView({
     data.links.forEach(link => {
       const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
       const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-      
+
       linkCounts[sourceId] = (linkCounts[sourceId] || 0) + 1;
       linkCounts[targetId] = (linkCounts[targetId] || 0) + 1;
     });
-    
+
     // 링크 수에 따라 노드 정렬하여 색상 결정
     const processedData = {
       nodes: data.nodes.map((n, index) => {
         const nodeId = n.id || n.name;
         let nodeColor;
-        
+
         // 명확한 임계값에 기반한 색상 할당: 연결이 3개 이상인 노드만 파란색으로
         const linkCount = linkCounts[nodeId] || 0;
-        
+
         if (linkCount >= 3) {
           nodeColor = colorPalette[4]; // 파란색 포인트 색상 (연결 3개 이상)
         } else if (linkCount == 2) {
@@ -147,7 +147,7 @@ function GraphView({
         relation: l.relation || l.label || '연결'
       }))
     };
-    
+
     setGraphData(processedData);
     setLoading(false);
   };
@@ -213,7 +213,7 @@ function GraphView({
         </div>
       )}
       {!loading && graphData.nodes.length > 0 && dimensions.width > 0 && (
-        
+
         <ForceGraph2D
           width={dimensions.width}
           height={dimensions.height}
@@ -241,13 +241,13 @@ function GraphView({
             const label = node.name || node.id;
             const fontSize = 10 / globalScale;
             ctx.font = `${fontSize}px Sans-Serif`;
-            
+
             // 노드 크기 - 연결이 많을수록 더 큰 노드로 표시
             const baseSize = 5;
             const sizeFactor = Math.min(node.linkCount * 0.5, 3);
             const nodeSize = baseSize + sizeFactor;
             const nodeRadius = nodeSize / globalScale;
-            
+
             // 노드 그리기
             ctx.beginPath();
             ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI, false);
@@ -257,7 +257,7 @@ function GraphView({
             // 노드 테두리 그리기 - 참고된 노드는 주황색 테두리
             const isImportantNode = node.linkCount >= 3;
             const isReferenced = referencedSet.has(node.name); // Set에서 직접 확인
-            
+
             if (isReferenced) {
               // ctx.strokeStyle = '#ff6b35'; // 주황색 테두리 (참고된 노드)
               ctx.strokeStyle = '#EBB20C'; // 주황색 테두리 (참고된 노드)
@@ -267,14 +267,14 @@ function GraphView({
               ctx.lineWidth = 0.5 / globalScale;
             }
             ctx.stroke();
-            
+
             // 노드 아래에 텍스트 그리기
             const textColor = (isImportantNode || isReferenced) ? '#222' : '#555';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             ctx.fillStyle = textColor;
             ctx.fillText(label, node.x, node.y + nodeRadius + 1);
-            
+
             // 마우스 오버시 크기 확대
             node.__bckgDimensions = [nodeRadius * 2, fontSize].map(n => n + fontSize * 0.2);
           }}
