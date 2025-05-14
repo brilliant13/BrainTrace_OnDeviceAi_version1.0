@@ -34,8 +34,8 @@ import {
   deleteVoice,
   updatePdf,
   updateTextFile,
-  updateVoice
-  createTextToGraph ,
+  updateVoice,
+  createTextToGraph,
 } from '../../../../backend/services/backend'
 
 
@@ -147,35 +147,35 @@ export default function FileView({
     const common = { folder_id: folderId, type: ext, brain_id: brainId }
 
     if (ext === 'pdf') {
-    // 1) PDF ArrayBuffer 로 읽기
-    console.log('PDF 처리 시작:', f.name);
-    const arrayBuffer = await f.arrayBuffer();
-    console.log('→ ArrayBuffer 로딩 OK');
+      // 1) PDF ArrayBuffer 로 읽기
+      console.log('PDF 처리 시작:', f.name);
+      const arrayBuffer = await f.arrayBuffer();
+      console.log('→ ArrayBuffer 로딩 OK');
 
-    // 2) PDF.js 로 문서 로드
-    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-    console.log('→ PDF 로드 OK, 페이지 수:', pdf.numPages);
-    // 3) 페이지별 텍스트 추출
-    let content = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const strings = textContent.items.map(item => item.str);
-      content += strings.join(' ') + '\n\n';
-    }
-    console.log('→ 텍스트 추출 완료, 길이:', content.length);
-    // 4) 메타데이터로 PDF 저장
-    const res = await createPdf({
-      ...common,
-      pdf_title: f.name,
-      pdf_path: f.name,
-    });
-    // 5) 추출한 텍스트로 그래프 생성 API 호출
-    await createTextToGraph({
-      text: content,
-      brain_id: String(brainId),
-      source_id: String(res.pdf_id),
-    });
+      // 2) PDF.js 로 문서 로드
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      console.log('→ PDF 로드 OK, 페이지 수:', pdf.numPages);
+      // 3) 페이지별 텍스트 추출
+      let content = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const strings = textContent.items.map(item => item.str);
+        content += strings.join(' ') + '\n\n';
+      }
+      console.log('→ 텍스트 추출 완료, 길이:', content.length);
+      // 4) 메타데이터로 PDF 저장
+      const res = await createPdf({
+        ...common,
+        pdf_title: f.name,
+        pdf_path: f.name,
+      });
+      // 5) 추출한 텍스트로 그래프 생성 API 호출
+      await createTextToGraph({
+        text: content,
+        brain_id: String(brainId),
+        source_id: String(res.pdf_id),
+      });
     } else if (ext === 'txt') {
       const content = await f.text();
       const res = await createTextFile({ ...common, txt_title: f.name, txt_path: f.name })
@@ -259,11 +259,11 @@ export default function FileView({
       })
       // 텍스트를 지식 그래프로 처리
 
-    await processMemoTextAsGraph(content, name, brainId);
-          // 그래프 새로고침 트리거
-    if (onGraphRefresh) {
-      onGraphRefresh();
-    }
+      await processMemoTextAsGraph(content, name, brainId);
+      // 그래프 새로고침 트리거
+      if (onGraphRefresh) {
+        onGraphRefresh();
+      }
 
 
       await refresh()
