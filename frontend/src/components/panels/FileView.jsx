@@ -233,6 +233,7 @@ export default function FileView({
 
 
       await refresh()
+
     } catch (e) {
       console.error('삭제 실패:', e);
       alert('삭제 실패');

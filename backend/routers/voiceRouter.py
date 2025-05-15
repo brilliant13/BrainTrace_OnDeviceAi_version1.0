@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from sqlite_db.sqlite_handler import SQLiteHandler
@@ -202,11 +202,20 @@ async def get_voices_by_folder(folder_id: int):
 
 
 # ───────── GET BY BRAIN ─────────
-@router.get("/brain/{brain_id}", response_model=List[VoiceResponse],
-    summary="Brain 기준 음성 파일 목록 조회")
-async def get_voices_by_brain(brain_id: int):
+@router.get(
+    "/brain/{brain_id}",
+    response_model=List[VoiceResponse],
+    summary="Brain 기준 음성 파일 목록 조회 (루트 vs 모든 폴더)"
+)
+async def get_voices_by_brain(
+    brain_id: int,
+    folder_id: Optional[int] = Query(
+        None,
+        description="없으면 루트 only, 있으면 모든 폴더 내 음성 파일"
+    )
+):
     try:
-        return sqlite_handler.get_voices_by_brain(brain_id)
+        return sqlite_handler.get_voices_by_brain_and_folder(brain_id, folder_id)
     except Exception as e:
-        logging.error("음성 파일 Brain 조회 오류: %s", e)
-        raise HTTPException(status_code=500, detail="내부 서버 오류")
+        logging.error("음성 파일 조회 오류: %s", e)
+        raise HTTPException(status_code=500, detail="서버 오류")

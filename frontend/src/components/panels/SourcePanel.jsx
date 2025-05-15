@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   listBrainFolders,
   createFolder,
   createMemo,
   createPdf,
   createTextFile,
-  createVoice
+  createVoice,
+  getPdfsByBrain,
+  getTextfilesByBrain,
+  getVoicesByBrain
+
 } from '../../../../backend/services/backend';
 import FileView from '../panels/FileView';
 import PDFViewer from '../panels/PDFViewer';
@@ -38,7 +42,7 @@ export default function SourcePanel({
   setCollapsed,
   setIsPDFOpen,
   onBackFromPDF,
-  onGraphRefresh // 그래프 새로고침 함수 추가
+  onGraphRefresh
 }) {
   const panelRef = useRef();
   const [panelWidth, setPanelWidth] = useState(0);
@@ -51,6 +55,8 @@ export default function SourcePanel({
 
   // 업로드 트리거 (바뀔 때마다 FileView가 다시 로드)
   const [uploadKey, setUploadKey] = useState(0);
+  const [sourceCount, setSourceCount] = useState(0);
+  const maxQuota = 50; // 예시로 최대 50개 제한
 
   useEffect(() => {
     if (!panelRef.current) return;
@@ -75,6 +81,43 @@ export default function SourcePanel({
   useEffect(() => {
     refresh();
   }, [activeProject]);
+
+  // 소스(파일) 카운트 계산
+  const refreshSourceCount = async () => {
+    if (!activeProject) return;
+    try {
+      const [
+        pdfRoot, pdfNested,
+        txtRoot, txtNested,
+        voiceRoot, voiceNested
+      ] = await Promise.all([
+        // PDF
+        getPdfsByBrain(activeProject),        // folder_id IS NULL
+        getPdfsByBrain(activeProject, 1),     // folder_id IS NOT NULL (1은 아무 숫자)
+        // TXT
+        getTextfilesByBrain(activeProject),   // folder_id IS NULL
+        getTextfilesByBrain(activeProject, 1),// folder_id IS NOT NULL
+        // Voice
+        getVoicesByBrain(activeProject),      // folder_id IS NULL
+        getVoicesByBrain(activeProject, 1)    // folder_id IS NOT NULL
+      ]);
+
+      const totalCount =
+        pdfRoot.length + pdfNested.length +
+        txtRoot.length + txtNested.length +
+        voiceRoot.length + voiceNested.length;
+
+      setSourceCount(totalCount);
+    } catch (e) {
+      console.error('소스 카운트 오류', e);
+      setSourceCount(0);
+    }
+  };
+
+  // 마운트 시와 uploadKey 변경 시 재계산
+  useEffect(() => {
+    refreshSourceCount();
+  }, [activeProject, uploadKey]);
 
   const handleAddFolder = async e => {
     e.preventDefault();
@@ -205,7 +248,11 @@ export default function SourcePanel({
                 fileMap={fileMap}
                 setFileMap={setFileMap}
                 refreshTrigger={uploadKey}
-                onGraphRefresh={onGraphRefresh} // 그래프 refesh 용도로 FileView에 전달
+                onGraphRefresh={() => {
+                  onGraphRefresh?.();
+                  // 소스 수 갱신
+                  refreshSourceCount();
+                }}
               />
             )
             }
@@ -231,7 +278,7 @@ export default function SourcePanel({
         }}
         brainId={activeProject}
       />
-      {!collapsed && <SourceQuotaBar current={10} max={50} />}
+      {!collapsed && <SourceQuotaBar current={sourceCount} max={50} />}
     </div >
   );
 }
