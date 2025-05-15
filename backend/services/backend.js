@@ -52,7 +52,16 @@ export const movePdfToFolder = (brainId, targetFolderId, pdfId) =>
     api.put(`/pdfs/brain/${brainId}/changeFolder/${targetFolderId}/${pdfId}`).then(r => r.data);
 export const removePdfFromFolder = (brainId, pdfId) =>
     api.put(`/pdfs/brain/${brainId}/MoveOutFolder/${pdfId}`).then(r => r.data);
-export const getPdfsByBrain = brainId => api.get(`/pdfs/brain/${brainId}`).then(r => r.data)
+export const getPdfsByBrain = (brainId, folderId = null) => {
+    const url = `/pdfs/brain/${brainId}`;
+    const params = {};
+    if (folderId !== null) {
+        params.folder_id = folderId;
+    }
+    return api.get(url, { params }).then(r => r.data);
+};
+
+
 /**
  * files: File[] 드래그·드롭 혹은 파일 선택으로 받은 File 객체 배열
  * folderId, brainId: (선택) 기존 createFolder 등에서 쓰던 ID
@@ -86,16 +95,23 @@ export const removeTextFileFromFolder = (brainId, txtId) =>
     api.put(
         `/textfiles/brain/${brainId}/MoveOutFolder/${txtId}`
     ).then(r => r.data);
-export const getTextfilesByBrain = brainId => api.get(`/textfiles/brain/${brainId}`).then(r => r.data)
+export const getTextfilesByBrain = (brainId, folderId = null) => {
+    const url = `/textfiles/brain/${brainId}`;
+    const params = {};
+    if (folderId !== null) {
+        params.folder_id = folderId;
+    }
+    return api.get(url, { params }).then(r => r.data);
+};
 // 텍스트를 그래프로 변환
 export const createTextToGraph = body =>
     api
-      .post(
-        '/brainGraph/process_text',
-        JSON.stringify(body),                    // ← JSON.stringify() 추가
-        { headers: { 'Content-Type': 'application/json' } }  // ← 헤더 명시
-      )
-      .then(r => r.data);
+        .post(
+            '/brainGraph/process_text',
+            JSON.stringify(body),                    // ← JSON.stringify() 추가
+            { headers: { 'Content-Type': 'application/json' } }  // ← 헤더 명시
+        )
+        .then(r => r.data);
 
 /* ───────── VOICE FILES ───────── */
 export const createVoice = body => api.post('/voices', body).then(r => r.data);
@@ -111,7 +127,14 @@ export const removeVoiceFromFolder = (brainId, voiceId) =>
     api.put(
         `/voices/brain/${brainId}/MoveOutFolder/${voiceId}`
     ).then(r => r.data);
-export const getVoicesByBrain = brainId => api.get(`/voices/brain/${brainId}`).then(r => r.data)
+export const getVoicesByBrain = (brainId, folderId = null) => {
+    const url = `/voices/brain/${brainId}`;
+    const params = {};
+    if (folderId !== null) {
+        params.folder_id = folderId;
+    }
+    return api.get(url, { params }).then(r => r.data);
+};
 
 // ───────── DEFAULT (루트) ───────── //
 export const getDefaultPdfs = () => api.get(`/pdfs/default`).then(r => r.data);
