@@ -153,15 +153,21 @@ class Neo4jHandler:
                 
                 # 2단계 결과 추가
                 if record2:
-                    indirect_nodes = record2.get("indirect_nodes", [])
-                    indirect_relationships = record2.get("indirect_relationships", [])
-                    
-                    # None 값은 제외
-                    for node in indirect_nodes:
+                    # 중간 노드(m)도 related_nodes에 추가
+                    intermediate = record2.get("intermediate_nodes", []) or []
+                    for node in intermediate:
                         if node is not None:
                             related_nodes.append(node)
-                            
-                    for rel in indirect_relationships:
+
+                    # 간접 노드(p) 추가
+                    indirect = record2.get("indirect_nodes", []) or []
+                    for node in indirect:
+                        if node is not None:
+                            related_nodes.append(node)
+
+                    # 간접 관계(r2) 추가
+                    rels2 = record2.get("indirect_relationships", []) or []
+                    for rel in rels2:
                         if rel is not None:
                             relationships.append(rel)
                 
@@ -260,6 +266,35 @@ class Neo4jHandler:
         except Exception as e:
             logging.error(f"❌ Neo4j 데이터 삭제 실패: {str(e)}")
             raise RuntimeError(f"Neo4j 데이터 삭제 실패: {str(e)}")
+
+    def delete_descriptions_by_source_id(self, source_id: str, brain_id: str) -> None:
+        """
+        특정 source_id를 가진 description들을 삭제하고, description이 비어있는 노드는 삭제합니다.
+        Args:
+            source_id: 삭제할 description의 source_id
+            brain_id: 브레인 ID
+        """
+        try:
+            # 1. description 삭제
+            query1 = """
+            MATCH (n:Node {brain_id: $brain_id})
+            WITH n, [d in n.descriptions WHERE NOT (d CONTAINS $source_id)] as filtered_descriptions
+            SET n.descriptions = filtered_descriptions
+            """
+            self._execute_with_retry(query1, {"source_id": source_id, "brain_id": brain_id})
+            
+            # 2. description이 비어있는 노드 삭제
+            query2 = """
+            MATCH (n:Node {brain_id: $brain_id})
+            WHERE size(n.descriptions) = 0
+            DETACH DELETE n
+            """
+            self._execute_with_retry(query2, {"brain_id": brain_id})
+            
+            logging.info(f"✅ source_id {source_id}의 descriptions 삭제 완료")
+        except Exception as e:
+            logging.error(f"❌ descriptions 삭제 실패: {str(e)}")
+            raise RuntimeError(f"descriptions 삭제 실패: {str(e)}")
 
     def __del__(self):
         self.close()

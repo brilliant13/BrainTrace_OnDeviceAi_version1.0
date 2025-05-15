@@ -2,11 +2,13 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from sqlite_db.sqlite_handler import SQLiteHandler
+from neo4j_db.Neo4jHandler import Neo4jHandler
 import logging
 import sqlite3
 from datetime import date
 
 sqlite_handler = SQLiteHandler()
+neo4j_handler = Neo4jHandler()
 
 router = APIRouter(
     prefix="/brains",
@@ -147,3 +149,25 @@ async def rename_brain(brain_id: int, data: BrainRename):
 async def delete_brain(brain_id: int):
     if not sqlite_handler.delete_brain(brain_id):
         raise HTTPException(404, "브레인을 찾을 수 없습니다")
+
+@router.delete(
+    "/{brain_id}/deleteDB/{source_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="특정 source_id의 descriptions 삭제 및 임베딩 삭제"
+)
+async def delete_descriptions_by_source_id(brain_id: str, source_id: str):
+    """
+    특정 source_id를 가진 description들을 삭제합니다.
+    - Neo4j에서 해당 source_id를 가진 description들을 삭제하고, description이 비어있는 노드는 삭제합니다.
+    - 벡터 DB에서 해당 source_id를 가진 임베딩값들을 삭제합니다.
+    """
+    try:
+        # 1. Neo4j에서 description 삭제
+        neo4j_handler.delete_descriptions_by_source_id(source_id, brain_id)
+        
+        # 2. 벡터 DB에서 임베딩 삭제
+        from services.embedding_service import delete_node
+        delete_node(source_id, brain_id)
+        
+    except Exception as e:
+        raise HTTPException(500, str(e))

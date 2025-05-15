@@ -282,12 +282,21 @@ def delete_node(source_id: str, brain_id: str) -> None:
     """
     collection_name = get_collection_name(brain_id)
     try:
-        point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, source_id))
+        # source_id를 payload 필터로 사용하여 모든 관련 벡터 삭제
         client.delete(
             collection_name=collection_name,
-            points_selector=models.PointIdsList(points=[point_id])
+            points_selector=models.FilterSelector(
+                filter=models.Filter(
+                    must=[
+                        models.FieldCondition(
+                            key="source_id",
+                            match=models.MatchValue(value=source_id)
+                        )
+                    ]
+                )
+            )
         )
-        logging.info("컬렉션 %s에서 노드 %s 삭제 완료 (UUID: %s)", collection_name, source_id, point_id)
+        logging.info("컬렉션 %s에서 source_id %s의 모든 벡터 삭제 완료", collection_name, source_id)
     except Exception as e:
         logging.error("노드 %s 삭제 실패: %s", source_id, str(e))
         raise RuntimeError(f"노드 삭제 실패: {str(e)}")

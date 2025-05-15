@@ -1171,7 +1171,8 @@ class SQLiteHandler:
             if brain_id is None or brain_id == "null":
                 update_fields.append("brain_id = NULL")
             else:
-                update_fields.append("brain_id = ?"); params.append(brain_id)
+                update_fields.append("brain_id = ?")
+                params.append(brain_id)
             if not update_fields:
                 conn.close()
                 return False
@@ -1682,10 +1683,10 @@ class SQLiteHandler:
             else:
                 update_fields.append("brain_id = ?")
                 params.append(brain_id)
-                
+
             if not update_fields:
                 conn.close()
-                return False
+                return False  # 변경할 내용 없음
             
             update_fields.append("txt_date = CURRENT_TIMESTAMP")
             
@@ -1769,7 +1770,7 @@ class SQLiteHandler:
             ]
         except Exception as e:
             logging.error("폴더 텍스트 파일 목록 조회 오류: %s", str(e))
-            return [] 
+            return []
         
     def get_default_memos(self) -> List[Dict[str, Any]]:
         """folder_id가 NULL인 메모(루트 메모) 목록 조회"""
@@ -1890,3 +1891,5 @@ class SQLiteHandler:
         except Exception as e:
             logging.error("get_default_voices 오류: %s", e)
             return []
+
+   

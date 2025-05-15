@@ -249,6 +249,7 @@ export default function FileView({
 
     // 2) 메모 드래그 (application/json-memo)
     const memoData = e.dataTransfer.getData('application/json-memo')
+    console.log('메모 데이터:', memoData);
     if (memoData) {
       const { name, content } = JSON.parse(memoData)
       // 텍스트 파일로 생성
