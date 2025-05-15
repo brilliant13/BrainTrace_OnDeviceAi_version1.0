@@ -93,7 +93,7 @@ function GraphViewWithModal(props) {
             <div className="graph-with-button">
                 <GraphView {...props} />
                 <button className="fullscreen-btn" onClick={() => setIsFullscreen(true)}>
-                    <MdFullscreen size={20} />
+                    <MdFullscreen size={20} color='black' />
                 </button>
             </div>
 
@@ -117,7 +117,7 @@ function GraphViewWithModal(props) {
                             </button>
                         </div>
                         <GraphView {...props} height="100%" />
-                        <div className="resize-handle" onMouseDown={handleResizeMouseDown} />
+                        <div className="modal-resize-handle" onMouseDown={handleResizeMouseDown} />
                     </div>
                 </div>
             )}
