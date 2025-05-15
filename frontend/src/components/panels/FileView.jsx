@@ -226,7 +226,13 @@ export default function FileView({
         throw new Error(`${f.filetype} 파일 삭제 실패`);
       }
 
-      await refresh();
+      // 그래프 새로고침 트리거
+      if (onGraphRefresh) {
+        onGraphRefresh();
+      }
+
+
+      await refresh()
     } catch (e) {
       console.error('삭제 실패:', e);
       alert('삭제 실패');
