@@ -1108,18 +1108,37 @@ class SQLiteHandler:
             logging.error("PDF 삭제 오류: %s", str(e))
             raise RuntimeError(f"PDF 삭제 오류: {str(e)}")
         
-    def get_pdfs_by_brain(self, brain_id: int) -> List[dict]:
-        
+    def get_pdfs_by_brain_and_folder(
+        self,
+        brain_id: int,
+        folder_id: Optional[int] = None
+    ) -> List[dict]:
         conn   = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT pdf_id, pdf_title, pdf_path, pdf_date, type, folder_id, brain_id "
-            "FROM Pdf WHERE brain_id = ? AND folder_id IS NULL ORDER BY pdf_date DESC",
-            (brain_id,)
-        )
+
+        if folder_id is None:
+            # 루트(폴더 없음) PDF만
+            where  = "brain_id = ? AND folder_id IS NULL"
+            params = (brain_id,)
+        else:
+            # 폴더가 있는(어느 폴더든) PDF 모두
+            where  = "brain_id = ? AND folder_id IS NOT NULL"
+            params = (brain_id,)
+
+        sql = f"""
+            SELECT
+                pdf_id, pdf_title, pdf_path,
+                pdf_date, type, folder_id, brain_id
+            FROM Pdf
+            WHERE {where}
+            ORDER BY pdf_date DESC
+        """
+        cursor.execute(sql, params)
         rows = cursor.fetchall()
+        cols = [c[0] for c in cursor.description]
         conn.close()
-        return [ dict(zip([c[0] for c in cursor.description], r)) for r in rows ]
+
+        return [ dict(zip(cols, r)) for r in rows ]
 
     def update_pdf(self, pdf_id: int, pdf_title: str = None, pdf_path: str = None, folder_id: Optional[int] = None, type: Optional[str] = None, brain_id: Optional[int] = None) -> bool:
         """PDF 정보 업데이트"""
@@ -1309,24 +1328,39 @@ class SQLiteHandler:
             logging.error("음성 파일 생성 오류: %s", str(e))
             raise RuntimeError(f"음성 파일 생성 오류: {str(e)}")
     
-    def get_voices_by_brain(self, brain_id: int) -> List[dict]:
+    def get_voices_by_brain_and_folder(
+        self,
+        brain_id: int,
+        folder_id: Optional[int] = None
+    ) -> List[Dict]:
         conn   = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT voice_id, voice_title, voice_path, voice_date, type, folder_id, brain_id
-              FROM Voice
-             WHERE brain_id = ? AND folder_id IS NULL
-          ORDER BY voice_date DESC
-            """,
-            (brain_id,)
-        )
+
+        if folder_id is None:
+            where  = "brain_id = ? AND folder_id IS NULL"
+            params = (brain_id,)
+        else:
+            where  = "brain_id = ? AND folder_id IS NOT NULL"
+            params = (brain_id,)
+
+        sql = f"""
+            SELECT
+                voice_id,
+                voice_title,
+                voice_path,
+                voice_date,
+                type,
+                folder_id,
+                brain_id
+            FROM Voice
+            WHERE {where}
+            ORDER BY voice_date DESC
+        """
+        cursor.execute(sql, params)
         rows = cursor.fetchall()
+        cols = [c[0] for c in cursor.description]
         conn.close()
-        return [
-            dict(zip([c[0] for c in cursor.description], r))
-            for r in rows
-        ]
+        return [dict(zip(cols, r)) for r in rows]
         
     def get_folder_voices(self, folder_id: int) -> List[dict]:
         """폴더에 속한 음성 파일 목록 조회"""
@@ -1564,24 +1598,39 @@ class SQLiteHandler:
             logging.error("텍스트 파일 생성 오류: %s", str(e))
             raise RuntimeError(f"텍스트 파일 생성 오류: {str(e)}")
     
-    def get_textfiles_by_brain(self, brain_id: int) -> List[dict]:
+    def get_textfiles_by_brain_and_folder(
+        self,
+        brain_id: int,
+        folder_id: Optional[int] = None
+    ) -> List[Dict]:
         conn   = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT txt_id, txt_title, txt_path, txt_date, type, folder_id, brain_id
-              FROM TextFile
-             WHERE brain_id = ? AND folder_id IS NULL
-          ORDER BY txt_date DESC
-            """,
-            (brain_id,)
-        )
+
+        if folder_id is None:
+            where  = "brain_id = ? AND folder_id IS NULL"
+            params = (brain_id,)
+        else:
+            where  = "brain_id = ? AND folder_id IS NOT NULL"
+            params = (brain_id,)
+
+        sql = f"""
+            SELECT
+                txt_id,
+                txt_title,
+                txt_path,
+                txt_date,
+                type,
+                folder_id,
+                brain_id
+            FROM TextFile
+            WHERE {where}
+            ORDER BY txt_date DESC
+        """
+        cursor.execute(sql, params)
         rows = cursor.fetchall()
+        cols = [c[0] for c in cursor.description]
         conn.close()
-        return [
-            dict(zip([c[0] for c in cursor.description], r))
-            for r in rows
-        ]
+        return [dict(zip(cols, r)) for r in rows]
         
     def get_folder_textfiles(self, folder_id: int) -> List[dict]:
         """폴더에 속한 텍스트 파일 목록 조회"""

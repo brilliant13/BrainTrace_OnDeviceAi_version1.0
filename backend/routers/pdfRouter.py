@@ -1,4 +1,4 @@
-from fastapi import UploadFile, File,Form, APIRouter, HTTPException, status
+from fastapi import UploadFile, File,Form, APIRouter, HTTPException, status,Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -155,13 +155,21 @@ async def get_pdfs_by_folder(folder_id: int):
         raise HTTPException(status_code=500, detail="PDF 목록 조회 중 오류 발생")
 
 # ───────── GET BY BRAIN ─────────
-@router.get("/brain/{brain_id}", response_model=List[PdfResponse],
-            summary="Brain 기준 PDF 목록 조회")
-async def get_pdfs_by_brain(brain_id: int):
+@router.get(
+    "/brain/{brain_id}",
+    response_model=List[PdfResponse],
+    summary="Brain·Folder 기준 PDF 목록 조회"
+)
+async def get_pdfs_by_brain(
+    brain_id: int,
+    folder_id: Optional[int] = Query(
+        None, description="조회할 폴더 ID (없으면 뿌리 폴더)"
+    )
+):
     try:
-        return sqlite_handler.get_pdfs_by_brain(brain_id)
+        return sqlite_handler.get_pdfs_by_brain_and_folder(brain_id, folder_id)
     except Exception as e:
-        logging.error("PDF Brain 조회 오류: %s", e)
+        logging.error("PDF 조회 오류: %s", e)
         raise HTTPException(status_code=500, detail="서버 오류")
 
 

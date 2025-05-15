@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from sqlite_db.sqlite_handler import SQLiteHandler
@@ -104,7 +104,7 @@ async def update_textfile(txt_id: int, textfile_data: TextFileUpdate):
             txt_id=txt_id,
             txt_title=textfile_data.txt_title,
             txt_path=textfile_data.txt_path,
-            folder_id=textfile.get("folder_id"),  # ✅ 기존 folder_id 유
+            folder_id=textfile.get("folder_id"),  # ✅ 기존 folder_id 유지
             type=textfile_data.type,
             brain_id=textfile_data.brain_id
         )
@@ -204,11 +204,20 @@ async def get_textfiles_by_folder(folder_id: int):
 
 
 # ───────── GET BY BRAIN ─────────
-@router.get("/brain/{brain_id}", response_model=List[TextFileResponse],
-    summary="Brain 기준 텍스트 파일 목록 조회")
-async def get_textfiles_by_brain(brain_id: int):
+@router.get(
+    "/brain/{brain_id}",
+    response_model=List[TextFileResponse],
+    summary="Brain 기준 텍스트 파일 목록 조회 (루트 vs 모든 폴더)"
+)
+async def get_textfiles_by_brain(
+    brain_id: int,
+    folder_id: Optional[int] = Query(
+        None,
+        description="없으면 루트 only, 있으면 모든 폴더 내 텍스트 파일"
+    )
+):
     try:
-        return sqlite_handler.get_textfiles_by_brain(brain_id)
+        return sqlite_handler.get_textfiles_by_brain_and_folder(brain_id, folder_id)
     except Exception as e:
-        logging.error("텍스트 파일 Brain 조회 오류: %s", e)
-        raise HTTPException(status_code=500, detail="내부 서버 오류")
+        logging.error("텍스트 파일 조회 오류: %s", e)
+        raise HTTPException(status_code=500, detail="서버 오류")

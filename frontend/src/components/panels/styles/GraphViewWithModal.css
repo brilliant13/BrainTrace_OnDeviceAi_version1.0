@@ -1,0 +1,99 @@
+.graph-view-wrapper {
+    position: relative;
+}
+
+.graph-with-button {
+    position: relative;
+}
+
+.fullscreen-btn {
+    position: absolute;
+    top: 11px;
+    right: 11px;
+    padding: 6px;
+    cursor: pointer;
+    border: none;
+    /* 기본 상태에서도 border 제거 */
+    outline: none;
+    /* 포커스 테두리 제거 (선택) */
+    background: transparent;
+    /* 배경 없으면 이 줄도 유용 */
+}
+
+.fullscreen-btn:hover {
+    transform: scale(1.08);
+}
+
+.fullscreen-btn:active,
+.fullscreen-btn:focus {
+    transform: scale(1.08);
+    border: none;
+    outline: none;
+}
+
+.fullscreen-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 140vw;
+    height: 140vh;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.modal-graph-container {
+    position: fixed;
+    width: 70vw;
+    height: 80vh;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    border: 1px solid #ddd;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    pointer-events: all;
+    resize: none;
+    /* 기본 브라우저 리사이즈 제거 */
+}
+
+.resize-handle {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    right: 0;
+    bottom: 0;
+    cursor: se-resize;
+    z-index: 100;
+}
+
+.modal-header {
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    /* 왼쪽 타이틀 + 오른쪽 닫기버튼 */
+    align-items: center;
+    cursor: move;
+    user-select: none;
+}
+
+.modal-title {
+    font-size: 18px;
+    font-weight: 650;
+    color: #333;
+    padding-left: 10px;
+    pointer-events: none;
+    /* 텍스트는 클릭 무시 */
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.close-btn:hover {
+    transform: scale(1.1);
+}

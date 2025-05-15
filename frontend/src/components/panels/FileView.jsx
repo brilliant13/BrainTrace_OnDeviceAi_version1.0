@@ -200,6 +200,7 @@ export default function FileView({
       else if (f.filetype === 'txt') await deleteTextFile(f.id);
       else if (f.filetype === 'voice') await deleteVoice(f.id);
       await refresh();
+      if (onGraphRefresh) onGraphRefresh();
     } catch (e) {
       alert('삭제 실패');
     }
