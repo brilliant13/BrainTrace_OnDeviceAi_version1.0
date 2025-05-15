@@ -187,3 +187,13 @@ export const getAnswer = async (question, brainId) => {
     throw error;
   }
 };
+
+export const deleteDB = async (brainId, sourceId) => {
+  try {
+    const response = await axios.delete(`${BASE_URL}/brains/${brainId}/deleteDB/${sourceId}`);
+    return response.data;
+  } catch (error) {
+    console.error('벡터 DB or 그래프 DB 삭제 실패:', error);
+    throw error;
+  }
+};

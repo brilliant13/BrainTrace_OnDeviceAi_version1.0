@@ -11,8 +11,8 @@ import FileIcon from './FileIcon'
 import { TiUpload } from 'react-icons/ti'
 import { GoPencil } from 'react-icons/go';
 import { RiDeleteBinLine } from 'react-icons/ri';
-import { processText } from '../../api/graphApi'; // graphApi.js에서 processText API 가져오기
-import { fetchGraphData } from '../../api/graphApi'; // 그래프 데이터 API 불러오기
+import { processText, deleteDB } from '../../api/graphApi';
+import { fetchGraphData } from '../../api/graphApi';
 import ConfirmDialog from '../ConfirmDialog'
 
 import {
@@ -196,11 +196,39 @@ export default function FileView({
 
   const handleDelete = async f => {
     try {
-      if (f.filetype === 'pdf') await deletePdf(f.id);
-      else if (f.filetype === 'txt') await deleteTextFile(f.id);
-      else if (f.filetype === 'voice') await deleteVoice(f.id);
+      console.log('삭제할 파일 정보:', {
+        brainId,
+        fileId: f.id,
+        fileType: f.filetype,
+        fileName: f.name
+      });
+
+      // 1. 벡터 DB에서 먼저 삭제
+      try {
+        await deleteDB(brainId, f.id);
+        console.log('벡터 DB,그래프 DB 삭제 성공');
+      } catch (dbError) {
+        console.error('벡터 DB,그래프 DB 삭제 실패:', dbError);
+        // 벡터 DB 삭제 실패는 무시하고 계속 진행
+      }
+
+      // 2. 파일 시스템에서 삭제
+      let deleted = false;
+      if (f.filetype === 'pdf') {
+        deleted = await deletePdf(f.id);
+      } else if (f.filetype === 'txt') {
+        deleted = await deleteTextFile(f.id);
+      } else if (f.filetype === 'voice') {
+        deleted = await deleteVoice(f.id);
+      }
+
+      if (!deleted) {
+        throw new Error(`${f.filetype} 파일 삭제 실패`);
+      }
+
       await refresh();
     } catch (e) {
+      console.error('삭제 실패:', e);
       alert('삭제 실패');
     }
   };
