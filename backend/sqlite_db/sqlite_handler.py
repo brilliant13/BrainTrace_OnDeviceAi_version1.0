@@ -76,9 +76,12 @@ class SQLiteHandler:
                 memo_title TEXT,
                 memo_date DATETIME DEFAULT CURRENT_TIMESTAMP,
                 is_source BOOLEAN DEFAULT 0,
+                is_delete BOOLEAN DEFAULT 0,
                 type TEXT,                
                 folder_id INTEGER,
-                FOREIGN KEY (folder_id) REFERENCES Folder(folder_id)
+                brain_id INTEGER,
+                FOREIGN KEY (folder_id) REFERENCES Folder(folder_id),
+                FOREIGN KEY (brain_id) REFERENCES Brain(brain_id)
             )
             ''')
 
@@ -720,7 +723,7 @@ class SQLiteHandler:
             logging.error("ID 생성 오류: %s", str(e))
             raise RuntimeError(f"ID 생성 오류: {str(e)}")
 
-    def create_memo(self, memo_title: str, memo_text: str, folder_id: Optional[int] = None, is_source: bool = False, type: Optional[str] = None) -> dict:
+    def create_memo(self, memo_title: str, memo_text: str, folder_id: Optional[int] = None, is_source: bool = False, type: Optional[str] = None, brain_id: Optional[int] = None) -> dict:
         """새 메모 생성"""
         try:
             # folder_id가 주어진 경우에만 폴더 존재 여부 확인
@@ -729,6 +732,12 @@ class SQLiteHandler:
                 if not folder:
                     raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
                     
+            # brain_id가 주어진 경우에만 브레인 존재 여부 확인
+            if brain_id is not None:
+                brain = self.get_brain(brain_id)
+                if not brain:
+                    raise ValueError(f"존재하지 않는 브레인 ID: {brain_id}")
+                    
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
@@ -736,8 +745,8 @@ class SQLiteHandler:
             memo_id = self._get_next_id()
             
             cursor.execute(
-                "INSERT INTO Memo (memo_id, memo_title, memo_text, folder_id, is_source, type) VALUES (?, ?, ?, ?, ?, ?)",
-                (memo_id, memo_title, memo_text, folder_id, 1 if is_source else 0, type)
+                "INSERT INTO Memo (memo_id, memo_title, memo_text, folder_id, is_source, type, brain_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (memo_id, memo_title, memo_text, folder_id, 1 if is_source else 0, type, brain_id)
             )
             
             # 현재 날짜 가져오기 (자동 생성됨)
@@ -747,8 +756,8 @@ class SQLiteHandler:
             conn.commit()
             conn.close()
             
-            logging.info("메모 생성 완료: memo_id=%s, memo_title=%s, folder_id=%s", 
-                        memo_id, memo_title, folder_id)
+            logging.info("메모 생성 완료: memo_id=%s, memo_title=%s, folder_id=%s, brain_id=%s", 
+                        memo_id, memo_title, folder_id, brain_id)
             return {
                 "memo_id": memo_id, 
                 "memo_title": memo_title, 
@@ -756,7 +765,8 @@ class SQLiteHandler:
                 "memo_date": memo_date,
                 "is_source": is_source,
                 "type": type,
-                "folder_id": folder_id
+                "folder_id": folder_id,
+                "brain_id": brain_id
             }
         except ValueError as e:
             logging.error("메모 생성 실패: %s", str(e))
@@ -787,7 +797,7 @@ class SQLiteHandler:
             logging.error("메모 삭제 오류: %s", str(e))
             raise RuntimeError(f"메모 삭제 오류: {str(e)}")
     
-    def update_memo(self, memo_id: int, memo_title: str = None, memo_text: str = None, is_source: bool = None, folder_id: Optional[int] = None, type: Optional[str] = None) -> bool:
+    def update_memo(self, memo_id: int, memo_title: str = None, memo_text: str = None, is_source: bool = None, folder_id: Optional[int] = None, type: Optional[str] = None, is_delete: bool = None, brain_id: Optional[int] = None) -> bool:
         """메모 정보 업데이트"""
         try:
             # 메모가 존재하는지 확인
@@ -800,6 +810,12 @@ class SQLiteHandler:
                 folder = self.get_folder(folder_id)
                 if not folder:
                     raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
+
+            # brain_id가 주어진 경우에만 브레인 존재 여부 확인
+            if brain_id is not None and brain_id != "null":
+                brain = self.get_brain(brain_id)
+                if not brain:
+                    raise ValueError(f"존재하지 않는 Brain ID: {brain_id}")
             
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -824,12 +840,23 @@ class SQLiteHandler:
                 update_fields.append("type = ?")
                 params.append(type)
 
+            if is_delete is not None:
+                update_fields.append("is_delete = ?")
+                params.append(1 if is_delete else 0)
+
             # folder_id가 None이거나 "null"이면 NULL로 설정
             if folder_id is None or folder_id == "null":
                 update_fields.append("folder_id = NULL")
             elif folder_id is not None:
                 update_fields.append("folder_id = ?")
                 params.append(folder_id)
+
+            # brain_id가 None이거나 "null"이면 NULL로 설정
+            if brain_id is None or brain_id == "null":
+                update_fields.append("brain_id = NULL")
+            elif brain_id is not None:
+                update_fields.append("brain_id = ?")
+                params.append(brain_id)
                 
             if not update_fields:
                 return False  # 업데이트할 내용 없음
@@ -867,7 +894,7 @@ class SQLiteHandler:
             cursor = conn.cursor()
             
             cursor.execute(
-                "SELECT memo_id, memo_title, memo_text, memo_date, is_source, type, folder_id FROM Memo WHERE memo_id = ?", 
+                "SELECT memo_id, memo_title, memo_text, memo_date, is_source, type, folder_id, brain_id FROM Memo WHERE memo_id = ?", 
                 (memo_id,)
             )
             memo = cursor.fetchone()
@@ -881,7 +908,8 @@ class SQLiteHandler:
                     "memo_date": memo[3],
                     "is_source": bool(memo[4]),
                     "type": memo[5],
-                    "folder_id": memo[6]
+                    "folder_id": memo[6],
+                    "brain_id": memo[7]
                 }
             else:
                 return None
@@ -1468,7 +1496,6 @@ class SQLiteHandler:
             if not update_fields:
                 conn.close()
                 return False  # 변경할 내용 없음
-
             
             update_fields.append("voice_date = CURRENT_TIMESTAMP")
             
@@ -1719,7 +1746,7 @@ class SQLiteHandler:
                 update_fields.append("type = ?")
                 params.append(type)
 
-            # folder_id 처리: null 또는 값
+            # folder_id가 None이거나 "null"이면 NULL로 설정
             if folder_id is None or folder_id == "null":
                 update_fields.append("folder_id = NULL")
             else:
@@ -1814,7 +1841,7 @@ class SQLiteHandler:
                     "type": textfile[4],
                     "folder_id": textfile[5],
                     "brain_id" : textfile[6]
-                } 
+                }
                 for textfile in textfiles
             ]
         except Exception as e:
@@ -1939,6 +1966,64 @@ class SQLiteHandler:
             ]
         except Exception as e:
             logging.error("get_default_voices 오류: %s", e)
+            return []
+
+    def get_memos_by_brain_and_folder(
+        self,
+        brain_id: int,
+        folder_id: Optional[int] = None
+    ) -> List[Dict]:
+        conn   = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        if folder_id is None:
+            where  = "brain_id = ? AND folder_id IS NULL"
+            params = (brain_id,)
+        else:
+            where  = "brain_id = ? AND folder_id IS NOT NULL"
+            params = (brain_id,)
+
+        sql = f"""
+            SELECT
+                memo_id,
+                memo_title,
+                memo_text,
+                memo_date,
+                is_source,
+                type,
+                folder_id,
+                brain_id
+            FROM Memo
+            WHERE {where}
+            ORDER BY memo_date DESC
+        """
+        cursor.execute(sql, params)
+        rows = cursor.fetchall()
+        cols = [c[0] for c in cursor.description]
+        conn.close()
+        return [dict(zip(cols, r)) for r in rows]
+
+    def get_trash_bin_memos(self, brain_id: int) -> List[Dict]:
+        """특정 Brain의 휴지통에 있는 모든 메모를 조회합니다."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT memo_id, memo_title, memo_text, memo_date, 
+                       is_source, type, folder_id, brain_id
+                FROM Memo 
+                WHERE brain_id = ? AND is_delete = 1
+                ORDER BY memo_date DESC
+            """, (brain_id,))
+            
+            rows = cursor.fetchall()
+            cols = [c[0] for c in cursor.description]
+            conn.close()
+            
+            return [dict(zip(cols, r)) for r in rows]
+        except Exception as e:
+            logging.error("휴지통 메모 조회 오류: %s", str(e))
             return []
 
    
