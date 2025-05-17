@@ -3,6 +3,7 @@ from models.request_models import ProcessTextRequest, AnswerRequest, GraphRespon
 from services import ai_service, embedding_service
 from neo4j_db.Neo4jHandler import Neo4jHandler
 import logging
+from sqlite_db.sqlite_handler import SQLiteHandler
 
 ###임시 질답용 임포트
 from LLM.basic_chat import basic_chat
@@ -133,6 +134,10 @@ async def answer_endpoint(request_data: AnswerRequest):
     logging.info("질문 접수: %s, brain_id: %s", question, brain_id)
     
     try:
+        # 사용자 질문 저장
+        db_handler = SQLiteHandler()
+        chat_id = db_handler.save_chat(False, question, brain_id)
+        
         # Step 1: 컬렉션이 없으면 초기화
         if not embedding_service.is_index_ready(brain_id):
             embedding_service.initialize_collection(brain_id)
@@ -174,12 +179,16 @@ async def answer_endpoint(request_data: AnswerRequest):
         final_answer = ai_service.generate_answer(raw_schema_text, question)
         referenced_nodes = ai_service.extract_referenced_nodes(final_answer)
         final_answer = final_answer.split("EOF")[0].strip()
-                # referenced_nodes 내용을 텍스트로 final_answer 뒤에 추가
+        
+        # referenced_nodes 내용을 텍스트로 final_answer 뒤에 추가
         if referenced_nodes:
             nodes_text = "\n\n[참고된 노드 목록]\n" + "\n".join(f"- {node}" for node in referenced_nodes)
             final_answer += nodes_text
+            
+        # AI 답변 저장
+        db_handler.save_chat(True, final_answer, brain_id, referenced_nodes)
 
-        return {"answer": final_answer,"referenced_nodes":referenced_nodes}
+        return {"answer": final_answer, "referenced_nodes": referenced_nodes}
     except Exception as e:
         logging.error("answer 오류: %s", str(e))
         raise HTTPException(status_code=500, detail=str(e))
