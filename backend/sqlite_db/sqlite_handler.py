@@ -130,6 +130,18 @@ class SQLiteHandler:
             )
             ''')
 
+            # Chat 테이블 생성
+            cursor.execute('''
+            CREATE TABLE IF NOT EXISTS Chat (
+                chat_id INTEGER PRIMARY KEY,
+                is_ai BOOLEAN NOT NULL,
+                message TEXT,
+                brain_id INTEGER,
+                referenced_nodes TEXT,
+                FOREIGN KEY (brain_id) REFERENCES Brain(brain_id)
+            )
+            ''')
+
             conn.commit()
             conn.close()
             logging.info("SQLite 데이터베이스 초기화 완료: %s", self.db_path)
@@ -2026,4 +2038,27 @@ class SQLiteHandler:
             logging.error("휴지통 메모 조회 오류: %s", str(e))
             return []
 
+    def save_chat(self, chat_id: int, is_ai: bool, message: str, brain_id: int, referenced_nodes: List[str] = None) -> bool:
+        """채팅 메시지를 저장합니다."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # referenced_nodes를 텍스트 형식으로 변환
+            referenced_nodes_text = ", ".join(referenced_nodes) if referenced_nodes else None
+            
+            cursor.execute(
+                "INSERT INTO Chat (chat_id, is_ai, message, brain_id, referenced_nodes) VALUES (?, ?, ?, ?, ?)",
+                (chat_id, 1 if is_ai else 0, message, brain_id, referenced_nodes_text)
+            )
+            
+            conn.commit()
+            conn.close()
+            
+            logging.info("채팅 저장 완료: chat_id=%s, is_ai=%s, brain_id=%s", chat_id, is_ai, brain_id)
+            return True
+        except Exception as e:
+            logging.error("채팅 저장 오류: %s", str(e))
+            return False
+    
    
