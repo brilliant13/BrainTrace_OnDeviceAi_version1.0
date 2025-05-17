@@ -2,13 +2,8 @@
 import React, { useState, useRef } from 'react';
 import './styles/MemoList.css';
 import { CiMemoPad } from 'react-icons/ci';
-import { FaTrashAlt } from "react-icons/fa"; // 휴지통
-import { HiOutlineMicrophone } from "react-icons/hi";
-import { HiMicrophone } from "react-icons/hi2";
-import { HiQueueList } from "react-icons/hi2";
 import { MdOutlineRestore } from "react-icons/md";
 import { FaRegTrashAlt } from "react-icons/fa";
-import { RiDeleteBin2Line } from "react-icons/ri"; // 휴지통
 import { MdOutlineDeleteForever } from "react-icons/md"; // 휴지통
 import { MdKeyboardBackspace } from "react-icons/md";
 
@@ -20,7 +15,6 @@ function formatTime(seconds) {
     const sec = String(seconds % 60).padStart(2, '0');
     return `${min}:${sec}`;
 }
-
 
 function MemoListPanel({
     memos,
@@ -85,7 +79,6 @@ function MemoListPanel({
                             onClick={handleMicClick}
                         />
                     </div>
-
 
                     <button className="add-memo-button" onClick={onAdd}>+ 새 메모</button>
                 </div>
