@@ -5,7 +5,7 @@ import { fetchGraphData } from '../../api/graphApi';
 
 function GraphView({
   brainId = 'default-brain-id',
-  height = '550px',
+  height = '850px',
   graphData: initialGraphData = null,
   referencedNodes = [],
   graphRefreshTrigger // 그래프 새로고침 트리거 prop 추가
