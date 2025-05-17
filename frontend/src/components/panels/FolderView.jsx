@@ -167,6 +167,7 @@ export default function FolderView({
             else if (file.filetype === 'txt') await deleteTextFile(file.id);
             else if (file.filetype === 'voice') await deleteVoice(file.id);
             await fetchFolderFiles();
+            if (onGraphRefresh) onGraphRefresh();
         } catch (e) {
             alert('삭제 실패');
         }
