@@ -136,8 +136,7 @@ async def answer_endpoint(request_data: AnswerRequest):
     try:
         # 사용자 질문 저장
         db_handler = SQLiteHandler()
-        chat_id = db_handler._get_next_id()
-        db_handler.save_chat(chat_id, False, question, brain_id)
+        chat_id = db_handler.save_chat(False, question, brain_id)
         
         # Step 1: 컬렉션이 없으면 초기화
         if not embedding_service.is_index_ready(brain_id):
@@ -187,7 +186,7 @@ async def answer_endpoint(request_data: AnswerRequest):
             final_answer += nodes_text
             
         # AI 답변 저장
-        db_handler.save_chat(chat_id + 1, True, final_answer, brain_id, referenced_nodes)
+        db_handler.save_chat(True, final_answer, brain_id, referenced_nodes)
 
         return {"answer": final_answer, "referenced_nodes": referenced_nodes}
     except Exception as e:
