@@ -284,6 +284,7 @@ export default function SourcePanel({
             alert('파일 업로드 실패');
           }
         }}
+        onGraphRefresh={onGraphRefresh}
         brainId={activeProject}
       />
       {!collapsed && <SourceQuotaBar current={sourceCount} max={50} />}
