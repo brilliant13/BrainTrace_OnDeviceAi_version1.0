@@ -20,6 +20,7 @@ import {
   getPdfsByBrain,
   getTextfilesByBrain,
   getVoicesByBrain,
+  uploadPdfs,
   createPdf,
   createTextFile,
   createVoice,
@@ -123,6 +124,15 @@ export default function FileView({
         getVoicesByBrain(brainId),
       ])
 
+      // 2.1) fileMap 갱신
+      setFileMap(prev => {
+        const m = { ...prev };
+        pdfs.forEach(p => { m[p.pdf_id] = p; });
+        txts.forEach(t => { m[t.txt_id] = t; });
+        voices.forEach(v => { m[v.voice_id] = v; });
+        return m;
+      });
+
       // 3) folder_id === null 인 것만 골라 루트 파일로
       const roots = [
         ...pdfs
@@ -146,37 +156,31 @@ export default function FileView({
     const ext = f.name.split('.').pop().toLowerCase()
     const common = { folder_id: folderId, type: ext, brain_id: brainId }
 
+    // --- PDF ---
     if (ext === 'pdf') {
-      // 1) PDF ArrayBuffer 로 읽기
-      console.log('PDF 처리 시작:', f.name);
-      const arrayBuffer = await f.arrayBuffer();
-      console.log('→ ArrayBuffer 로딩 OK');
+      // 1-1) 바이너리 + 메타 업로드
+      const [meta] = await uploadPdfs([f], folderId, brainId);
 
-      // 2) PDF.js 로 문서 로드
-      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-      console.log('→ PDF 로드 OK, 페이지 수:', pdf.numPages);
-      // 3) 페이지별 텍스트 추출
+      // 1-2) 텍스트 추출
+      const arrayBuffer = await f.arrayBuffer();
+      const pdfDoc = await pdfjs.getDocument({ data: arrayBuffer }).promise;
       let content = '';
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const page = await pdfDoc.getPage(i);
         const textContent = await page.getTextContent();
-        const strings = textContent.items.map(item => item.str);
-        content += strings.join(' ') + '\n\n';
+        content += textContent.items.map(item => item.str).join(' ') + '\n\n';
       }
-      console.log('→ 텍스트 추출 완료, 길이:', content.length);
-      // 4) 메타데이터로 PDF 저장
-      const res = await createPdf({
-        ...common,
-        pdf_title: f.name,
-        pdf_path: f.name,
-      });
-      // 5) 추출한 텍스트로 그래프 생성 API 호출
+
+      // 1-3) 그래프 생성
       await createTextToGraph({
         text: content,
         brain_id: String(brainId),
-        source_id: String(res.pdf_id),
+        source_id: String(meta.pdf_id),
       });
-    } else if (ext === 'txt') {
+
+      return { id: meta.pdf_id, filetype: 'pdf', meta };
+    }
+    else if (ext === 'txt') {
       const content = await f.text();
       const res = await createTextFile({ ...common, txt_title: f.name, txt_path: f.name })
       await createTextToGraph({
@@ -304,33 +308,58 @@ export default function FileView({
         onGraphRefresh();
       }
 
-
       await refresh()
       return
     }
 
     // 3) OS 파일 드롭
-    const dropped = Array.from(e.dataTransfer.files)
+    const dropped = Array.from(e.dataTransfer.files);
+    if (!dropped.length) return;
+
     try {
-      await Promise.all(dropped.map(f => createFileByType(f, null)))
-      const frag = Object.fromEntries(dropped.map(f => [f.name, f]))
-      setFileMap(prev => ({ ...prev, ...frag }))
-      await refresh()
+      // 2-1) 각 파일을 createFileByType 으로 처리
+      const results = await Promise.all(
+        dropped.map(f => createFileByType(f, null))
+      );
+
+      // 2-2) fileMap 갱신
+      setFileMap(prev => {
+        const m = { ...prev };
+        results.forEach(r => {
+          m[r.id] = r.meta;
+        });
+        return m;
+      });
+
+      // 2-3) 목록/트리 새로고침
+      await refresh();
+      if (onGraphRefresh) onGraphRefresh();
     } catch (err) {
-      console.error('루트 파일 생성 실패', err)
+      console.error('루트 파일 생성 실패', err);
     }
   }
 
 
   const handleDropToFolder = async (folderId, dropped) => {
-    if (!Array.isArray(dropped)) return
+    if (!Array.isArray(dropped)) return;
     try {
-      await Promise.all(dropped.map(f => createFileByType(f, folderId)))
-      const frag = Object.fromEntries(dropped.map(f => [f.name, f]))
-      setFileMap(prev => ({ ...prev, ...frag }))
-      await refresh()
+      // 1) createFileByType 으로 처리 → { id, filetype, meta } 받기
+      const results = await Promise.all(
+        dropped.map(f => createFileByType(f, folderId))
+      );
+      // 2) fileMap 에 id → meta 로 저장
+      setFileMap(prev => {
+        const m = { ...prev };
+        results.forEach(r => {
+          m[r.id] = r.meta;
+        });
+        return m;
+      });
+      // 3) 트리/리스트 갱신
+      await refresh();
     } catch (err) {
-      console.error('폴더 파일 생성 실패', err)
+      console.error('폴더 파일 생성 실패', err);
+
     }
   }
 
@@ -411,9 +440,9 @@ export default function FileView({
             )
           }
           onClick={() => {
-            setSelectedFile(f.name)
-            if (f.filetype === 'pdf' && fileMap[f.name]) {
-              onOpenPDF(fileMap[f.name])
+            setSelectedFile(f.id)
+            if (f.filetype === 'pdf' && fileMap[f.id]) {
+              onOpenPDF(fileMap[f.id])
             }
           }}
         >

@@ -9,13 +9,9 @@ function SourceUploadModal({ visible, onClose, onUpload, folderId = null, brainI
   const fileInputRef = useRef();
 
   if (!visible) return null;
-  console.log("brainId : ", brainId);
-  // 실제 업로드 처리 함수: backend.js 의 uploadPdfs 사용
   const uploadFiles = async files => {
     try {
-      // files: File[] → FormData 로 묶어 POST
       const uploaded = await uploadPdfs(files, folderId, brainId);
-      // uploaded: PdfResponse[] 형태로 반환됨
       onUpload(uploaded);
       onClose();
     } catch (e) {

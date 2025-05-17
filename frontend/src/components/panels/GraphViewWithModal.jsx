@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import GraphView from './GraphView';
 import { MdFullscreen, MdClose } from 'react-icons/md';
 import './styles/GraphViewWithModal.css';
+import { ImEnlarge } from "react-icons/im";
 
 function GraphViewWithModal(props) {
     const [isFullscreen, setIsFullscreen] = useState(false);
