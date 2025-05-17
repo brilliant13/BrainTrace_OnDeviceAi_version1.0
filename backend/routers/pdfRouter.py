@@ -5,6 +5,7 @@ from typing import List, Optional
 from sqlite_db.sqlite_handler import SQLiteHandler
 import logging
 import shutil, uuid, os, re
+from fastapi.responses import Response
 
 sqlite_handler = SQLiteHandler()
 router = APIRouter(
@@ -112,8 +113,27 @@ async def update_pdf(pdf_id: int, pdf_data: PdfUpdate):
 @router.delete("/{pdf_id}", status_code=status.HTTP_204_NO_CONTENT,
                summary="PDF 파일 삭제")
 async def delete_pdf(pdf_id: int):
-    if not sqlite_handler.delete_pdf(pdf_id):
+    # 1) 삭제 대상 레코드 조회
+    pdf = sqlite_handler.get_pdf(pdf_id)
+    if not pdf:
         raise HTTPException(status_code=404, detail="PDF를 찾을 수 없습니다")
+
+    # 2) DB에서 레코드 삭제
+    sqlite_handler.delete_pdf(pdf_id)
+
+    # 3) 로컬 디스크 파일 삭제
+    file_path = pdf["pdf_path"]
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            logging.info(f"✅ 로컬 파일 삭제 완료: {file_path}")
+        else:
+            logging.warning(f"⚠️ 삭제할 파일이 존재하지 않습니다: {file_path}")
+    except Exception as e:
+        logging.error(f"❌ 로컬 파일 삭제 실패 ({file_path}): {e}")
+
+    # 204 No Content 응답
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 # ───────── MOVE FOLDER ─────────
 @router.put("/brain/{brain_id}/changeFolder/{target_folder_id}/{pdf_id}", response_model=PdfResponse,
