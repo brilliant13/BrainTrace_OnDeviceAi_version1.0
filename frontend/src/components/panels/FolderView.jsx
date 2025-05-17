@@ -35,7 +35,8 @@ export default function FolderView({
     moveItem,      // 부모 FileView의 moveItem
     refreshParent, // 부모 FileView의 전체 트리 갱신 함수
     refreshKey,
-    brainId
+    brainId,
+    onGraphRefresh
 }) {
     const [isOpen, setIsOpen] = useState(depth === 1);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -56,9 +57,9 @@ export default function FolderView({
                 getFolderVoices(item.folder_id)
             ]);
             const all = [
-                ...txts.map(f => ({ id: f.txt_id, name: f.txt_title, filetype: 'txt' })),
-                ...pdfs.map(f => ({ id: f.pdf_id, name: f.pdf_title, filetype: 'pdf' })),
-                ...voices.map(f => ({ id: f.voice_id, name: f.voice_title, filetype: 'voice' }))
+                ...txts.map(f => ({ id: f.txt_id, name: f.txt_title, filetype: 'txt', meta: f })),
+                ...pdfs.map(f => ({ id: f.pdf_id, name: f.pdf_title, filetype: 'pdf', meta: f })),
+                ...voices.map(f => ({ id: f.voice_id, name: f.voice_title, filetype: 'voice', meta: f }))
             ];
             setChildrenFiles(all);
         } catch (err) {
@@ -135,6 +136,7 @@ export default function FolderView({
         const droppedFiles = Array.from(e.dataTransfer.files);
         if (droppedFiles.length > 0) {
             await onDropFileToFolder(item.folder_id, droppedFiles);
+            if (onGraphRefresh) onGraphRefresh();
             await refreshParent();
             await fetchFolderFiles();
         }
@@ -165,6 +167,7 @@ export default function FolderView({
             else if (file.filetype === 'txt') await deleteTextFile(file.id);
             else if (file.filetype === 'voice') await deleteVoice(file.id);
             await fetchFolderFiles();
+            if (onGraphRefresh) onGraphRefresh();
         } catch (e) {
             alert('삭제 실패');
         }
@@ -174,16 +177,6 @@ export default function FolderView({
         setFileToDelete(f); // 삭제할 파일 지정
         setMenuOpenId(null); // 점점점 메뉴 닫기
     };
-
-
-    const handleDragStart = (e, child) => {
-        e.dataTransfer.setData('application/json', JSON.stringify({
-            id: child.id,
-            filetype: child.filetype,
-            name: child.name
-        }));
-    };
-
     return (
         <div
             className={`folder-container ${isDragOver ? 'folder-drag-over' : ''}`}
@@ -218,8 +211,8 @@ export default function FolderView({
                             onClick={() => {
                                 const path = `${item.name}/${child.name}`;
                                 onSelectFile(path);
-                                if (child.filetype === 'pdf' && fileMap?.[child.name]) {
-                                    onOpenPDF(fileMap[child.name]);
+                                if (child.filetype === 'pdf') {
+                                    onOpenPDF(child.meta);
                                 }
                             }}
                             draggable
@@ -279,8 +272,6 @@ export default function FolderView({
                     }}
                 />
             )}
-
         </div>
-
     );
 }

@@ -234,7 +234,7 @@ export default function SourcePanel({
               <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
 
                 <button className="pdf-back-button" onClick={closePDF}>← 뒤로가기</button>
-                <PDFViewer file={openedPDF} containerWidth={panelWidth} />
+                <PDFViewer file={`http://localhost:8000/${openedPDF.pdf_path}`} containerWidth={panelWidth} />
               </div >
             ) : (
               <FileView
@@ -265,11 +265,19 @@ export default function SourcePanel({
         onClose={() => setShowUploadModal(false)}
         onUpload={async uploadedFiles => {
           try {
-            await Promise.all(uploadedFiles.map(f => createAtRoot(f)));
-            await refresh();
+            // 서버에 저장된 PDF 메타데이터로 목록만 갱신
+            await refresh();                    // getPdfsByBrain으로 새로고침
             setUploadKey(k => k + 1);
-            const frag = Object.fromEntries(uploadedFiles.map(f => [f.name, f]));
-            setFileMap(prev => ({ ...prev, ...frag }));
+
+            // fileMap에 pdf_id → PdfResponse 매핑
+            setFileMap(prev => {
+              const m = { ...prev };
+              uploadedFiles.forEach(pdf => {
+                m[pdf.pdf_id] = pdf;
+              });
+              return m;
+            });
+
             setShowUploadModal(false);
           } catch (e) {
             console.error(e);

@@ -15,7 +15,6 @@ import memoOnIcon from '../../assets/icons/memo-on.png';
 import memoOffIcon from '../../assets/icons/memo-off.png';
 import GraphViewWithModal from './GraphViewWithModal';
 
-// function MemoPanel({ activeProject, collapsed, setCollapsed }) {
 function MemoPanel({ activeProject, collapsed, setCollapsed, referencedNodes = [], graphRefreshTrigger }) {
   const projectId = activeProject;
   const MEMO_STORAGE_KEY = `brainTrace-memos-${projectId}`;

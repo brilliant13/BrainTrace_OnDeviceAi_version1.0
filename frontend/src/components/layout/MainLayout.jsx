@@ -54,6 +54,7 @@ function MainLayout() {
   const sourcePanelRef = useRef(null);
   const chatPanelRef = useRef(null);  // 추가된 채팅 패널 ref
   const memoPanelRef = useRef(null);
+  const firstPdfExpand = useRef(true);
 
   const [sourcePanelSize, setSourcePanelSize] = useState(DEFAULT_SOURCE_PANEL_SIZE);
   const [chatPanelSize, setChatPanelSize] = useState(DEFAULT_CHAT_PANEL_SIZE);  // 추가된 채팅 패널 크기 상태
@@ -62,6 +63,7 @@ function MainLayout() {
 
   const handleBackFromPDF = () => {
     setIsPDFOpen(false);
+    firstPdfExpand.current = true;
     if (sourcePanelRef.current) {
       sourcePanelRef.current.resize(DEFAULT_SOURCE_PANEL_SIZE);
     }
@@ -111,13 +113,25 @@ function MainLayout() {
 
   // 소스 패널 크기 변경 효과
   useEffect(() => {
-    if (sourcePanelRef.current) {
-      if (sourceCollapsed) {
-        sourcePanelRef.current.resize(5);  // 접혔을 때 최소 크기
-      } else {
-        sourcePanelRef.current.resize(sourcePanelSize);
-      }
+    if (!sourcePanelRef.current) return;
+
+    // 1) 완전히 접힌 상태
+    if (sourceCollapsed) {
+      sourcePanelRef.current.resize(5);
+      return;
     }
+
+    // 2) PDF 뷰어가 열려 있으면, 넓게 펼치기 (예: 40%)
+    if (isPDFOpen) {
+      if (firstPdfExpand.current) {
+        sourcePanelRef.current.resize(40);
+        firstPdfExpand.current = false;
+      }
+      return;
+    }
+
+    // 3) 기본/사용자 지정 크기
+    sourcePanelRef.current.resize(sourcePanelSize);
   }, [isPDFOpen, sourceCollapsed, sourcePanelSize]);
 
   // 메모 패널 크기 변경 효과

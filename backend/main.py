@@ -7,6 +7,7 @@ import logging
 import sqlite3
 import uvicorn
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from neo4j_db.utils import run_neo4j
 from sqlite_db.sqlite_handler import SQLiteHandler
@@ -86,6 +87,8 @@ app.include_router(pdfRouter.router)
 app.include_router(textFileRouter.router)   
 app.include_router(voiceRouter.router)      
 app.include_router(chatRouter.router)
+
+app.mount("/uploaded_pdfs", StaticFiles(directory="uploaded_pdfs"), name="uploaded_pdfs")
 
 # ─── 서버 실행 ──────────────────────────────────────
 if __name__ == "__main__":
