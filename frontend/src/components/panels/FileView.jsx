@@ -152,6 +152,7 @@ export default function FileView({
       console.error('전체 로드 실패', err)
     }
   }
+
   const createFileByType = async (f, folderId = null) => {
     const ext = f.name.split('.').pop().toLowerCase()
     const common = { folder_id: folderId, type: ext, brain_id: brainId }
@@ -180,17 +181,33 @@ export default function FileView({
 
       return { id: meta.pdf_id, filetype: 'pdf', meta };
     }
+    // --- TXT ---
     else if (ext === 'txt') {
+      // 텍스트 파일 생성
+      const res = await createTextFile({
+        ...common,
+        txt_title: f.name,
+        txt_path: f.name,
+      });
+      // 그래프 생성
       const content = await f.text();
-      const res = await createTextFile({ ...common, txt_title: f.name, txt_path: f.name })
       await createTextToGraph({
         text: content,
         brain_id: String(brainId),
         source_id: String(res.txt_id),
       });
-    } else if (['mp3', 'wav', 'm4a'].includes(ext)) {
-      await createVoice({ ...common, voice_title: f.name, voice_path: f.name })
-    } else {
+      return { id: res.txt_id, filetype: 'txt', meta: res };
+    }
+    // --- Voice ---
+    else if (['mp3', 'wav', 'm4a'].includes(ext)) {
+      const res = await createVoice({
+        ...common,
+        voice_title: f.name,
+        voice_path: f.name,
+      });
+      return { id: res.voice_id, filetype: 'voice', meta: res };
+    }
+    else {
       await createTextFile({ ...common, txt_title: f.name, txt_path: f.name })
     }
 
@@ -357,6 +374,7 @@ export default function FileView({
       });
       // 3) 트리/리스트 갱신
       await refresh();
+      if (onGraphRefresh) onGraphRefresh();
     } catch (err) {
       console.error('폴더 파일 생성 실패', err);
 
@@ -423,6 +441,7 @@ export default function FileView({
             moveItem={moveItem}
             refreshParent={refresh}
             brainId={brainId}
+            onGraphRefresh={onGraphRefresh}
           />
         ) : null
       )}

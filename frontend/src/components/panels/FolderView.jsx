@@ -35,7 +35,8 @@ export default function FolderView({
     moveItem,      // 부모 FileView의 moveItem
     refreshParent, // 부모 FileView의 전체 트리 갱신 함수
     refreshKey,
-    brainId
+    brainId,
+    onGraphRefresh
 }) {
     const [isOpen, setIsOpen] = useState(depth === 1);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -135,6 +136,7 @@ export default function FolderView({
         const droppedFiles = Array.from(e.dataTransfer.files);
         if (droppedFiles.length > 0) {
             await onDropFileToFolder(item.folder_id, droppedFiles);
+            if (onGraphRefresh) onGraphRefresh();
             await refreshParent();
             await fetchFolderFiles();
         }
