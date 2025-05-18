@@ -28,10 +28,13 @@ export const listBrainFolders = brain_id => api.get(`/folders/brain/${brain_id}`
 export const getFolder = id => api.get(`/folders/${id}`).then(r => r.data);
 export const updateFolder = (id, folder_name) => api.put(`/folders/${id}`, { folder_name }).then(r => r.data);
 export const deleteFolder = id => api.delete(`/folders/${id}`);
-export const deleteFolderWithMemos = id => api.delete(`/folders/deleteAll/${id}`).then(r => r.data);
 export const getFolderTextfiles = folderId => api.get(`/textfiles/folder/${folderId}`).then(r => r.data);
 export const getFolderPdfs = folderId => api.get(`/pdfs/folder/${folderId}`).then(r => r.data);
 export const getFolderVoices = folderId => api.get(`/voices/folder/${folderId}`).then(r => r.data);
+
+export const deleteFolderWithMemos = (folderId, brainId) =>
+    api.delete(`/folders/deleteAll/${folderId}`, { params: { brain_id: brainId } }).then(r => r.data);
+
 
 /* ───────── MEMOS ───────── */
 export const createMemo = body => api.post('/memos', body).then(r => r.data);
