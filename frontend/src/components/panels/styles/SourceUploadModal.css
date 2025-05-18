@@ -19,7 +19,8 @@
 }
 
 .description {
-    font-size: 14px;
+    padding-top: 10px;
+    font-size: 12px;
     margin-bottom: 20px;
     color: #444;
 }
