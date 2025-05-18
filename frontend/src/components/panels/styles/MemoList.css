@@ -28,7 +28,6 @@
 .memo-list-title-row {
     display: flex;
     align-items: center;
-    /* note + 아이콘을 수평 가운데 정렬 */
     gap: 6px;
 }
 
@@ -82,7 +81,6 @@
     font-size: 0.7rem;
     color: black;
     font-weight: bold;
-    /* animation: blink 1.2s infinite; */
 }
 
 @keyframes blink {
@@ -135,7 +133,7 @@
 .memo-item:hover {
     background-color: rgba(148, 148, 148, 0.05);
     border: 1.5px dashed #ccc;
-    transform: translateY(-1px);
+    transform: translateY(-3px);
 }
 
 .memo-item.active {
@@ -185,7 +183,6 @@
 .delete-button:hover {
     background: #f0f0f0;
     color: #e53935;
-    /* 약간 붉은색으로 강조 */
 }
 
 .restore-button {
@@ -206,7 +203,6 @@
 .memo-item.highlighted {
     animation: highlightGray 1s ease-in-out;
     background-color: #dcdcdc;
-    /* 연한 회색 */
 }
 
 @keyframes highlightGray {
