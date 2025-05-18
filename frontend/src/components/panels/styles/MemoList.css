@@ -28,16 +28,16 @@
 .memo-list-title-row {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 3px;
 }
 
 .memo-title-icon {
-    font-size: 22px;
+    font-size: 21px;
     color: #444;
 }
 
 .memo-title-text {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
     color: #222;
 }
@@ -130,10 +130,20 @@
     transition: background-color 0.2s ease;
 }
 
+/* 일반 메모 hover 효과 */
 .memo-item:hover {
     background-color: rgba(148, 148, 148, 0.05);
     border: 1.5px dashed #ccc;
     transform: translateY(-3px);
+}
+
+/* 휴지통 메모는 hover 효과 제거 */
+.memo-item.trash:hover {
+    background-color: transparent !important;
+    border: 1px solid #ccc;
+    transform: none !important;
+    cursor: default;
+
 }
 
 .memo-item.active {

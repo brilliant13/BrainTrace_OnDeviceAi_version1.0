@@ -6,7 +6,7 @@ import { MdOutlineRestore } from "react-icons/md";
 import { FaRegTrashAlt } from "react-icons/fa";
 import { MdOutlineDeleteForever } from "react-icons/md"; // 휴지통
 import { MdKeyboardBackspace } from "react-icons/md";
-
+import { BsTrash } from "react-icons/bs";
 import micOff from '../../assets/icons/mic_off.png'
 import micOn from '../../assets/icons/mic_on.png'
 
@@ -60,10 +60,20 @@ function MemoListPanel({
             <div className="memo-list-header">
                 <div className="memo-list-header-left">
                     <div className="memo-list-title-row">
-                        <CiMemoPad className="memo-title-icon" />
-                        <span className="memo-title-text">note</span>
+                        {isTrash ? (
+                            <>
+                                <BsTrash className="memo-title-icon" />
+                                <span className="memo-title-text">bin</span>
+                            </>
+                        ) : (
+                            <>
+                                <CiMemoPad className="memo-title-icon" />
+                                <span className="memo-title-text">note</span>
+                            </>
+                        )}
                     </div>
                 </div>
+
 
                 <div className="memo-list-header-right">
                     {isTrash && (
@@ -107,7 +117,7 @@ function MemoListPanel({
                     return (
                         <div
                             key={memo.id}
-                            className={`memo-item ${selectedId === memo.id ? 'active' : ''} ${highlightedId === memo.id ? 'highlighted' : ''}`}
+                            className={`memo-item ${isTrash ? 'trash' : ''} ${selectedId === memo.id ? 'active' : ''} ${highlightedId === memo.id ? 'highlighted' : ''}`}
                             draggable={!isTrash}
                             onDragStart={!isTrash ? e => {
                                 const dragData = { name: filename, content };
@@ -153,13 +163,13 @@ function MemoListPanel({
                 <div className="memo-list-header-toggle" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 16px', gap: '8px' }}>
                     <div className="memo-header-icons">
                         {!showTrash ? (
-                            <FaRegTrashAlt
+                            <BsTrash
                                 className="header-icon"
                                 onClick={() => setShowTrash(true)}
                                 title="휴지통 보기"
                             />
                         ) : (
-                            <MdKeyboardBackspace
+                            <CiMemoPad
                                 className="header-icon"
                                 onClick={() => setShowTrash(false)}
                                 title="메모 목록으로"
