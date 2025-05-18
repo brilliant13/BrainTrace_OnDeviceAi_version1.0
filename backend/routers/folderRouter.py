@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, Field
 from typing import List, Optional,Dict,Any
 from sqlite_db.sqlite_handler import SQLiteHandler
@@ -252,29 +252,23 @@ async def add_memo_to_folder(folder_id: int, memo_id: int):
         logging.error("메모 폴더 업데이트 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="내부 서버 오류")
 
-@router.delete("/deleteAll/{folder_id}", response_model=DeleteFolderResponse,
-              summary="폴더와 메모 전체 삭제",
-              description="특정 폴더와 그 안의 모든 메모를 삭제합니다.")
-async def delete_folder_with_memos(folder_id: int):
-    """
-    폴더와 그 안의 모든 메모를 삭제합니다:
-    
-    - **folder_id**: 삭제할 폴더의 ID
-    
-    반환값:
-    - **folder_id**: 삭제된 폴더의 ID
-    - **deleted_memos_count**: 삭제된 메모의 수
-    - **success**: 삭제 성공 여부
-    """
+@router.delete("/deleteAll/{folder_id}", response_model=DeleteFolderResponse)
+async def delete_folder_with_memos(
+    folder_id: int,
+    brain_id: int = Query(..., description="브레인 ID")
+):
     try:
-        result = sqlite_handler.delete_folder_with_memos(folder_id)
+        result = sqlite_handler.delete_folder_with_memos(folder_id, brain_id)
+
         if not result["success"]:
-            raise HTTPException(status_code=404, detail="폴더를 찾을 수 없습니다")
-        return result
+            raise HTTPException(status_code=404, detail="폴더 삭제 실패")
+
+        return result  # ⚠️ 여기서도 model에 맞는 필드만 있어야 함
+
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        logging.error("폴더와 메모 삭제 오류: %s", str(e))
+        logging.error("폴더 및 파일 삭제 오류: %s", str(e))
         raise HTTPException(status_code=500, detail="내부 서버 오류")
 
 @router.get("/default/getMemos", response_model=List[MemoResponse],

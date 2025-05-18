@@ -21,7 +21,9 @@ import {
     deleteVoice,
     updatePdf,
     updateTextFile,
-    updateVoice
+    updateVoice,
+    deleteFolderWithMemos,  // ✅ 폴더 삭제 추가
+    updateFolder            // ✅ 폴더 이름 수정 추가
 } from '../../../../backend/services/backend';
 
 export default function FolderView({
@@ -195,15 +197,35 @@ export default function FolderView({
         }
     };
 
-    const handleDelete = async file => {
+    const handleDelete = async target => {
         try {
-            if (file.filetype === 'pdf') await deletePdf(file.id);
-            else if (file.filetype === 'txt') await deleteTextFile(file.id);
-            else if (file.filetype === 'voice') await deleteVoice(file.id);
+            if (target.filetype) {
+                if (target.filetype === 'pdf') await deletePdf(target.id);
+                else if (target.filetype === 'txt') await deleteTextFile(target.id);
+                else if (target.filetype === 'voice') await deleteVoice(target.id);
+            } else if (target.folder_id) {
+                await deleteFolderWithMemos(target.folder_id, brainId); // 🔐
+            }
             await fetchFolderFiles();
+            refreshParent();
             if (onGraphRefresh) onGraphRefresh();
         } catch (e) {
             alert('삭제 실패');
+        }
+    };
+    const handleFolderRename = async (folder) => {
+        const newName = tempName.trim();
+        if (!newName || newName === folder.name) {
+            setEditingId(null);
+            return;
+        }
+        try {
+            await updateFolder(folder.folder_id, newName);
+            await refreshParent();
+        } catch (e) {
+            alert('폴더 이름 변경 실패');
+        } finally {
+            setEditingId(null);
         }
     };
 
@@ -232,7 +254,56 @@ export default function FolderView({
                 onDragStart={e => e.dataTransfer.setData('text/plain', item.folder_id)}
             >
                 <span className="tree-toggle">{isOpen ? <MdOutlineKeyboardArrowDown /> : <MdOutlineKeyboardArrowRight />}</span>
-                <span className="file-name folder-name">{item.name}</span>
+
+
+                {editingId === item.folder_id ? (
+                    <input
+                        className="rename-input"
+                        autoFocus
+                        defaultValue={item.name}
+                        onChange={e => setTempName(e.target.value)}
+                        onBlur={() => handleFolderRename(item)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') handleFolderRename(item);
+                            if (e.key === 'Escape') setEditingId(null);
+                        }}
+                    />
+                ) : (
+                    <span className="file-name folder-name">{item.name}</span>
+                )}
+
+                <div
+                    className="file-menu-button"
+                    onClick={e => {
+                        e.stopPropagation();
+                        setMenuOpenId(prev => prev === item.folder_id ? null : item.folder_id);
+                    }}
+                >
+                    ⋮
+                    {menuOpenId === item.folder_id && (
+                        <div className="file-menu-popup" onClick={e => e.stopPropagation()}>
+                            <div
+                                className="popup-item"
+                                onClick={() => {
+                                    setEditingId(item.folder_id);
+                                    setTempName(item.name);
+                                    setMenuOpenId(null);
+                                }}
+                            >
+                                <GoPencil size={14} style={{ marginRight: 4 }} /> 이름 바꾸기
+                            </div>
+                            <div
+                                className="popup-item"
+                                onClick={() => {
+                                    setFileToDelete(item);
+                                    setMenuOpenId(null);
+                                }}
+                            >
+                                <RiDeleteBinLine size={14} style={{ marginRight: 4 }} /> 삭제
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
             {/* ── 업로드 진행중 표시 ── */}
             {uploadQueue.map(item => (
@@ -315,10 +386,10 @@ export default function FolderView({
             )}
             {fileToDelete && (
                 <ConfirmDialog
-                    message={`"${fileToDelete.name}" 파일을 삭제하시겠습니까?`}
+                    message={`"${fileToDelete.name}" ${fileToDelete.filetype ? '파일' : '폴더'}을 삭제하시겠습니까?`}
                     onCancel={() => setFileToDelete(null)}
                     onOk={async () => {
-                        await handleDelete(fileToDelete); // 실제 삭제
+                        await handleDelete(fileToDelete);
                         setFileToDelete(null);
                     }}
                 />

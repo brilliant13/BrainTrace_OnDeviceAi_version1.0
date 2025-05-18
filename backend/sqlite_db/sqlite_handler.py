@@ -534,50 +534,55 @@ class SQLiteHandler:
         except Exception as e:
             logging.error("폴더 삭제 오류: %s", str(e))
             raise RuntimeError(f"폴더 삭제 오류: {str(e)}")
-    
-    def delete_folder_with_memos(self, folder_id: int) -> dict:
-        """폴더와 그 안의 모든 메모 삭제"""
+        
+    def delete_folder_with_memos(self, folder_id: int, brain_id: int) -> dict:
+        """폴더와 그 안의 모든 메모 및 파일(txt/pdf/voice) 삭제"""
         try:
-            # 폴더가 존재하는지 확인
             folder = self.get_folder(folder_id)
             if not folder:
                 raise ValueError(f"존재하지 않는 폴더 ID: {folder_id}")
 
+            if folder['brain_id'] != brain_id:
+                raise ValueError("해당 brain_id에 속하지 않은 폴더입니다")
+
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            # 메모 삭제
-            cursor.execute("DELETE FROM Memo WHERE folder_id = ?", (folder_id,))
-            deleted_memos_count = cursor.rowcount
+            cursor.execute("DELETE FROM TextFile WHERE folder_id = ?", (folder_id,))
+            deleted_txt_count = cursor.rowcount
 
-            # 폴더 삭제
+            cursor.execute("DELETE FROM Pdf WHERE folder_id = ?", (folder_id,))
+            deleted_pdf_count = cursor.rowcount
+
+            cursor.execute("DELETE FROM Voice WHERE folder_id = ?", (folder_id,))
+            deleted_voice_count = cursor.rowcount
+
             cursor.execute("DELETE FROM Folder WHERE folder_id = ?", (folder_id,))
-            folder_deleted = cursor.rowcount > 0
+            folder_deleted_count = cursor.rowcount
 
             conn.commit()
             conn.close()
 
-            if folder_deleted:
-                logging.info("폴더와 메모 삭제 완료: folder_id=%s, deleted_memos=%s", folder_id, deleted_memos_count)
-                return {
-                    "folder_id": folder_id,
-                    "deleted_memos_count": deleted_memos_count,
-                    "success": True
-                }
-            else:
-                logging.warning("폴더와 메모 삭제 실패: folder_id=%s", folder_id)
-                return {
-                    "folder_id": folder_id,
-                    "deleted_memos_count": 0,
-                    "success": False
-                }
+            logging.info(
+                "[폴더 삭제] folder_id=%s | 텍스트:%d, PDF:%d, 오디오:%d, 폴더:%d",
+                folder_id, deleted_txt_count, deleted_pdf_count, deleted_voice_count, folder_deleted_count
+            )
+
+            return {
+                "folder_id": folder_id,
+                "deleted_memos_count": deleted_txt_count + deleted_pdf_count + deleted_voice_count,
+                "success": folder_deleted_count > 0
+            }
+
         except ValueError as e:
-            logging.error("폴더와 메모 삭제 실패: %s", str(e))
+            logging.error("폴더 삭제 실패: %s", str(e))
             raise
         except Exception as e:
-            logging.error("폴더와 메모 삭제 오류: %s", str(e))
-            raise RuntimeError(f"폴더와 메모 삭제 오류: {str(e)}")
-    
+            logging.error("폴더 삭제 오류: %s", str(e))
+            raise RuntimeError(f"폴더 삭제 오류: {str(e)}")
+
+
+
     def update_folder(self, folder_id: int, folder_name: str = None, is_default: bool = None) -> bool:
         """폴더 정보 업데이트"""
         try:
