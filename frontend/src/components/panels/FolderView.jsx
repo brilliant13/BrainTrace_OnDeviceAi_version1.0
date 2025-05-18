@@ -11,7 +11,7 @@ import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 import { GoPencil } from 'react-icons/go';
 import { RiDeleteBinLine } from 'react-icons/ri';
 import ConfirmDialog from '../ConfirmDialog';
-
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import {
     getFolderTextfiles,
     getFolderPdfs,
@@ -46,6 +46,8 @@ export default function FolderView({
     const [editingId, setEditingId] = useState(null);
     const [tempName, setTempName] = useState('');
     const [fileToDelete, setFileToDelete] = useState(null);
+    // 파일 추가 로딩 큐  
+    const [uploadQueue, setUploadQueue] = useState([]);
 
     // 폴더 열 때, 자식 파일들 API 호출
     const fetchFolderFiles = async () => {
@@ -120,14 +122,25 @@ export default function FolderView({
         // 2) 메모 드롭(json-memo)
         const memoData = e.dataTransfer.getData('application/json-memo');
         if (memoData) {
+            const { name, content } = JSON.parse(memoData);
+            const key = `${name}-${Date.now()}`;
+            // 1) 큐에 등록
+            setUploadQueue(q => [...q, { key, name, filetype: 'txt' }]);
             try {
-                const memo = JSON.parse(memoData);
-                const newFile = new File([memo.content], memo.name, { type: 'text/plain' });
-                await onDropFileToFolder(item.folder_id, [newFile]);
-                await refreshParent();
-                await fetchFolderFiles();
+                // 2) 생성 & 그래프
+                const newFile = new File([content], name, { type: 'text/plain' });
+                const results = await onDropFileToFolder(item.folder_id, [newFile]);
+                const newId = results?.[0]?.id;
+
+                // 3) 큐에서 제거
+                setUploadQueue(q => q.filter(i => i.key !== key));
+
+                if (onGraphRefresh) onGraphRefresh();
+                refreshParent();
+                fetchFolderFiles();
             } catch (err) {
-                console.error('메모 파싱 오류:', err);
+                console.error('메모 파일 생성 실패:', err);
+                setUploadQueue(q => q.filter(i => i.key !== key));
             }
             return;
         }
@@ -135,10 +148,31 @@ export default function FolderView({
         // 3) OS 파일 드롭
         const droppedFiles = Array.from(e.dataTransfer.files);
         if (droppedFiles.length > 0) {
-            await onDropFileToFolder(item.folder_id, droppedFiles);
-            if (onGraphRefresh) onGraphRefresh();
-            await refreshParent();
-            await fetchFolderFiles();
+            // 각 파일에 대해 큐에 스피너 추가 후 생성
+            droppedFiles.forEach(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                const key = `${file.name}-${Date.now()}`;
+                // 1) 로딩 큐에 등록
+                setUploadQueue(q => [...q, { key, name: file.name, filetype: ext }]);
+
+                // 2) 실제 생성 & 그래프
+                onDropFileToFolder(item.folder_id, [file])
+                    .then(results => {
+                        // (선택) results 배열에서 신규 id를 가져올 수 있으면 r.id 사용
+                        const newId = results?.[0]?.id;
+
+                        // 3) 큐에서 제거
+                        setUploadQueue(q => q.filter(i => i.key !== key));
+
+                        if (onGraphRefresh) onGraphRefresh();
+                        refreshParent();
+                        fetchFolderFiles();
+                    })
+                    .catch(err => {
+                        console.error('폴더 파일 생성 실패', err);
+                        setUploadQueue(q => q.filter(i => i.key !== key));
+                    });
+            });
         }
     };
 
@@ -200,6 +234,23 @@ export default function FolderView({
                 <span className="tree-toggle">{isOpen ? <MdOutlineKeyboardArrowDown /> : <MdOutlineKeyboardArrowRight />}</span>
                 <span className="file-name folder-name">{item.name}</span>
             </div>
+            {/* ── 업로드 진행중 표시 ── */}
+            {uploadQueue.map(item => (
+                <div
+                    key={item.key}
+                    className="file-item uploading"
+                    style={{ paddingLeft: `${(depth + 1) * 16}px` }}
+                >
+                    <FileIcon fileName={item.name} />
+                    <span className="file-name">{item.name}</span>
+                    <span className="upload-status">
+                        <span className="loading-text">그래프 변환 중</span>
+                        <AiOutlineLoading3Quarters className="loading-spinner" />
+
+                    </span>
+                </div>
+            ))
+            }
 
             {isOpen && (
                 <div className="tree-children">

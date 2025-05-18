@@ -236,3 +236,36 @@
   font-family: inherit;
   color: inherit;
 }
+
+.file-item.uploading {
+  opacity: 0.8;
+}
+
+.upload-status {
+  margin-left: auto;
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+.upload-status svg {
+  margin-left: 4px;
+}
+
+/* 원형 스피너 회전 애니메이션 */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  margin-left: auto;
+  /* 필요하면 위치 조정 */
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
