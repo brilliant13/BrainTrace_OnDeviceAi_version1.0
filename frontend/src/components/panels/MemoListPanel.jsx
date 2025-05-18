@@ -66,22 +66,37 @@ function MemoListPanel({
                 </div>
 
                 <div className="memo-list-header-right">
-                    <div className="mic-wrapper">
-                        {isRecording && (
-                            <div className="recording-indicator-timer">
-                                {formatTime(elapsedTime)}
+                    {isTrash && (
+                        <div className="tooltip-container">
+                            <span className="tooltip-icon">?</span>
+                            <div className="tooltip-text">
+                                휴지통에 있는 메모는<br />30일 후 자동 삭제됩니다.
                             </div>
-                        )}
-                        <img
-                            src={isRecording ? (showOnIcon ? micOn : micOff) : micOff}
-                            alt="mic"
-                            className={`mic-icon ${isRecording ? 'recording' : ''}`}
-                            onClick={handleMicClick}
-                        />
-                    </div>
+                        </div>
+                    )}
 
-                    <button className="add-memo-button" onClick={onAdd}>+ 새 메모</button>
+                    {!isTrash && (
+                        <>
+                            <div className="mic-wrapper">
+                                {isRecording && (
+                                    <div className="recording-indicator-timer">
+                                        {formatTime(elapsedTime)}
+                                    </div>
+                                )}
+                                <img
+                                    src={isRecording ? (showOnIcon ? micOn : micOff) : micOff}
+                                    alt="mic"
+                                    className={`mic-icon ${isRecording ? 'recording' : ''}`}
+                                    onClick={handleMicClick}
+                                />
+                            </div>
+
+                            <button className="add-memo-button" onClick={onAdd}>+ 새 메모</button>
+                        </>
+                    )}
                 </div>
+
+
             </div>
 
             <div className="memo-list">
@@ -134,7 +149,8 @@ function MemoListPanel({
             </div>
             <div className="memo-footer">
                 <div className="memo-count-footer">총 {displayedMemos.length}개</div>
-                <div className="memo-list-header-toggle" style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 16px' }}>
+
+                <div className="memo-list-header-toggle" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '0 16px', gap: '8px' }}>
                     <div className="memo-header-icons">
                         {!showTrash ? (
                             <FaRegTrashAlt
@@ -152,7 +168,6 @@ function MemoListPanel({
                         )}
                     </div>
                 </div>
-
             </div>
 
         </div>

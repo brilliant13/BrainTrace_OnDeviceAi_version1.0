@@ -4,28 +4,21 @@
 
 .folder-drag-over {
   background-color: #ffffff;
-  /* 완전한 흰색 */
-
-  /* 거의 검정색 테두리 */
   border-radius: 6px;
 }
 
 .folder-drop-zone {
   margin: 8px;
   padding: 16px;
-  /* 진한 회색 테두리 */
   border-radius: 6px;
   text-align: center;
   background-color: #fff;
-  /* 흰 배경 */
   transition: all 0.3s ease;
 }
 
 .folder-drop-zone.drag-over {
   border-color: #111;
-  /* 거의 검정 */
   background-color: #fafafa;
-  /* 살짝 톤 다운된 흰색 */
 }
 
 .drop-zone-message {
@@ -51,7 +44,7 @@
   background-color: rgba(148, 148, 148, 0.05);
   outline: 2px dotted #999;
   outline-offset: -2px;
-  transform: translateY(-1px);
+  transform: translateY(-3px);
 }
 
 .file-item.selected {
@@ -105,7 +98,6 @@
 }
 
 .drop-overlay {
-
   position: absolute;
   inset: 0;
   background: rgba(255, 255, 255, 0.6);
@@ -119,7 +111,7 @@
 }
 
 .drop-icon {
-  font-size: 36px;
+  font-size: 37px;
   opacity: 0.6;
 }
 
@@ -138,14 +130,13 @@
   justify-content: center;
   color: #777;
   margin: 0;
-  /* margin이 정렬을 깨트릴 수 있으므로 제거 */
 }
 
 /* 트리 자식 영역에 세로선 추가 */
 .tree-children {
   border-left: 1px solid #ddd;
   margin-left: 9px;
-  padding-left: 12px;
+  padding-left: 11px;
 }
 
 .empty-state {
@@ -183,7 +174,6 @@
 .file-menu-popup {
   position: absolute;
   top: 24px;
-  /* 아래로 떨어뜨리기 */
   right: 0;
   background: white;
   border: 1px solid #ccc;
@@ -257,7 +247,6 @@
 .loading-spinner {
   animation: spin 1s linear infinite;
   margin-left: auto;
-  /* 필요하면 위치 조정 */
 }
 
 @keyframes spin {
