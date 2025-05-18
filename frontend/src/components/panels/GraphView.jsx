@@ -16,6 +16,9 @@ function GraphView({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [referencedSet, setReferencedSet] = useState(new Set()); // 참고된 노드들을 Set으로 관리
+  const [showReferenced, setShowReferenced] = useState(true); // 참고된 노드 표시 여부를 위한 상태
+  const fgRef = useRef();
+
 
   // 앱 디자인에 맞는 모노크로매틱 + 포인트 색상 팔레트
   const colorPalette = [
@@ -97,7 +100,32 @@ function GraphView({
   useEffect(() => {
     console.log('referencedNodes:', referencedNodes); // 디버깅용
     setReferencedSet(new Set(referencedNodes));
+    // referencedNodes가 바뀌면 다시 보여주기 ON
+    if (referencedNodes.length > 0) {
+      setShowReferenced(true);
+    }
   }, [referencedNodes]);
+
+  useEffect(() => {
+    if (!showReferenced || referencedNodes.length === 0 || !graphData.nodes.length) return;
+
+    const referenced = graphData.nodes.filter(n => referencedSet.has(n.name));
+    if (referenced.length === 0) return;
+
+    // 위치가 아직 할당되지 않았을 수 있으므로, 약간 지연
+    const timer = setTimeout(() => {
+      const validNodes = referenced.filter(n => typeof n.x === 'number' && typeof n.y === 'number');
+
+      if (validNodes.length === 0) return;
+
+      const avgX = validNodes.reduce((sum, n) => sum + n.x, 0) / validNodes.length;
+      const avgY = validNodes.reduce((sum, n) => sum + n.y, 0) / validNodes.length;
+
+      fgRef.current?.centerAt(avgX, avgY, 1000)?.zoom(1.5, 1000);
+    }, 500); // 500ms 정도 지연
+
+    return () => clearTimeout(timer);
+  }, [showReferenced, referencedNodes, graphData]);
 
   // 그래프 데이터 처리 함수
   const processGraphData = (data) => {
@@ -167,7 +195,7 @@ function GraphView({
       }}
     >
       {/* 참고된 노드가 있을 때 디버깅 정보 표시 */}
-      {referencedNodes.length > 0 && (
+      {showReferenced && referencedNodes.length > 0 && (
         <div style={{
           position: 'absolute',
           top: '10px',
@@ -176,9 +204,36 @@ function GraphView({
           padding: '8px',
           borderRadius: '4px',
           fontSize: '12px',
-          zIndex: 20
-        }}>
-          참고된 노드: {referencedNodes.join(', ')}
+          zIndex: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+        }}
+          onMouseEnter={e => {
+            const closeBtn = e.currentTarget.querySelector('.close-x');
+            if (closeBtn) closeBtn.style.display = 'inline';
+          }}
+          onMouseLeave={e => {
+            const closeBtn = e.currentTarget.querySelector('.close-x');
+            if (closeBtn) closeBtn.style.display = 'none';
+          }}
+        >
+          <span>참고된 노드: {referencedNodes.join(', ')}</span>
+          <span
+            onClick={() => setShowReferenced(false)}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'red')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#666')}
+            style={{
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              color: '#666',
+              fontSize: '16px',
+              transition: 'color 0.2s',
+            }}
+          >
+            ×
+          </span>
         </div>
       )}
       {/* 로딩 및 에러 처리 */}
@@ -215,14 +270,16 @@ function GraphView({
       {!loading && graphData.nodes.length > 0 && dimensions.width > 0 && (
 
         <ForceGraph2D
+          ref={fgRef}
           width={dimensions.width}
           height={dimensions.height}
           graphData={graphData}
           nodeLabel={node => {
             const baseLabel = `${node.name} (연결: ${node.linkCount})`;
-            const isReferenced = referencedSet.has(node.name);
+            const isReferenced = showReferenced && referencedSet.has(node.name);
             return isReferenced ? `${baseLabel} - 참고됨` : baseLabel;
           }}
+
           linkLabel={link => link.relation}
           nodeRelSize={6}
           linkColor={() => "#dedede"}
@@ -233,9 +290,9 @@ function GraphView({
           d3VelocityDecay={0.2}
           d3Force={fg => {
             fg.force("center", d3.forceCenter(dimensions.width / 2, dimensions.height / 2));
-            fg.force("charge", d3.forceManyBody().strength(-200));
-            fg.force("link", d3.forceLink().id(d => d.id).distance(100).strength(0.8));
-            fg.force("collide", d3.forceCollide(40));
+            fg.force("charge", d3.forceManyBody().strength(-40)); // 반발력 완화
+            fg.force("link", d3.forceLink().id(d => d.id).distance(60).strength(1)); // 연결 거리 짧게
+            fg.force("collide", d3.forceCollide(40)); // 겹치지 않게 유지
           }}
           nodeCanvasObject={(node, ctx, globalScale) => {
             const label = node.name || node.id;
@@ -256,7 +313,7 @@ function GraphView({
 
             // 노드 테두리 그리기 - 참고된 노드는 주황색 테두리
             const isImportantNode = node.linkCount >= 3;
-            const isReferenced = referencedSet.has(node.name); // Set에서 직접 확인
+            const isReferenced = showReferenced && referencedSet.has(node.name);
 
             if (isReferenced) {
               // ctx.strokeStyle = '#ff6b35'; // 주황색 테두리 (참고된 노드)
