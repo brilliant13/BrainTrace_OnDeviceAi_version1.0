@@ -14,7 +14,7 @@ import { RiDeleteBinLine } from 'react-icons/ri';
 import { processText, deleteDB } from '../../api/graphApi';
 import { fetchGraphData } from '../../api/graphApi';
 import ConfirmDialog from '../ConfirmDialog'
-
+import { AiOutlineLoading3Quarters } from 'react-icons/ai'
 import {
   listBrainFolders,
   getPdfsByBrain,
@@ -98,6 +98,8 @@ export default function FileView({
   const [editingId, setEditingId] = useState(null);
   const [tempName, setTempName] = useState('');
   const [fileToDelete, setFileToDelete] = useState(null);
+  // 드롭 즉시 표시할 업로드 큐
+  const [uploadQueue, setUploadQueue] = useState([])
 
   useEffect(() => {
     refresh()
@@ -307,24 +309,33 @@ export default function FileView({
     console.log('메모 데이터:', memoData);
     if (memoData) {
       const { name, content } = JSON.parse(memoData)
-      // 텍스트 파일로 생성
-      await createTextFile({
-        folder_id: null,
-        brain_id: brainId,
-        type: 'txt',
-        txt_title: name,
-        txt_path: name,
-        content,        // 만약 API가 content 필드를 지원하면
-      })
-      // 텍스트를 지식 그래프로 처리
+      const key = `${name}-${Date.now()}`
+      // 1) 로딩 큐에 추가
+      setUploadQueue(q => [...q, { key, name, filetype: 'txt', status: 'processing' }])
 
-      await processMemoTextAsGraph(content, name, brainId);
-      // 그래프 새로고침 트리거
-      if (onGraphRefresh) {
-        onGraphRefresh();
+      try {
+        // 2) 실제 생성 & 그래프 변환
+        const res = await createTextFile({
+          folder_id: null,
+          brain_id: brainId,
+          type: 'txt',
+          txt_title: name,
+          txt_path: name,
+          content,
+        })
+        await processMemoTextAsGraph(content, res.txt_id, brainId)
+        // 그래프 새로고침 트리거
+        if (onGraphRefresh) onGraphRefresh();
+
+        // 3) 완료 처리: 큐에서 제거 + 체크 표시
+        setUploadQueue(q => q.filter(item => item.key !== key))
+
+        await refresh()
+      } catch (err) {
+        console.error('메모 파일 생성 실패', err)
+        // 에러 시에도 큐에서 제거
+        setUploadQueue(q => q.filter(item => item.key !== key))
       }
-
-      await refresh()
       return
     }
 
@@ -332,29 +343,34 @@ export default function FileView({
     const dropped = Array.from(e.dataTransfer.files);
     if (!dropped.length) return;
 
-    try {
-      // 2-1) 각 파일을 createFileByType 으로 처리
-      const results = await Promise.all(
-        dropped.map(f => createFileByType(f, null))
-      );
+    // ── 즉시 보이도록 큐에 넣고, 비동기로 업로드/그래프 생성 ──
+    dropped.forEach(file => {
+      const ext = file.name.split('.').pop().toLowerCase();
+      const key = `${file.name}-${Date.now()}`;
 
-      // 2-2) fileMap 갱신
-      setFileMap(prev => {
-        const m = { ...prev };
-        results.forEach(r => {
-          m[r.id] = r.meta;
+      // 1) UI에 processing 상태로 바로 추가
+      setUploadQueue(q => [...q, { key, name: file.name, filetype: ext, status: 'processing' }]);
+
+      // 2) 실제 업로드 & 그래프 생성
+      createFileByType(file, null)
+        .then(r => {
+          // 1) 가짜(큐) 항목 제거
+          setUploadQueue(q => q.filter(item => item.key !== key));
+
+          // 2) fileMap 갱신 & 뷰 리프레시
+          setFileMap(prev => ({ ...prev, [r.id]: r.meta }));
+          // 그래프 뷰 갱신
+          if (onGraphRefresh) onGraphRefresh();
+          // 최종 목록 동기화
+          refresh();
+        })
+        .catch(err => {
+          console.error('파일 업로드 실패', err);
+          // 에러 시에도 큐에서 제거
+          setUploadQueue(q => q.filter(item => item.key !== key));
         });
-        return m;
-      });
-
-      // 2-3) 목록/트리 새로고침
-      await refresh();
-      if (onGraphRefresh) onGraphRefresh();
-    } catch (err) {
-      console.error('루트 파일 생성 실패', err);
-    }
+    });
   }
-
 
   const handleDropToFolder = async (folderId, dropped) => {
     if (!Array.isArray(dropped)) return;
@@ -445,66 +461,87 @@ export default function FileView({
         ) : null
       )}
 
-      {/* ── 루트 레벨 파일들 ── */}
-      {rootFiles.map(f => (
-        <div
-          key={`${f.filetype}-${f.id}`}
-          className={`file-item ${selectedFile === f.name ? 'selected' : ''}`}
-          draggable
-          onDragStart={e =>
-            e.dataTransfer.setData(
-              'application/json',
-              JSON.stringify({ id: f.id, filetype: f.filetype })
-            )
-          }
-          onClick={() => {
-            setSelectedFile(f.id)
-            if (f.filetype === 'pdf' && fileMap[f.id]) {
-              onOpenPDF(fileMap[f.id])
-            }
-          }}
-        >
-          <FileIcon fileName={f.name} />
-          {editingId === f.id ? (
-            <input
-              autoFocus
-              className="rename-input"
-              defaultValue={f.name}
-              onChange={e => setTempName(e.target.value)}
-              onBlur={() => handleNameChange(f)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handleNameChange(f);
-                if (e.key === 'Escape') setEditingId(null);
-              }}
-            />
-          ) : (
-            <span className="file-name">{f.name}</span>
+      {/* ── 업로드 진행중/완료 표시 ── */}
+      {uploadQueue.map(item => (
+        <div key={item.key} className="file-item uploading">
+          <FileIcon fileName={item.name} />
+          <span className="file-name">{item.name}</span>
+          {item.status === 'processing' && (
+            <span className="upload-status" style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
+              <span style={{ marginLeft: 4 }}>그래프 변환 중</span>
+              <AiOutlineLoading3Quarters className="loading-spinner" />
+
+            </span>
           )}
-
-          <div
-            className="file-menu-button"
-            onClick={e => {
-              e.stopPropagation();
-              setMenuOpenId(prev => prev === f.id ? null : f.id);
-            }}
-          >
-            ⋮
-            {menuOpenId === f.id && (
-              <div className="file-menu-popup" onClick={e => e.stopPropagation()}>
-                <div className="popup-item" onClick={() => { setEditingId(f.id); setTempName(f.name); setMenuOpenId(null); }}>
-                  <GoPencil size={14} style={{ marginRight: 4 }} /> 소스 이름 바꾸기
-                </div>
-                <div className="popup-item" onClick={() => openDeleteConfirm(f)}>
-                  <RiDeleteBinLine size={14} style={{ marginRight: 4 }} /> 소스 삭제
-                </div>
-              </div>
-            )}
-          </div>
-
-
         </div>
       ))}
 
+      {/* ── 루트 레벨 파일들 ── */}
+      {rootFiles.map(f => {
+        return (
+          <div
+            key={`${f.filetype}-${f.id}`}
+            className={`file-item ${selectedFile === f.id ? 'selected' : ''}`}
+            draggable
+            onDragStart={e =>
+              e.dataTransfer.setData(
+                'application/json',
+                JSON.stringify({ id: f.id, filetype: f.filetype })
+              )
+            }
+            onClick={() => {
+              setSelectedFile(f.id);
+              if (f.filetype === 'pdf' && fileMap[f.id]) {
+                onOpenPDF(fileMap[f.id]);
+              }
+            }}
+          >
+            <FileIcon fileName={f.name} />
+            {editingId === f.id ? (
+              <input
+                autoFocus
+                className="rename-input"
+                defaultValue={f.name}
+                onChange={e => setTempName(e.target.value)}
+                onBlur={() => handleNameChange(f)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') handleNameChange(f);
+                  if (e.key === 'Escape') setEditingId(null);
+                }}
+              />
+            ) : (
+              <span className="file-name">{f.name}</span>
+            )}
+
+            <div
+              className="file-menu-button"
+              onClick={e => {
+                e.stopPropagation();
+                setMenuOpenId(prev => (prev === f.id ? null : f.id));
+              }}
+            >
+              ⋮
+              {menuOpenId === f.id && (
+                <div className="file-menu-popup" onClick={e => e.stopPropagation()}>
+                  <div
+                    className="popup-item"
+                    onClick={() => {
+                      setEditingId(f.id);
+                      setTempName(f.name);
+                      setMenuOpenId(null);
+                    }}
+                  >
+                    <GoPencil size={14} style={{ marginRight: 4 }} /> 소스 이름 바꾸기
+                  </div>
+                  <div className="popup-item" onClick={() => openDeleteConfirm(f)}>
+                    <RiDeleteBinLine size={14} style={{ marginRight: 4 }} /> 소스 삭제
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
 
       {/* 비어 있을 때 */}
       {files.length === 0 && rootFiles.length === 0 && (
