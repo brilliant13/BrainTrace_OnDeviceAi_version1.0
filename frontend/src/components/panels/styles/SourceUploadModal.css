@@ -157,3 +157,62 @@
 .fancy-form button.secondary:hover {
     background-color: #ccc;
 }
+
+.progress-list,
+.progress-item {
+    margin-top: 16px;
+}
+
+.progress-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+}
+
+.upload-status {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    font-size: 0.9em;
+}
+
+.loading-spinner {
+    margin-right: 4px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    color: #666;
+}
+
+.loading-done {
+    margin-left: auto;
+    color: #28a745;
+}
+
+.closing-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    animation: fadeOut 0.3s forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
