@@ -45,11 +45,16 @@ function GraphViewWithModal(props) {
             const newTop = e.clientY - offset.current.y;
 
             // 화면 밖으로 나가지 않게 제한
-            const maxLeft = window.innerWidth - modal.offsetWidth;
-            const maxTop = window.innerHeight - modal.offsetHeight;
+            // const maxLeft = window.innerWidth - modal.offsetWidth;
+            // const maxTop = window.innerHeight - modal.offsetHeight;
 
-            modal.style.left = `${Math.min(Math.max(0, newLeft), maxLeft)}px`;
-            modal.style.top = `${Math.min(Math.max(0, newTop), maxTop)}px`;
+            // modal.style.left = `${Math.min(Math.max(0, newLeft), maxLeft)}px`;
+            // modal.style.top = `${Math.min(Math.max(0, newTop), maxTop)}px`;
+
+            // 제한 없이 자유롭게 이동 가능
+            modal.style.left = `${newLeft}px`;
+            modal.style.top = `${newTop}px`;
+
         };
 
         const onMouseUp = () => {

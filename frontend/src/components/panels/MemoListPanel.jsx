@@ -75,22 +75,27 @@ function MemoListPanel({
                         </div>
                     )}
 
-                    <div className="mic-wrapper">
-                        {isRecording && (
-                            <div className="recording-indicator-timer">
-                                {formatTime(elapsedTime)}
+                    {!isTrash && (
+                        <>
+                            <div className="mic-wrapper">
+                                {isRecording && (
+                                    <div className="recording-indicator-timer">
+                                        {formatTime(elapsedTime)}
+                                    </div>
+                                )}
+                                <img
+                                    src={isRecording ? (showOnIcon ? micOn : micOff) : micOff}
+                                    alt="mic"
+                                    className={`mic-icon ${isRecording ? 'recording' : ''}`}
+                                    onClick={handleMicClick}
+                                />
                             </div>
-                        )}
-                        <img
-                            src={isRecording ? (showOnIcon ? micOn : micOff) : micOff}
-                            alt="mic"
-                            className={`mic-icon ${isRecording ? 'recording' : ''}`}
-                            onClick={handleMicClick}
-                        />
-                    </div>
 
-                    <button className="add-memo-button" onClick={onAdd}>+ 새 메모</button>
+                            <button className="add-memo-button" onClick={onAdd}>+ 새 메모</button>
+                        </>
+                    )}
                 </div>
+
 
             </div>
 
