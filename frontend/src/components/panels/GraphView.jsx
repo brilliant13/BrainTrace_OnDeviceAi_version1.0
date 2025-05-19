@@ -5,7 +5,7 @@ import { fetchGraphData } from '../../api/graphApi';
 
 function GraphView({
   brainId = 'default-brain-id',
-  height = '850px',
+  height = '1022px', // 안예찬이 직접 찾은 최적의 그래프뷰 높이
   graphData: initialGraphData = null,
   referencedNodes = [],
   graphRefreshTrigger // 그래프 새로고침 트리거 prop 추가
@@ -57,6 +57,13 @@ function GraphView({
   }, [height]);
 
   useEffect(() => {
+    if (!loading && graphData.nodes.length > 0 && fgRef.current) {
+      fgRef.current.centerAt(0, 0, 0);
+      fgRef.current.zoom(0.01, 0);
+    }
+  }, [loading, graphData]);
+
+  useEffect(() => {
     // 초기 데이터가 제공되면 사용
     if (initialGraphData) {
       processGraphData(initialGraphData);
@@ -106,26 +113,57 @@ function GraphView({
     }
   }, [referencedNodes]);
 
-  useEffect(() => {
+
+  useEffect(() => { // 질문할 때 관련된 노드로 이동하는 코드
     if (!showReferenced || referencedNodes.length === 0 || !graphData.nodes.length) return;
 
     const referenced = graphData.nodes.filter(n => referencedSet.has(n.name));
     if (referenced.length === 0) return;
 
-    // 위치가 아직 할당되지 않았을 수 있으므로, 약간 지연
     const timer = setTimeout(() => {
       const validNodes = referenced.filter(n => typeof n.x === 'number' && typeof n.y === 'number');
-
       if (validNodes.length === 0) return;
 
+      const fg = fgRef.current;
+      if (!fg || !dimensions.width || !dimensions.height) return;
+
+      // 1. 중심 좌표 계산
       const avgX = validNodes.reduce((sum, n) => sum + n.x, 0) / validNodes.length;
       const avgY = validNodes.reduce((sum, n) => sum + n.y, 0) / validNodes.length;
 
-      fgRef.current?.centerAt(avgX, avgY, 1000)?.zoom(1.5, 1000);
-    }, 500); // 500ms 정도 지연
+      // 2. 노드들 경계 상자 계산
+      const xs = validNodes.map(n => n.x);
+      const ys = validNodes.map(n => n.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+
+      const boxWidth = maxX - minX;
+      const boxHeight = maxY - minY;
+
+      // 3. 화면 기준으로 padding 적용하여 적절한 zoom 비율 계산
+      const padding = 400;
+      const zoomScaleX = dimensions.width / (boxWidth + padding);
+      const zoomScaleY = dimensions.height / (boxHeight + padding);
+      const targetZoom = Math.min(zoomScaleX, zoomScaleY, 5);// 최대 5배 이상 확대 제한
+
+      // Step 1: 먼저 줌 아웃
+      fg.zoom(0.02, 800);
+
+      // Step 2: center 이동
+      setTimeout(() => {
+        fg.centerAt(avgX, avgY, 1000);
+
+        // Step 3: 해당 영역이 다 보이도록 줌인
+        setTimeout(() => {
+          fg.zoom(targetZoom, 1000);
+        }, 1000);
+      }, 900);
+    }, 500);
 
     return () => clearTimeout(timer);
-  }, [showReferenced, referencedNodes, graphData]);
+  }, [showReferenced, referencedNodes, graphData, referencedSet]);
 
   // 그래프 데이터 처리 함수
   const processGraphData = (data) => {
@@ -228,7 +266,7 @@ function GraphView({
               cursor: 'pointer',
               fontWeight: 'bold',
               color: '#666',
-              fontSize: '16px',
+              fontSize: '18px',
               transition: 'color 0.2s',
             }}
           >
@@ -279,7 +317,6 @@ function GraphView({
             const isReferenced = showReferenced && referencedSet.has(node.name);
             return isReferenced ? `${baseLabel} - 참고됨` : baseLabel;
           }}
-
           linkLabel={link => link.relation}
           nodeRelSize={6}
           linkColor={() => "#dedede"}
@@ -290,14 +327,12 @@ function GraphView({
           d3VelocityDecay={0.2}
           d3Force={fg => {
             fg.force("center", d3.forceCenter(dimensions.width / 2, dimensions.height / 2));
-            fg.force("charge", d3.forceManyBody().strength(-40)); // 반발력 완화
-            fg.force("link", d3.forceLink().id(d => d.id).distance(60).strength(1)); // 연결 거리 짧게
-            fg.force("collide", d3.forceCollide(40)); // 겹치지 않게 유지
+            fg.force("charge", d3.forceManyBody().strength(-150)); // ✅ 더 강한 반발력으로 멀리 퍼짐
+            fg.force("link", d3.forceLink().id(d => d.id).distance(100).strength(0.2)); // ✅ 느슨한 연결
+            fg.force("collide", d3.forceCollide(50)); // ✅ 충돌 반경 조정
           }}
           nodeCanvasObject={(node, ctx, globalScale) => {
             const label = node.name || node.id;
-            const fontSize = 9 / globalScale;
-            ctx.font = `${fontSize}px Sans-Serif`;
 
             // 노드 크기 - 연결이 많을수록 더 큰 노드로 표시
             const baseSize = 5;
@@ -314,15 +349,23 @@ function GraphView({
             // 노드 테두리 그리기 - 참고된 노드는 주황색 테두리
             const isImportantNode = node.linkCount >= 3;
             const isReferenced = showReferenced && referencedSet.has(node.name);
+            const fontSize = isReferenced ? 13 / globalScale : 9 / globalScale;
+
+            ctx.font = isReferenced
+              ? `bold ${fontSize}px Sans-Serif`
+              : `${fontSize}px Sans-Serif`;
 
             if (isReferenced) {
-              // ctx.strokeStyle = '#ff6b35'; // 주황색 테두리 (참고된 노드)
-              ctx.strokeStyle = '#EBB20C'; // 주황색 테두리 (참고된 노드)
-              ctx.lineWidth = 2 / globalScale; // 더 굵은 테두리
+              ctx.strokeStyle = '#d9820f'; // 더 진한 골드 계열 (EBB20C보다 더 세련됨)
+              ctx.lineWidth = 3 / globalScale; // 더 두꺼운 테두리
+              ctx.shadowColor = '#ffc107'; // 약간의 빛 효과 추가
+              ctx.shadowBlur = 6; // 부드러운 광택 느낌
             } else {
               ctx.strokeStyle = isImportantNode ? 'white' : '#f0f0f0';
               ctx.lineWidth = 0.5 / globalScale;
+              ctx.shadowBlur = 0; // 기본 노드는 그림자 제거
             }
+
             ctx.stroke();
 
             // 노드 아래에 텍스트 그리기
@@ -337,7 +380,7 @@ function GraphView({
           }}
           enableNodeDrag={true}
           enableZoomPanInteraction={true}
-          minZoom={0.3}
+          minZoom={0.05}
           maxZoom={5}
           onNodeDragEnd={node => {
             delete node.fx;
