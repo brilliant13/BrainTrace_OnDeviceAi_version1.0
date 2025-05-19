@@ -2,13 +2,16 @@ import React, { useRef, useEffect, useState } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import * as d3 from 'd3';
 import { fetchGraphData } from '../../api/graphApi';
+import { MdAnimation } from "react-icons/md";
+import { PiMagicWand } from "react-icons/pi";
 
 function GraphView({
   brainId = 'default-brain-id',
   height = '1022px', // 안예찬이 직접 찾은 최적의 그래프뷰 높이
   graphData: initialGraphData = null,
   referencedNodes = [],
-  graphRefreshTrigger // 그래프 새로고침 트리거 prop 추가
+  graphRefreshTrigger, // 그래프 새로고침 트리거 prop 추가
+  isFullscreen = false
 }) {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -18,7 +21,9 @@ function GraphView({
   const [referencedSet, setReferencedSet] = useState(new Set()); // 참고된 노드들을 Set으로 관리
   const [showReferenced, setShowReferenced] = useState(true); // 참고된 노드 표시 여부를 위한 상태
   const fgRef = useRef();
-
+  const [visibleNodes, setVisibleNodes] = useState([]);
+  const [visibleLinks, setVisibleLinks] = useState([]);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   // 앱 디자인에 맞는 모노크로매틱 + 포인트 색상 팔레트
   const colorPalette = [
@@ -46,6 +51,59 @@ function GraphView({
     setDimensions({ width, height: calcHeight });
   };
 
+  const getInitialZoomScale = (nodeCount) => {
+    if (nodeCount >= 1000) return 0.05;
+    else if (nodeCount >= 500) return 0.08;
+    else if (nodeCount >= 100) return 0.1;
+    else if (nodeCount >= 50) return 0.2;
+    return 0.3; // 노드가 매우 적을 때는 확대
+  };
+
+  const startTimelapse = () => {
+    if (!graphData.nodes.length) return;
+
+    setIsAnimating(true);
+    setVisibleNodes([]);
+    setVisibleLinks([]);
+
+    const zoom = getInitialZoomScale(graphData.nodes.length);
+    fgRef.current.zoom(zoom + 0.05, 800);
+
+    const sortedNodes = [...graphData.nodes]; // timestamp 기준 정렬 가능
+    const allLinks = [...graphData.links];
+
+    let index = 0;
+    const nodeMap = new Map(); // 등장한 노드 추적
+
+    // 초기 지연(ms)
+    let delay = 150;
+    const animateStep = () => {
+      if (index >= sortedNodes.length) {
+        setIsAnimating(false);
+        return;
+      }
+
+      const node = sortedNodes[index];
+      nodeMap.set(node.id, true);
+
+      const newNodes = [...nodeMap.values()].map((_, i) => sortedNodes[i]);
+      const newLinks = allLinks.filter(
+        link => nodeMap.has(link.source) && nodeMap.has(link.target)
+      );
+
+      setVisibleNodes(newNodes);
+      setVisibleLinks(newLinks);
+      index++;
+
+      // 지연시간을 점점 줄임 (최소 1ms까지)
+      delay = Math.max(0, delay * 0.95);
+
+      setTimeout(animateStep, delay);
+    };
+
+    animateStep(); // 시작
+  };
+
   useEffect(() => {
     updateDimensions();
     const resizeObserver = new ResizeObserver(updateDimensions);
@@ -58,8 +116,10 @@ function GraphView({
 
   useEffect(() => {
     if (!loading && graphData.nodes.length > 0 && fgRef.current) {
+      const zoom = getInitialZoomScale(graphData.nodes.length);
+      console.log("노드의 갯수 : ", graphData.nodes.length)
       fgRef.current.centerAt(0, 0, 0);
-      fgRef.current.zoom(0.01, 0);
+      fgRef.current.zoom(zoom, 0);
     }
   }, [loading, graphData]);
 
@@ -149,7 +209,7 @@ function GraphView({
       const targetZoom = Math.min(zoomScaleX, zoomScaleY, 5);// 최대 5배 이상 확대 제한
 
       // Step 1: 먼저 줌 아웃
-      fg.zoom(0.02, 800);
+      fg.zoom(0.05, 800);
 
       // Step 2: center 이동
       setTimeout(() => {
@@ -311,7 +371,10 @@ function GraphView({
           ref={fgRef}
           width={dimensions.width}
           height={dimensions.height}
-          graphData={graphData}
+          graphData={isAnimating ? {
+            nodes: visibleNodes,
+            links: visibleLinks
+          } : graphData}
           nodeLabel={node => {
             const baseLabel = `${node.name} (연결: ${node.linkCount})`;
             const isReferenced = showReferenced && referencedSet.has(node.name);
@@ -323,16 +386,19 @@ function GraphView({
           linkWidth={1}
           linkDirectionalArrowLength={3.5}
           linkDirectionalArrowRelPos={1}
-          cooldownTime={2000}
+          cooldownTime={3000}
           d3VelocityDecay={0.2}
           d3Force={fg => {
             fg.force("center", d3.forceCenter(dimensions.width / 2, dimensions.height / 2));
-            fg.force("charge", d3.forceManyBody().strength(-150)); // ✅ 더 강한 반발력으로 멀리 퍼짐
+            // 노드 간 반발력(밀어내는 힘).절대값이 클수록 강하게 밀어냄냄
+            fg.force("charge", d3.forceManyBody().strength(-80));
             fg.force("link", d3.forceLink().id(d => d.id).distance(100).strength(0.2)); // ✅ 느슨한 연결
             fg.force("collide", d3.forceCollide(50)); // ✅ 충돌 반경 조정
           }}
           nodeCanvasObject={(node, ctx, globalScale) => {
             const label = node.name || node.id;
+            const isReferenced = showReferenced && referencedSet.has(node.name);
+            const isImportantNode = node.linkCount >= 3;
 
             // 노드 크기 - 연결이 많을수록 더 큰 노드로 표시
             const baseSize = 5;
@@ -340,15 +406,13 @@ function GraphView({
             const nodeSize = baseSize + sizeFactor;
             const nodeRadius = nodeSize / globalScale;
 
-            // 노드 그리기
+            // 노드 원 그리기
             ctx.beginPath();
             ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI, false);
             ctx.fillStyle = node.color;
             ctx.fill();
 
             // 노드 테두리 그리기 - 참고된 노드는 주황색 테두리
-            const isImportantNode = node.linkCount >= 3;
-            const isReferenced = showReferenced && referencedSet.has(node.name);
             const fontSize = isReferenced ? 13 / globalScale : 9 / globalScale;
 
             ctx.font = isReferenced
@@ -380,7 +444,7 @@ function GraphView({
           }}
           enableNodeDrag={true}
           enableZoomPanInteraction={true}
-          minZoom={0.05}
+          minZoom={0.01}
           maxZoom={5}
           onNodeDragEnd={node => {
             delete node.fx;
@@ -389,9 +453,40 @@ function GraphView({
           onNodeHover={node => {
             document.body.style.cursor = node ? 'pointer' : 'default';
           }}
+
         />
       )}
+
+      {/* 타임랩스 애니메이션 버튼 */}
+      <div
+        style={{
+          position: 'absolute',
+          top: isFullscreen ? 10 : 45, // 👈 전체화면이면 더 위로
+          right: -3,
+        }}
+      >
+        <button
+          onClick={startTimelapse}
+          style={{
+            color: 'black',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'transform 0.2s ease',
+            border: 'none',
+            outline: 'none',
+          }}
+          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
+          title="Start timelapse animation"
+        >
+          <PiMagicWand size={21} color="black" />
+        </button>
+      </div>
+
+
     </div>
+
   );
 }
 

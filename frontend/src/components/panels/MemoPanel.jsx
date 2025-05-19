@@ -26,7 +26,7 @@ function MemoPanel({ activeProject, collapsed, setCollapsed, referencedNodes = [
   const [deletedMemos, setDeletedMemos] = useState([]);
   const [selectedMemoId, setSelectedMemoId] = useState(null);
   const [highlightedMemoId, setHighlightedMemoId] = useState(null);
-  const [graphHeight, setGraphHeight] = useState(350);
+  const [graphHeight, setGraphHeight] = useState(450);
   const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
