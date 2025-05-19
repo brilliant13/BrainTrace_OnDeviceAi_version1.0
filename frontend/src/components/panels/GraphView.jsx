@@ -30,6 +30,10 @@ function GraphView({
   // 여기에 펄스 시작 시간 저장
   const [pulseStartTime, setPulseStartTime] = useState(null);
   const [refPulseStartTime, setRefPulseStartTime] = useState(null);
+  // 더블클릭 감지용 레퍼런스
+  const lastClickRef = useRef({ node: null, time: 0 });
+  const clickTimeoutRef = useRef();
+
 
 
   // 앱 디자인에 맞는 모노크로매틱 + 포인트 색상 팔레트
@@ -65,7 +69,6 @@ function GraphView({
     else if (nodeCount >= 50) return 0.2;
     return 0.3; // 노드가 매우 적을 때는 확대
   };
-
 
   const startTimelapse = () => {
     const nodes = [...graphData.nodes];
@@ -124,6 +127,32 @@ function GraphView({
 
     requestAnimationFrame(tick);
   };
+
+  // 노드 클릭 핸들러 (더블클릭 감지 포함)
+  const handleNodeClick = (node) => {
+    const now = Date.now();
+    const { node: lastNode, time: lastTime } = lastClickRef.current;
+
+    // 같은 노드를 300ms 이내에 두 번 클릭했으면 “더블클릭” 처리
+    if (lastNode === node && now - lastTime < 300) {
+      clearTimeout(clickTimeoutRef.current);
+      lastClickRef.current = { node: null, time: 0 };
+
+      // 더블클릭 액션: 해당 노드로 센터+줌
+      if (fgRef.current) {
+        // 더블클릭 액션
+        fgRef.current.centerAt(node.x, node.y, 800);
+        fgRef.current.zoom(2, 800);  // 2배율로 0.8초 동안 줌
+      }
+    } else {
+      // 최초 클릭으로 간주, 300ms 지나면 리셋
+      lastClickRef.current = { node, time: now };
+      clickTimeoutRef.current = setTimeout(() => {
+        lastClickRef.current = { node: null, time: 0 };
+      }, 300);
+    }
+  };
+
   useEffect(() => {
     updateDimensions();
     const resizeObserver = new ResizeObserver(updateDimensions);
@@ -201,7 +230,6 @@ function GraphView({
 
     loadAndDetect();
   }, [graphRefreshTrigger, brainId]);
-
 
   // referencedNodes가 변경될 때 Set 업데이트
   useEffect(() => {
@@ -501,6 +529,7 @@ function GraphView({
             nodes: visibleNodes,
             links: visibleLinks
           } : graphData}
+          onNodeClick={handleNodeClick}
           nodeLabel={node => {
             const baseLabel = `${node.name} (연결: ${node.linkCount})`;
             const isReferenced = showReferenced && referencedSet.has(node.name);
