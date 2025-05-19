@@ -459,8 +459,7 @@ function GraphView({
         style={{
           position: 'absolute',
           top: 45, // 전체화면 버튼 아래에 배치
-          right: -4,
-          zIndex: 0,
+          right: -3,
         }}
       >
         <button
@@ -474,11 +473,11 @@ function GraphView({
             border: 'none',
             outline: 'none',
           }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
+          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
           onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
           title="Start timelapse animation"
         >
-          <PiMagicWand size={22} color="black" />
+          <PiMagicWand size={21} color="black" />
         </button>
       </div>
 
