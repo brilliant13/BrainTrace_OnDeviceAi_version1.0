@@ -2,8 +2,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import * as d3 from 'd3';
 import { fetchGraphData } from '../../api/graphApi';
-import { MdAnimation } from "react-icons/md";
 import { PiMagicWand } from "react-icons/pi";
+import { easeCubicInOut } from 'd3-ease';
 
 function GraphView({
   brainId = 'default-brain-id',
@@ -24,6 +24,13 @@ function GraphView({
   const [visibleNodes, setVisibleNodes] = useState([]);
   const [visibleLinks, setVisibleLinks] = useState([]);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [newlyAddedNodeNames, setNewlyAddedNodeNames] = useState([]);
+  const [showNewlyAdded, setShowNewlyAdded] = useState(false);
+  const prevGraphDataRef = useRef({ nodes: [], links: [] });
+  // 여기에 펄스 시작 시간 저장
+  const [pulseStartTime, setPulseStartTime] = useState(null);
+  const [refPulseStartTime, setRefPulseStartTime] = useState(null);
+
 
   // 앱 디자인에 맞는 모노크로매틱 + 포인트 색상 팔레트
   const colorPalette = [
@@ -59,51 +66,64 @@ function GraphView({
     return 0.3; // 노드가 매우 적을 때는 확대
   };
 
+
   const startTimelapse = () => {
-    if (!graphData.nodes.length) return;
+    const nodes = [...graphData.nodes];
+    const links = [...graphData.links];
+    const totalDuration = 5000;            // 전체 애니메이션을 5초에 끝내겠다
+    const fadeDuration = 300;             // 각 노드가 서서히 fade-in 되는 시간(ms)
+    const N = nodes.length;
+    if (N === 0) return;
+
+    // 1) 등장 타임 계산
+    const appearTimes = nodes.map((_, i) =>
+      (i / (N - 1)) * (totalDuration - fadeDuration)
+    );
 
     setIsAnimating(true);
-    setVisibleNodes([]);
-    setVisibleLinks([]);
+    const startTime = performance.now();
 
-    const zoom = getInitialZoomScale(graphData.nodes.length);
-    fgRef.current.zoom(zoom + 0.05, 800);
-
-    const sortedNodes = [...graphData.nodes]; // timestamp 기준 정렬 가능
-    const allLinks = [...graphData.links];
-
-    let index = 0;
-    const nodeMap = new Map(); // 등장한 노드 추적
-
-    // 초기 지연(ms)
-    let delay = 150;
-    const animateStep = () => {
-      if (index >= sortedNodes.length) {
-        setIsAnimating(false);
-        return;
-      }
-
-      const node = sortedNodes[index];
-      nodeMap.set(node.id, true);
-
-      const newNodes = [...nodeMap.values()].map((_, i) => sortedNodes[i]);
-      const newLinks = allLinks.filter(
-        link => nodeMap.has(link.source) && nodeMap.has(link.target)
+    const tick = now => {
+      const t = now - startTime;
+      // 2) 현재 보여줄 노드 인덱스
+      const idx = Math.min(
+        N - 1,
+        Math.floor(((t) / (totalDuration - fadeDuration)) * (N - 1))
       );
 
-      setVisibleNodes(newNodes);
-      setVisibleLinks(newLinks);
-      index++;
+      // 3) opacity 계산: 노드 i가 appearTimes[i]에 등장 → fadeDuration 동안 opacity 0→1
+      const visible = nodes.slice(0, idx + 1).map((n, i) => {
+        const dt = t - appearTimes[i];
+        const alpha = dt <= 0
+          ? 0
+          : dt >= fadeDuration
+            ? 1
+            : easeCubicInOut(dt / fadeDuration);
+        return { ...n, __opacity: alpha };
+      });
 
-      // 지연시간을 점점 줄임 (최소 1ms까지)
-      delay = Math.max(0, delay * 0.95);
+      // 4) 링크도 노드 인덱스 기준으로 필터링
+      const visibleLinks = links.filter(l =>
+        appearTimes[nodes.findIndex(n => n.id === l.source)] <= t &&
+        appearTimes[nodes.findIndex(n => n.id === l.target)] <= t
+      );
 
-      setTimeout(animateStep, delay);
+      setVisibleNodes(visible);
+      setVisibleLinks(visibleLinks);
+
+      // 5) 그리기 레이어에 opacity 전달
+      fgRef.current || console.warn('no fgRef!');
+      // (ForceGraph2D 에서는 nodeCanvasObject 에서 node.__opacity를 참조)
+
+      if (t < totalDuration) {
+        requestAnimationFrame(tick);
+      } else {
+        setIsAnimating(false);
+      }
     };
 
-    animateStep(); // 시작
+    requestAnimationFrame(tick);
   };
-
   useEffect(() => {
     updateDimensions();
     const resizeObserver = new ResizeObserver(updateDimensions);
@@ -146,22 +166,42 @@ function GraphView({
 
   // graphRefreshTrigger가 변경될 때마다 그래프 새로고침
   useEffect(() => {
-    if (graphRefreshTrigger !== undefined && graphRefreshTrigger > 0) {
-      console.log('그래프 새로고침 트리거:', graphRefreshTrigger);
-      const loadGraphData = async () => {
-        try {
-          setLoading(true);
-          const data = await fetchGraphData(brainId);
-          processGraphData(data);
-        } catch (err) {
-          console.error('그래프 새로고침 실패:', err);
-          setError('그래프 데이터를 불러오는 데 실패했습니다.');
-          setLoading(false);
+    // 트리거가 없거나 초기값(0, undefined)이면 무시
+    if (!graphRefreshTrigger) return;
+
+    const loadAndDetect = async () => {
+      try {
+        setLoading(true);
+
+        // 1) 새 데이터 가져오기
+        const data = await fetchGraphData(brainId);
+
+        // 2) diff: 이전 그래프(prevGraphDataRef.current) vs. new data
+        const prevNames = new Set(prevGraphDataRef.current.nodes.map(n => n.name));
+        const added = data.nodes
+          .map(n => n.name)
+          .filter(name => !prevNames.has(name));
+
+        // 3) UI 상태에 반영
+        setNewlyAddedNodeNames(added);
+        setShowNewlyAdded(added.length > 0);
+        if (added.length > 0) {
+          setPulseStartTime(Date.now());  // 펄스 시작 시각
         }
-      };
-      loadGraphData();
-    }
+
+        // 4) 그래프 그리기
+        processGraphData(data);
+
+      } catch (err) {
+        console.error('그래프 새로고침 실패:', err);
+        setError('그래프 데이터를 불러오는 데 실패했습니다.');
+        setLoading(false);
+      }
+    };
+
+    loadAndDetect();
   }, [graphRefreshTrigger, brainId]);
+
 
   // referencedNodes가 변경될 때 Set 업데이트
   useEffect(() => {
@@ -169,6 +209,7 @@ function GraphView({
     setReferencedSet(new Set(referencedNodes));
     // referencedNodes가 바뀌면 다시 보여주기 ON
     if (referencedNodes.length > 0) {
+      setRefPulseStartTime(Date.now());
       setShowReferenced(true);
     }
   }, [referencedNodes]);
@@ -203,7 +244,7 @@ function GraphView({
       const boxHeight = maxY - minY;
 
       // 3. 화면 기준으로 padding 적용하여 적절한 zoom 비율 계산
-      const padding = 400;
+      const padding = 500;
       const zoomScaleX = dimensions.width / (boxWidth + padding);
       const zoomScaleY = dimensions.height / (boxHeight + padding);
       const targetZoom = Math.min(zoomScaleX, zoomScaleY, 5);// 최대 5배 이상 확대 제한
@@ -225,8 +266,60 @@ function GraphView({
     return () => clearTimeout(timer);
   }, [showReferenced, referencedNodes, graphData, referencedSet]);
 
+  useEffect(() => { // 소스 추가 시 추가된 노드로 카메라 이동
+    if (!newlyAddedNodeNames.length || !graphData.nodes.length) return;
+
+    const addedNodes = graphData.nodes.filter(n => newlyAddedNodeNames.includes(n.name));
+    if (addedNodes.length === 0) return;
+
+    const timer = setTimeout(() => {
+      const validNodes = addedNodes.filter(n => typeof n.x === 'number' && typeof n.y === 'number');
+      if (validNodes.length === 0) return;
+
+      const fg = fgRef.current;
+      if (!fg || !dimensions.width || !dimensions.height) return;
+
+      // 중심 좌표 계산
+      const avgX = validNodes.reduce((sum, n) => sum + n.x, 0) / validNodes.length;
+      const avgY = validNodes.reduce((sum, n) => sum + n.y, 0) / validNodes.length;
+
+      // 경계 상자 계산
+      const xs = validNodes.map(n => n.x);
+      const ys = validNodes.map(n => n.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+
+      const boxWidth = maxX - minX;
+      const boxHeight = maxY - minY;
+
+      // 줌 비율 계산
+      const padding = 500;
+      const zoomScaleX = dimensions.width / (boxWidth + padding);
+      const zoomScaleY = dimensions.height / (boxHeight + padding);
+      const targetZoom = Math.min(zoomScaleX, zoomScaleY, 5);
+
+      // Step 1: 줌 아웃
+      fg.zoom(0.05, 800);
+
+      // Step 2: center 이동
+      setTimeout(() => {
+        fg.centerAt(avgX, avgY, 1000);
+
+        // Step 3: 줌인
+        setTimeout(() => {
+          fg.zoom(targetZoom, 1000);
+        }, 1000);
+      }, 900);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [newlyAddedNodeNames, graphData]);
+
   // 그래프 데이터 처리 함수
   const processGraphData = (data) => {
+
     // 중요 노드 탐지 (링크가 많은 노드)
     const linkCounts = {};
     data.links.forEach(link => {
@@ -275,7 +368,9 @@ function GraphView({
     };
 
     setGraphData(processedData);
+    prevGraphDataRef.current = processedData; // 이전 상태 저장
     setLoading(false);
+
   };
 
   return (
@@ -292,6 +387,45 @@ function GraphView({
         backgroundColor: '#fafafa'
       }}
     >
+      {/* 추가된 노드 UI 표시 */}
+      {showNewlyAdded && newlyAddedNodeNames.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          padding: '8px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          zIndex: 20,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+        }}
+        >
+          <span>추가된 노드: {newlyAddedNodeNames.join(', ')}</span>
+          <span
+            onClick={() => {
+              setShowNewlyAdded(false);
+              setNewlyAddedNodeNames([]); // 추가된 노드 하이라이팅도 제거
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'red')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#666')}
+            style={{
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              color: '#666',
+              fontSize: '18px',
+              transition: 'color 0.2s',
+            }}
+            className="close-x"
+          >
+            ×
+          </span>
+        </div>
+      )}
+
       {/* 참고된 노드가 있을 때 디버깅 정보 표시 */}
       {showReferenced && referencedNodes.length > 0 && (
         <div style={{
@@ -308,14 +442,6 @@ function GraphView({
           gap: '10px',
           boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
         }}
-          onMouseEnter={e => {
-            const closeBtn = e.currentTarget.querySelector('.close-x');
-            if (closeBtn) closeBtn.style.display = 'inline';
-          }}
-          onMouseLeave={e => {
-            const closeBtn = e.currentTarget.querySelector('.close-x');
-            if (closeBtn) closeBtn.style.display = 'none';
-          }}
         >
           <span>참고된 노드: {referencedNodes.join(', ')}</span>
           <span
@@ -396,16 +522,22 @@ function GraphView({
             fg.force("collide", d3.forceCollide(50)); // ✅ 충돌 반경 조정
           }}
           nodeCanvasObject={(node, ctx, globalScale) => {
+
+            ctx.save();
+            ctx.globalAlpha = node.__opacity ?? 1;
             const label = node.name || node.id;
             const isReferenced = showReferenced && referencedSet.has(node.name);
             const isImportantNode = node.linkCount >= 3;
-
+            const isNewlyAdded = newlyAddedNodeNames.includes(node.name);
+            const isRef = showReferenced && referencedSet.has(label);
+            const r = (5 + Math.min(node.linkCount * 0.5, 3)) / globalScale;
             // 노드 크기 - 연결이 많을수록 더 큰 노드로 표시
             const baseSize = 5;
             const sizeFactor = Math.min(node.linkCount * 0.5, 3);
             const nodeSize = baseSize + sizeFactor;
             const nodeRadius = nodeSize / globalScale;
-
+            const pulseScale = 1.8;    // 반지 크기를 1배→3배까지 키움
+            const pulseDuration = 1000;   // 펄스 한 사이클
             // 노드 원 그리기
             ctx.beginPath();
             ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI, false);
@@ -419,17 +551,46 @@ function GraphView({
               ? `bold ${fontSize}px Sans-Serif`
               : `${fontSize}px Sans-Serif`;
 
-            if (isReferenced) {
-              ctx.strokeStyle = '#d9820f'; // 더 진한 골드 계열 (EBB20C보다 더 세련됨)
-              ctx.lineWidth = 3 / globalScale; // 더 두꺼운 테두리
-              ctx.shadowColor = '#ffc107'; // 약간의 빛 효과 추가
-              ctx.shadowBlur = 6; // 부드러운 광택 느낌
+
+            // — 2) 신규 펄스 링
+            if (isNewlyAdded && pulseStartTime) {
+              const elapsed = (Date.now() - pulseStartTime) % pulseDuration;
+              const t = elapsed / pulseDuration;        // 0 → 1
+              const ringR = r * (1 + t * (pulseScale - 1));
+              ctx.beginPath();
+              ctx.arc(node.x, node.y, ringR, 0, 2 * Math.PI);
+              ctx.strokeStyle = `rgba(33,150,243,${1 - t})`;
+              ctx.lineWidth = 2 / globalScale;
+              ctx.stroke();
+            }
+            // — 3) 참고된 노드 펄스 링 (orange)
+            if (isRef && refPulseStartTime) {
+              const elapsed2 = (Date.now() - refPulseStartTime) % pulseDuration;
+              const t2 = elapsed2 / pulseDuration;
+              const ringR2 = r * (1 + t2 * (pulseScale - 1));
+              ctx.beginPath();
+              ctx.arc(node.x, node.y, ringR2, 0, 2 * Math.PI);
+              ctx.strokeStyle = `rgba(217,130,15,${1 - t2})`;
+              ctx.lineWidth = 2 / globalScale;
+              ctx.stroke();
+            }
+
+            // 외곽선 스타일
+            if (isNewlyAdded) {
+              ctx.strokeStyle = '#2196f3'; // 파란색 계열 테두리
+              ctx.lineWidth = 4 / globalScale;
+              ctx.shadowColor = '#90caf9'; // 밝은 파랑으로 glow
+              ctx.shadowBlur = 10;
+            } else if (isReferenced) {
+              ctx.strokeStyle = '#d9820f';
+              ctx.lineWidth = 3 / globalScale;
+              ctx.shadowColor = '#ffc107';
+              ctx.shadowBlur = 6;
             } else {
               ctx.strokeStyle = isImportantNode ? 'white' : '#f0f0f0';
               ctx.lineWidth = 0.5 / globalScale;
-              ctx.shadowBlur = 0; // 기본 노드는 그림자 제거
+              ctx.shadowBlur = 0;
             }
-
             ctx.stroke();
 
             // 노드 아래에 텍스트 그리기
@@ -441,6 +602,8 @@ function GraphView({
 
             // 마우스 오버시 크기 확대
             node.__bckgDimensions = [nodeRadius * 2, fontSize].map(n => n + fontSize * 0.2);
+
+            ctx.restore();
           }}
           enableNodeDrag={true}
           enableZoomPanInteraction={true}
@@ -461,11 +624,11 @@ function GraphView({
       <div
         style={{
           position: 'absolute',
-          top: isFullscreen ? 10 : 45, // 👈 전체화면이면 더 위로
-          right: -3,
+          top: isFullscreen ? 10 : 55, // 👈 전체화면이면 더 위로
+          right: 15.5,
         }}
       >
-        <button
+        <div
           onClick={startTimelapse}
           style={{
             color: 'black',
@@ -481,7 +644,7 @@ function GraphView({
           title="Start timelapse animation"
         >
           <PiMagicWand size={21} color="black" />
-        </button>
+        </div>
       </div>
 
 
