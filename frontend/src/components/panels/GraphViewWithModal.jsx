@@ -99,7 +99,7 @@ function GraphViewWithModal(props) {
             <div className="graph-with-button">
                 <GraphView {...props} isFullscreen={isFullscreen} />
                 <button className="fullscreen-btn" onClick={() => setIsFullscreen(true)}>
-                    {!isFullscreen && (<MdFullscreen size={20} color='black' title='전체화면' />)}
+                    {!isFullscreen && (<MdFullscreen size={22} color='black' title='전체화면' />)}
                 </button>
             </div>
 
