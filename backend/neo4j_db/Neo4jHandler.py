@@ -296,5 +296,22 @@ class Neo4jHandler:
             logging.error(f"❌ descriptions 삭제 실패: {str(e)}")
             raise RuntimeError(f"descriptions 삭제 실패: {str(e)}")
 
+    def delete_descriptions_by_brain_id(self, brain_id: str) -> None:
+        """
+        특정 brain_id를 가진 모든 노드와 관계를 삭제합니다.
+        Args:
+            brain_id: 삭제할 브레인의 ID
+        """
+        try:
+            query = """
+            MATCH (n:Node {brain_id: $brain_id})
+            DETACH DELETE n
+            """
+            self._execute_with_retry(query, {"brain_id": brain_id})
+            logging.info(f"✅ brain_id {brain_id}의 모든 데이터 삭제 완료")
+        except Exception as e:
+            logging.error(f"❌ Neo4j 데이터 삭제 실패: {str(e)}")
+            raise RuntimeError(f"Neo4j 데이터 삭제 실패: {str(e)}")
+
     def __del__(self):
         self.close()

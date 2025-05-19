@@ -357,23 +357,55 @@ class SQLiteHandler:
             raise
     
     def delete_brain(self, brain_id: int) -> bool:
-        """브레인 삭제"""
+        """브레인과 관련된 모든 데이터 삭제"""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
-            cursor.execute("DELETE FROM Brain WHERE brain_id = ?", (brain_id,))
-            deleted = cursor.rowcount > 0
+            # 트랜잭션 시작
+            cursor.execute("BEGIN TRANSACTION")
             
-            conn.commit()
-            conn.close()
-            
-            if deleted:
-                logging.info("브레인 삭제 완료: brain_id=%s", brain_id)
-            else:
-                logging.warning("브레인 삭제 실패: 존재하지 않는 brain_id=%s", brain_id)
-            
-            return deleted
+            try:
+                # 1. Memo 테이블에서 삭제
+                cursor.execute("DELETE FROM Memo WHERE brain_id = ?", (brain_id,))
+                
+                # 2. Pdf 테이블에서 삭제
+                cursor.execute("DELETE FROM Pdf WHERE brain_id = ?", (brain_id,))
+                
+                # 3. Voice 테이블에서 삭제
+                cursor.execute("DELETE FROM Voice WHERE brain_id = ?", (brain_id,))
+                
+                # 4. TextFile 테이블에서 삭제
+                cursor.execute("DELETE FROM TextFile WHERE brain_id = ?", (brain_id,))
+                
+                # 5. Chat 테이블에서 삭제
+                cursor.execute("DELETE FROM Chat WHERE brain_id = ?", (brain_id,))
+                
+                # 6. Folder 테이블에서 삭제
+                cursor.execute("DELETE FROM Folder WHERE brain_id = ?", (brain_id,))
+                
+                # 7. Brain 테이블에서 삭제
+                cursor.execute("DELETE FROM Brain WHERE brain_id = ?", (brain_id,))
+                deleted = cursor.rowcount > 0
+                
+                # 트랜잭션 커밋
+                conn.commit()
+                
+                if deleted:
+                    logging.info("브레인 및 관련 데이터 삭제 완료: brain_id=%s", brain_id)
+                else:
+                    logging.warning("브레인 삭제 실패: 존재하지 않는 brain_id=%s", brain_id)
+                
+                return deleted
+                
+            except Exception as e:
+                # 오류 발생 시 롤백
+                conn.rollback()
+                raise e
+                
+            finally:
+                conn.close()
+                
         except Exception as e:
             logging.error("브레인 삭제 오류: %s", str(e))
             raise RuntimeError(f"브레인 삭제 오류: {str(e)}")
@@ -2159,6 +2191,25 @@ class SQLiteHandler:
             ]
         except Exception as e:
             logging.error(f"채팅 목록 조회 중 오류 발생: {str(e)}")
+            return None
+    
+    def get_brain_id_by_folder(self, folder_id: int) -> Optional[int]:
+        """폴더 ID로 브레인 ID를 조회합니다."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT brain_id FROM Folder WHERE folder_id = ?", 
+                (folder_id,)
+            )
+            result = cursor.fetchone()
+            
+            conn.close()
+            
+            return result[0] if result else None
+        except Exception as e:
+            logging.error("폴더의 브레인 ID 조회 오류: %s", str(e))
             return None
     
    
