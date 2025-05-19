@@ -34,7 +34,7 @@ function MainLayout() {
 
   const DEFAULT_SOURCE_PANEL_SIZE = 18;
   const DEFAULT_CHAT_PANEL_SIZE = 50;  // 추가된 기본 채팅 패널 크기
-  const DEFAULT_MEMO_PANEL_SIZE = 30;
+  const DEFAULT_MEMO_PANEL_SIZE = 40;
 
   const [activeProject, setActiveProject] = useState(projectId);
   const [sourceCollapsed, setSourceCollapsed] = useState(false);

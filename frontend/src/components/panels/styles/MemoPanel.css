@@ -219,10 +219,8 @@
 
 .header-actions img:last-child {
   margin-left: 5px;
-  /* 토글 아이콘 왼쪽 여백 추가 */
 }
 
-/* 반응형 조정 */
 @media (max-width: 1200px) {
   .layout.memo-layout {
     width: 300px;
@@ -230,12 +228,12 @@
   }
 }
 
-@media (max-width: 992px) {
+/* @media (max-width: 992px) {
   .layout.memo-layout {
     width: 250px;
     min-width: 200px;
   }
-}
+} */
 
 /* 메모 패널 스크롤 개선 */
 .memo-layout .memo-container {
@@ -270,10 +268,8 @@
   font-size: 20px;
   margin-right: 8px;
   transform: translateY(1px);
-  /* 아이콘 약간 아래로 내리기 */
 }
 
 .memo-title-text {
   transform: translateY(-1px);
-  /* 글자를 살짝 위로 */
 }
