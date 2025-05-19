@@ -290,7 +290,7 @@ export default function FolderView({
                                     setMenuOpenId(null);
                                 }}
                             >
-                                <GoPencil size={14} style={{ marginRight: 4 }} /> 이름 바꾸기
+                                <GoPencil size={14} style={{ marginRight: 4 }} /> 폴더 이름 바꾸기
                             </div>
                             <div
                                 className="popup-item"
