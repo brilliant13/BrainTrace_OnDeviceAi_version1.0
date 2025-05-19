@@ -10,10 +10,11 @@ import {
 } from '../../../../backend/services/backend';
 import { pdfjs } from 'react-pdf';
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min?url';
+import SourceQuotaBar from './SourceQuotaBar'; import './styles/SourceQuotaBar.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
-function SourceUploadModal({ visible, onClose, onUpload, onGraphRefresh, folderId = null, brainId = null }) {
+function SourceUploadModal({ visible, onClose, onUpload, onGraphRefresh, folderId = null, brainId = null, currentCount = 0 }) {
   const [dragOver, setDragOver] = useState(false);
   const [uploadQueue, setUploadQueue] = useState([]);
   const [closing, setClosing] = useState(false);
@@ -83,7 +84,7 @@ function SourceUploadModal({ visible, onClose, onUpload, onGraphRefresh, folderI
 
     const promises = queue.map(async item => {
       try {
-        await createFileByType(item.file, folderId);
+        const res = await createFileByType(item.file, folderId);
         results.push(res.meta); // 메타 저장
         setUploadQueue(q =>
           q.map(x => x.key === item.key ? { ...x, status: 'done' } : x)
@@ -167,7 +168,7 @@ function SourceUploadModal({ visible, onClose, onUpload, onGraphRefresh, folderI
                 업로드할 <span className="highlight">파일을 선택</span>하거나 드래그 앤 드롭하세요.
               </p>
               <p className="file-types">
-                지원 형식: PDF, TXT, Markdown, 오디오(mp3)
+                지원 형식: PDF, TXT, 오디오(mp3)
               </p>
             </div>
             <div className="source-options">
@@ -178,11 +179,9 @@ function SourceUploadModal({ visible, onClose, onUpload, onGraphRefresh, folderI
               <button className="source-button">복사된 텍스트</button>
             </div>
             <div className="footer">
-              <div className="limit-bar">
-                <div className="filled" style={{ width: '10%' }} />
-              </div>
-              <span className="limit-label">3/50</span>
+              <SourceQuotaBar current={uploadQueue.length + currentCount} max={50} />
             </div>
+
           </>
         )}
 

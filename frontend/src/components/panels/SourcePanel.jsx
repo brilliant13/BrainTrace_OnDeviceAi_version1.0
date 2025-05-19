@@ -286,6 +286,7 @@ export default function SourcePanel({
         }}
         onGraphRefresh={onGraphRefresh}
         brainId={activeProject}
+        currentCount={sourceCount}
       />
       {!collapsed && <SourceQuotaBar current={sourceCount} max={50} />}
     </div >

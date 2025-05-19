@@ -296,7 +296,7 @@ function GraphView({
           }}
           nodeCanvasObject={(node, ctx, globalScale) => {
             const label = node.name || node.id;
-            const fontSize = 10 / globalScale;
+            const fontSize = 9 / globalScale;
             ctx.font = `${fontSize}px Sans-Serif`;
 
             // 노드 크기 - 연결이 많을수록 더 큰 노드로 표시
