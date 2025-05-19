@@ -10,7 +10,8 @@ function GraphView({
   height = '1022px', // 안예찬이 직접 찾은 최적의 그래프뷰 높이
   graphData: initialGraphData = null,
   referencedNodes = [],
-  graphRefreshTrigger // 그래프 새로고침 트리거 prop 추가
+  graphRefreshTrigger, // 그래프 새로고침 트리거 prop 추가
+  isFullscreen = false
 }) {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -454,11 +455,13 @@ function GraphView({
           }}
 
         />
-      )}{/* 타임랩스 애니메이션 버튼 */}
+      )}
+
+      {/* 타임랩스 애니메이션 버튼 */}
       <div
         style={{
           position: 'absolute',
-          top: 45, // 전체화면 버튼 아래에 배치
+          top: isFullscreen ? 10 : 45, // 👈 전체화면이면 더 위로
           right: -3,
         }}
       >
