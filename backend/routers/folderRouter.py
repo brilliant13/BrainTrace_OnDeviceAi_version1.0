@@ -2,10 +2,13 @@ from fastapi import APIRouter, HTTPException, status, Query
 from pydantic import BaseModel, Field
 from typing import List, Optional,Dict,Any
 from sqlite_db.sqlite_handler import SQLiteHandler
+from neo4j_db.Neo4jHandler import Neo4jHandler
+from services.embedding_service import delete_node
 import logging
 
 # SQLite 핸들러 인스턴스 생성
 sqlite_handler = SQLiteHandler()
+neo4j_handler = Neo4jHandler()
 
 # 라우터 정의
 router = APIRouter(
@@ -254,16 +257,34 @@ async def add_memo_to_folder(folder_id: int, memo_id: int):
 
 @router.delete("/deleteAll/{folder_id}", response_model=DeleteFolderResponse)
 async def delete_folder_with_memos(
-    folder_id: int,
-    brain_id: int = Query(..., description="브레인 ID")
+    folder_id: int
 ):
     try:
+        # 1. 폴더 내의 모든 파일 ID와 brain_id 가져오기
+        textfiles = sqlite_handler.get_folder_textfiles(folder_id)
+        pdfs = sqlite_handler.get_folder_pdfs(folder_id)
+        brain_id = sqlite_handler.get_brain_id_by_folder(folder_id)
+        if brain_id is None:
+            raise HTTPException(status_code=404, detail="해당 folder_id에 brain_id 없음")
+
+        # 2. Neo4j와 벡터 DB에서 각 파일 삭제
+        for textfile in textfiles:
+            source_id = str(textfile['txt_id'])
+            neo4j_handler.delete_descriptions_by_source_id(source_id, str(brain_id))
+            delete_node(source_id, brain_id)
+            
+        for pdf in pdfs:
+            source_id = str(pdf['pdf_id'])
+            neo4j_handler.delete_descriptions_by_source_id(source_id, str(brain_id))
+            delete_node(source_id, brain_id)
+
+        # 3. SQLite에서 폴더와 파일 삭제
         result = sqlite_handler.delete_folder_with_memos(folder_id, brain_id)
 
         if not result["success"]:
             raise HTTPException(status_code=404, detail="폴더 삭제 실패")
 
-        return result  # ⚠️ 여기서도 model에 맞는 필드만 있어야 함
+        return result
 
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

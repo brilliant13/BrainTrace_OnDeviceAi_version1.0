@@ -2193,4 +2193,23 @@ class SQLiteHandler:
             logging.error(f"채팅 목록 조회 중 오류 발생: {str(e)}")
             return None
     
+    def get_brain_id_by_folder(self, folder_id: int) -> Optional[int]:
+        """폴더 ID로 브레인 ID를 조회합니다."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute(
+                "SELECT brain_id FROM Folder WHERE folder_id = ?", 
+                (folder_id,)
+            )
+            result = cursor.fetchone()
+            
+            conn.close()
+            
+            return result[0] if result else None
+        except Exception as e:
+            logging.error("폴더의 브레인 ID 조회 오류: %s", str(e))
+            return None
+    
    
