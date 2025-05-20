@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import { fetchGraphData } from '../../api/graphApi';
 import { PiMagicWand } from "react-icons/pi";
 import { easeCubicInOut } from 'd3-ease';
-
+import './styles/GraphView.css'; // 상단에 CSS import 추가
 function GraphView({
   brainId = 'default-brain-id',
   height = '1022px', // 안예찬이 직접 찾은 최적의 그래프뷰 높이
@@ -403,121 +403,34 @@ function GraphView({
   return (
     <div
       className="graph-area"
-      ref={containerRef}
-      style={{
-        width: '100%',
-        height: '100%',
-        minHeight: height,
-        borderRadius: '8px',
-        overflow: 'hidden',
-        position: 'relative',
-        backgroundColor: '#fafafa'
-      }}
-    >
+      ref={containerRef}>
       {/* 추가된 노드 UI 표시 */}
       {showNewlyAdded && newlyAddedNodeNames.length > 0 && (
-        <div style={{
-          position: 'absolute',
-          top: '10px',
-          left: '10px',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          padding: '8px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          zIndex: 20,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-        }}
-        >
+        <div className="graph-popup">
           <span>추가된 노드: {newlyAddedNodeNames.join(', ')}</span>
-          <span
-            onClick={() => {
-              setShowNewlyAdded(false);
-              setNewlyAddedNodeNames([]); // 추가된 노드 하이라이팅도 제거
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'red')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#666')}
-            style={{
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              color: '#666',
-              fontSize: '18px',
-              transition: 'color 0.2s',
-            }}
-            className="close-x"
-          >
-            ×
-          </span>
+          <span className="close-x" onClick={() => {
+            setShowNewlyAdded(false);
+            setNewlyAddedNodeNames([]);
+          }}>×</span>
         </div>
       )}
 
       {/* 참고된 노드가 있을 때 디버깅 정보 표시 */}
       {showReferenced && referencedNodes.length > 0 && (
-        <div style={{
-          position: 'absolute',
-          top: '10px',
-          left: '10px',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          padding: '8px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          zIndex: 20,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-        }}
-        >
+        <div className="graph-popup">
           <span>참고된 노드: {referencedNodes.join(', ')}</span>
-          <span
-            onClick={() => setShowReferenced(false)}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'red')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#666')}
-            style={{
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              color: '#666',
-              fontSize: '18px',
-              transition: 'color 0.2s',
-            }}
-          >
-            ×
-          </span>
+          <span className="close-x" onClick={() => setShowReferenced(false)}>×</span>
         </div>
       )}
+
       {/* 로딩 및 에러 처리 */}
       {loading && (
-        <div style={{
-          position: 'absolute',
-          top: 0, left: 0,
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#fafafa',
-          zIndex: 10
-        }}>
-          로딩 중...
-        </div>
+        <div className="graph-loading">로딩 중...</div>
       )}
       {error && (
-        <div style={{
-          position: 'absolute',
-          top: 0, left: 0,
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#fafafa',
-          color: 'red'
-        }}>
-          {error}
-        </div>
+        <div className="graph-error">{error}</div>
       )}
+
       {!loading && graphData.nodes.length > 0 && dimensions.width > 0 && (
 
         <ForceGraph2D
@@ -651,34 +564,18 @@ function GraphView({
 
       {/* 타임랩스 애니메이션 버튼 */}
       <div
-        style={{
-          position: 'absolute',
-          top: isFullscreen ? 10 : 55, // 👈 전체화면이면 더 위로
-          right: 15.5,
-        }}
+        className="timelapse-button-container"
+        style={{ top: isFullscreen ? 10 : 55 }}
       >
         <div
+          className="timelapse-button"
           onClick={startTimelapse}
-          style={{
-            color: 'black',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            transition: 'transform 0.2s ease',
-            border: 'none',
-            outline: 'none',
-          }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
           title="Start timelapse animation"
         >
           <PiMagicWand size={21} color="black" />
         </div>
       </div>
-
-
     </div>
-
   );
 }
 

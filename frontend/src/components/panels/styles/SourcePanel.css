@@ -245,7 +245,6 @@ button.add-button.icon-only:active {
   align-items: center;
   justify-content: center;
   gap: 6px;
-
   padding: 8px 20px;
   border: 1px solid #d1d5db;
   border-radius: 9999px;
@@ -254,7 +253,6 @@ button.add-button.icon-only:active {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-
   transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
