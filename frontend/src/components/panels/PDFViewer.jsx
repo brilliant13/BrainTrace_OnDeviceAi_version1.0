@@ -124,6 +124,7 @@ const PDFViewer = ({ file, containerWidth }) => {
         {popup && (
           <HighlightPopup
             position={popup.position}
+            containerRef={viewerRef}
             onSelectColor={addHighlight}
             onCopyText={copyText}
           />

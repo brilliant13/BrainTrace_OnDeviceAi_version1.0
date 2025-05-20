@@ -80,10 +80,13 @@ export default function ProjectListView() {
             <div className="project-list-view" style={{ flex: 1 }}>
                 {/* 페이지 헤더 */}
                 <div className="project-header" style={{ textAlign: 'center', margin: '35px 0 16px' }}>
-                    <h1 className="page-highlight" style={{ fontSize: '35px' }}>
-                        당신의 두뇌 저장소..
+                    <h1 className="page-highlight" style={{
+                        fontSize: '40px', lineHeight: '1.4'
+                    }}>
+                        당신만의 세컨드 브레인을 만들어보세요.
                     </h1>
                 </div>
+
 
                 {/* 정렬 드롭다운 */}
                 <div className="project-header-controls" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20, paddingRight: 20 }}>

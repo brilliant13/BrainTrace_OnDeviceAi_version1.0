@@ -10,8 +10,7 @@ import {
 } from '../../../../backend/services/backend';
 import { pdfjs } from 'react-pdf';
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min?url';
-import SourceQuotaBar from './SourceQuotaBar'; import './styles/SourceQuotaBar.css';
-
+import SourceQuotaBar from './SourceQuotaBar';
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 function SourceUploadModal({ visible, onClose, onUpload, onGraphRefresh, folderId = null, brainId = null, currentCount = 0 }) {
