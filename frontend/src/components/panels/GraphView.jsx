@@ -73,29 +73,37 @@ function GraphView({
   const startTimelapse = () => {
     const nodes = [...graphData.nodes];
     const links = [...graphData.links];
-    const totalDuration = 5000;            // 전체 애니메이션을 5초에 끝내겠다
-    const fadeDuration = 300;             // 각 노드가 서서히 fade-in 되는 시간(ms)
+    const totalDuration = 6000;
+    const fadeDuration = 300;
     const N = nodes.length;
     if (N === 0) return;
 
-    // 1) 등장 타임 계산
-    const appearTimes = nodes.map((_, i) =>
+    // 노드 셔플
+    const shuffledNodes = d3.shuffle(nodes);
+
+    const appearTimes = shuffledNodes.map((_, i) =>
       (i / (N - 1)) * (totalDuration - fadeDuration)
     );
 
     setIsAnimating(true);
+    setVisibleNodes([]);
+    setVisibleLinks([]);
+
+    if (fgRef.current) {
+      const currentZoom = fgRef.current.zoom();
+      fgRef.current.zoom(currentZoom, 0); // 카메라 줌 유지 (위치 이동 제거)
+    }
+
     const startTime = performance.now();
 
     const tick = now => {
       const t = now - startTime;
-      // 2) 현재 보여줄 노드 인덱스
       const idx = Math.min(
         N - 1,
-        Math.floor(((t) / (totalDuration - fadeDuration)) * (N - 1))
+        Math.floor((t / (totalDuration - fadeDuration)) * (N - 1))
       );
 
-      // 3) opacity 계산: 노드 i가 appearTimes[i]에 등장 → fadeDuration 동안 opacity 0→1
-      const visible = nodes.slice(0, idx + 1).map((n, i) => {
+      const visible = shuffledNodes.slice(0, idx + 1).map((n, i) => {
         const dt = t - appearTimes[i];
         const alpha = dt <= 0
           ? 0
@@ -105,18 +113,13 @@ function GraphView({
         return { ...n, __opacity: alpha };
       });
 
-      // 4) 링크도 노드 인덱스 기준으로 필터링
+      const visibleIds = new Set(visible.map(n => n.id));
       const visibleLinks = links.filter(l =>
-        appearTimes[nodes.findIndex(n => n.id === l.source)] <= t &&
-        appearTimes[nodes.findIndex(n => n.id === l.target)] <= t
+        visibleIds.has(l.source) && visibleIds.has(l.target)
       );
 
       setVisibleNodes(visible);
       setVisibleLinks(visibleLinks);
-
-      // 5) 그리기 레이어에 opacity 전달
-      fgRef.current || console.warn('no fgRef!');
-      // (ForceGraph2D 에서는 nodeCanvasObject 에서 node.__opacity를 참조)
 
       if (t < totalDuration) {
         requestAnimationFrame(tick);
@@ -127,6 +130,7 @@ function GraphView({
 
     requestAnimationFrame(tick);
   };
+
 
   // 노드 클릭 핸들러 (더블클릭 감지 포함)
   const handleNodeClick = (node) => {
