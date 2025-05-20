@@ -242,7 +242,6 @@ function GraphView({
     }
   }, [referencedNodes]);
 
-
   useEffect(() => { // 질문할 때 관련된 노드로 이동하는 코드
     if (!showReferenced || referencedNodes.length === 0 || !graphData.nodes.length) return;
 
@@ -289,7 +288,7 @@ function GraphView({
           fg.zoom(targetZoom, 1000);
         }, 1000);
       }, 900);
-    }, 500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [showReferenced, referencedNodes, graphData, referencedSet]);
@@ -340,7 +339,7 @@ function GraphView({
           fg.zoom(targetZoom, 1000);
         }, 1000);
       }, 900);
-    }, 500);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, [newlyAddedNodeNames, graphData]);
@@ -574,9 +573,9 @@ function GraphView({
             ctx.fill();
 
             // 노드 테두리 그리기 - 참고된 노드는 주황색 테두리
-            const fontSize = isReferenced ? 13 / globalScale : 9 / globalScale;
+            const fontSize = (isReferenced || isNewlyAdded) ? 13 / globalScale : 9 / globalScale;
 
-            ctx.font = isReferenced
+            ctx.font = (isReferenced || isNewlyAdded)
               ? `bold ${fontSize}px Sans-Serif`
               : `${fontSize}px Sans-Serif`;
 
@@ -623,7 +622,8 @@ function GraphView({
             ctx.stroke();
 
             // 노드 아래에 텍스트 그리기
-            const textColor = (isImportantNode || isReferenced) ? '#222' : '#555';
+            const textColor = (isImportantNode || isReferenced || isNewlyAdded) ? '#222' : '#555';
+
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             ctx.fillStyle = textColor;
