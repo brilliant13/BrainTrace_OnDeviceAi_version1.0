@@ -147,8 +147,20 @@ async def rename_brain(brain_id: int, data: BrainRename):
     summary="브레인 삭제"
 )
 async def delete_brain(brain_id: int):
-    if not sqlite_handler.delete_brain(brain_id):
-        raise HTTPException(404, "브레인을 찾을 수 없습니다")
+    try:
+        # 1. Neo4j에서 brain_id에 해당하는 모든 description 삭제
+        neo4j_handler.delete_descriptions_by_brain_id(str(brain_id))
+        
+        # 2. 벡터 DB에서 brain_id에 해당하는 컬렉션 전체 삭제
+        from services.embedding_service import delete_collection
+        delete_collection(str(brain_id))
+        
+        # 3. SQLite에서 brain 삭제
+        if not sqlite_handler.delete_brain(brain_id):
+            raise HTTPException(404, "브레인을 찾을 수 없습니다")
+            
+    except Exception as e:
+        raise HTTPException(500, str(e))
 
 @router.delete(
     "/{brain_id}/deleteDB/{source_id}",

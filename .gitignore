@@ -12,3 +12,4 @@ backend/data/
 backend/node_modules
 backend/data/qdrant/meta.json
 .env
+node_modules/
