@@ -82,7 +82,7 @@ export default function ProjectPanel({ activeProject, onProjectChange }) {
         onClick={() => nav('/')}
         title="홈으로"
       >
-        <IoHomeOutline size={20} />
+        <IoHomeOutline size={26} />
       </div>
       {/* 새 브레인 모달 */}
       {showModal && (
