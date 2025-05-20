@@ -1,12 +1,76 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-const colors = ['#fff7a3', '#ffd8c2', '#c9ffd9', '#cfe9ff', '#f2ccff']; // 연한 색상
+const colors = ['#fff7a3', '#ffd8c2', '#c9ffd9', '#cfe9ff', '#f2ccff'];
 
-const HighlightPopup = ({ position, onSelectColor, onCopyText }) => {
+const HighlightPopup = ({ position, containerRef, onSelectColor, onCopyText }) => {
+  const popupRef = useRef(null);
+  const [dragging, setDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const [currentPos, setCurrentPos] = useState({
+    x: position.x,
+    y: position.y + (containerRef?.current?.scrollTop || 0)
+  });
+
+  // ✅ 드래그하지 않은 경우에만 position으로 위치 초기화
+  useEffect(() => {
+    if (!dragging) {
+      setCurrentPos({
+        x: position.x,
+        y: position.y + (containerRef?.current?.scrollTop || 0)
+      });
+    }
+  }, [position]);
+
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    const popupRect = popupRef.current?.getBoundingClientRect();
+    if (!popupRect) return;
+
+    setDragOffset({
+      x: e.clientX - popupRect.left,
+      y: e.clientY - popupRect.top
+    });
+    setDragging(true);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!dragging) return;
+
+    const scrollTop = containerRef?.current?.scrollTop || window.scrollY || 0;
+    const scrollLeft = containerRef?.current?.scrollLeft || window.scrollX || 0;
+    const containerRect = containerRef?.current?.getBoundingClientRect();
+
+    const baseX = containerRect ? containerRect.left : 0;
+    const baseY = containerRect ? containerRect.top : 0;
+
+    setCurrentPos({
+      x: e.clientX - baseX - dragOffset.x + scrollLeft,
+      y: e.clientY - baseY - dragOffset.y + scrollTop
+    });
+  };
+
+  const handleMouseUp = () => setDragging(false);
+
+  useEffect(() => {
+    if (dragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [dragging]);
+
   const style = {
     position: 'absolute',
-    left: position.x,
-    top: position.y,
+    left: currentPos.x,
+    top: currentPos.y,
     padding: '10px 14px',
     backgroundColor: '#ffffff',
     borderRadius: '12px',
@@ -16,7 +80,7 @@ const HighlightPopup = ({ position, onSelectColor, onCopyText }) => {
     alignItems: 'center',
     gap: '10px',
     border: '1px solid #e6e8eb',
-    transition: 'opacity 0.3s ease',
+    cursor: dragging ? 'grabbing' : 'grab'
   };
 
   const circleStyle = (color) => ({
@@ -29,18 +93,24 @@ const HighlightPopup = ({ position, onSelectColor, onCopyText }) => {
   });
 
   return (
-    <div style={style}>
+    <div ref={popupRef} style={style} onMouseDown={handleMouseDown}>
       {colors.map((color) => (
         <div
           key={color}
           style={circleStyle(color)}
-          onClick={() => onSelectColor(color)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectColor(color);
+          }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         />
       ))}
       <button
-        onClick={onCopyText}
+        onClick={(e) => {
+          e.stopPropagation();
+          onCopyText();
+        }}
         style={{
           border: 'none',
           backgroundColor: '#4f46e5',
