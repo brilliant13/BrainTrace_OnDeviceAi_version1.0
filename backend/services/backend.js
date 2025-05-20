@@ -116,6 +116,20 @@ export const createTextToGraph = body =>
         )
         .then(r => r.data);
 
+export const uploadTextfiles = (files, folderId = null, brainId = null) => {
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    if (folderId != null) formData.append('folder_id', folderId);
+    if (brainId != null) formData.append('brain_id', brainId);
+
+    return api.post(
+        '/textfiles/upload-txt',  // 위에서 정의한 엔드포인트
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+    ).then(res => res.data);
+};
+
+
 /* ───────── VOICE FILES ───────── */
 export const createVoice = body => api.post('/voices', body).then(r => r.data);
 export const getVoice = id => api.get(`/voices/${id}`).then(r => r.data);

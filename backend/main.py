@@ -89,6 +89,8 @@ app.include_router(voiceRouter.router)
 app.include_router(chatRouter.router)
 
 app.mount("/uploaded_pdfs", StaticFiles(directory="uploaded_pdfs"), name="uploaded_pdfs")
+app.mount("/uploaded_txts", StaticFiles(directory="uploaded_txts"), name="uploaded_txts")
+
 
 # ─── 서버 실행 ──────────────────────────────────────
 if __name__ == "__main__":

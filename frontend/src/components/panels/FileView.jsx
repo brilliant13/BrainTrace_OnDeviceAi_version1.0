@@ -37,6 +37,7 @@ import {
   updateTextFile,
   updateVoice,
   createTextToGraph,
+  uploadTextfiles
 } from '../../../../backend/services/backend'
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
@@ -85,6 +86,7 @@ export default function FileView({
   files = [],
   setFiles = () => { },
   onOpenPDF,
+  onOpenTXT,
   fileMap = {},
   setFileMap = () => { },
   refreshTrigger,
@@ -184,20 +186,20 @@ export default function FileView({
     }
     // --- TXT ---
     else if (ext === 'txt') {
-      // 텍스트 파일 생성
-      const res = await createTextFile({
-        ...common,
-        txt_title: f.name,
-        txt_path: f.name,
-      });
-      // 그래프 생성
+      // 1) 업로드 (pdf와 동일한 방식)
+      const [meta] = await uploadTextfiles([f], folderId, brainId);
+
+      // 2) 파일 내용 추출 후 그래프 생성
       const content = await f.text();
+
       await createTextToGraph({
         text: content,
         brain_id: String(brainId),
-        source_id: String(res.txt_id),
+        source_id: String(meta.txt_id),
       });
-      return { id: res.txt_id, filetype: 'txt', meta: res };
+
+      return { id: meta.txt_id, filetype: 'txt', meta };
+
     }
     // --- Voice ---
     else if (['mp3', 'wav', 'm4a'].includes(ext)) {
@@ -290,7 +292,6 @@ export default function FileView({
     setMenuOpenId(null); // 점점점 메뉴 닫기
   };
 
-
   const handleRootDrop = async e => {
     e.preventDefault()
     e.stopPropagation()
@@ -314,22 +315,19 @@ export default function FileView({
       setUploadQueue(q => [...q, { key, name, filetype: 'txt', status: 'processing' }])
 
       try {
-        // 2) 실제 생성 & 그래프 변환
-        const res = await createTextFile({
-          folder_id: null,
-          brain_id: brainId,
-          type: 'txt',
-          txt_title: name,
-          txt_path: name,
-          content,
-        })
-        await processMemoTextAsGraph(content, res.txt_id, brainId)
-        // 그래프 새로고침 트리거
-        if (onGraphRefresh) onGraphRefresh();
+        // 2) Blob으로 변환 후 File 객체 생성 (업로드 통일 처리용)
+        const blob = new Blob([content], { type: 'text/plain' })
+        const file = new File([blob], name, { type: 'text/plain' })
 
-        // 3) 완료 처리: 큐에서 제거 + 체크 표시
+        // 3) uploadTextfiles 함수 호출 (pdf처럼 업로드 통일)
+        const [meta] = await uploadTextfiles([file], null, brainId)
+
+        // 4) 그래프 생성
+        await processMemoTextAsGraph(content, meta.txt_id, brainId)
+
+        // 5) 완료 처리
         setUploadQueue(q => q.filter(item => item.key !== key))
-
+        if (onGraphRefresh) onGraphRefresh()
         await refresh()
       } catch (err) {
         console.error('메모 파일 생성 실패', err)
@@ -493,6 +491,8 @@ export default function FileView({
               setSelectedFile(f.id);
               if (f.filetype === 'pdf' && fileMap[f.id]) {
                 onOpenPDF(fileMap[f.id]);
+              } else if (f.filetype === 'txt' && fileMap[f.id]) {
+                onOpenTXT(fileMap[f.id]);  // ✅ 이 부분 추가
               }
             }}
           >
@@ -559,7 +559,6 @@ export default function FileView({
           }}
         />
       )}
-
     </div>
   )
 }

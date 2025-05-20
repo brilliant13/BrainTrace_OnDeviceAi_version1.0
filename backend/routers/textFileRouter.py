@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query,UploadFile, File, Form
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from sqlite_db.sqlite_handler import SQLiteHandler
-import logging
+import logging, uuid, os, re
 
 sqlite_handler = SQLiteHandler()
 router = APIRouter(
@@ -221,3 +221,53 @@ async def get_textfiles_by_brain(
     except Exception as e:
         logging.error("텍스트 파일 조회 오류: %s", e)
         raise HTTPException(status_code=500, detail="서버 오류")
+    
+UPLOAD_TXT_DIR = "uploaded_txts"
+os.makedirs(UPLOAD_TXT_DIR, exist_ok=True)
+
+def sanitize_filename(name):
+    return re.sub(r'[^\w\-_\. ]', '_', name)
+
+@router.post("/upload-txt", response_model=List[TextFileResponse],
+             summary="텍스트 파일 업로드 및 저장",
+             description=".txt 파일을 업로드하고 DB에 저장합니다.")
+async def upload_textfiles(
+    files: List[UploadFile] = File(...),
+    folder_id: Optional[int] = Form(None),
+    brain_id: Optional[int] = Form(None)
+):
+    uploaded_textfiles = []
+
+    # 폴더 및 Brain 유효성 검사
+    if folder_id is not None and not sqlite_handler.get_folder(folder_id):
+        raise HTTPException(status_code=404, detail="해당 폴더가 존재하지 않습니다.")
+    if brain_id is not None and not sqlite_handler.get_brain(brain_id):
+        raise HTTPException(status_code=404, detail="해당 Brain이 존재하지 않습니다.")
+
+    for file in files:
+        try:
+            ext = os.path.splitext(file.filename)[1].lower()
+            if ext != ".txt":
+                continue  # txt 파일만 처리
+
+            safe_name = sanitize_filename(file.filename)
+            unique_name = f"{uuid.uuid4().hex}_{safe_name}"
+            file_path = os.path.join(UPLOAD_TXT_DIR, unique_name)
+
+            content = await file.read()
+            with open(file_path, "wb") as f:
+                f.write(content)
+
+            created = sqlite_handler.create_textfile(
+                txt_title=safe_name,
+                txt_path=file_path,
+                folder_id=folder_id,
+                type="txt",
+                brain_id=brain_id
+            )
+            uploaded_textfiles.append(created)
+
+        except Exception as e:
+            logging.error("TXT 업로드 실패 (%s): %s", file.filename, e)
+
+    return uploaded_textfiles

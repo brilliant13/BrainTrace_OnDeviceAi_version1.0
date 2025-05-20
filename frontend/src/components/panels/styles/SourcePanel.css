@@ -287,6 +287,7 @@ button.add-button.icon-only:active {
 }
 
 .pdf-viewer-wrapper {
+  background: #fafafa;
   overflow-y: auto;
   height: 100%;
   padding: 8px;
