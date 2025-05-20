@@ -122,7 +122,7 @@ function GraphViewWithModal(props) {
                                 <MdClose size={25} />
                             </button>
                         </div>
-                        <GraphView {...props} height="100%" isFullscreen={isFullscreen} />
+                        <GraphView {...props} isFullscreen={isFullscreen} />
                         <div className="modal-resize-handle" onMouseDown={handleResizeMouseDown} />
                     </div>
                 </div>

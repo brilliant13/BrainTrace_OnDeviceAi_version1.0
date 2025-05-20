@@ -1,0 +1,76 @@
+/* GraphView.css */
+.graph-area {
+    width: 100%;
+    height: auto;
+    max-height: 1022px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background-color: #fafafa;
+}
+
+/* 공통 팝업 UI */
+.graph-popup {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.graph-popup .close-x {
+    cursor: pointer;
+    font-weight: bold;
+    color: #666;
+    font-size: 18px;
+    transition: color 0.2s;
+}
+
+.graph-popup .close-x:hover {
+    color: red;
+}
+
+/* 로딩 오버레이 */
+.graph-loading,
+.graph-error {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fafafa;
+}
+
+.graph-error {
+    color: red;
+}
+
+/* 타임랩스 버튼 */
+.timelapse-button-container {
+    position: absolute;
+    right: 15.5px;
+}
+
+.timelapse-button {
+    color: black;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    border: none;
+    outline: none;
+}
+
+.timelapse-button:hover {
+    transform: scale(1.1);
+}
