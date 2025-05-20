@@ -13,6 +13,7 @@ import {
 } from '../../../../backend/services/backend';
 import FileView from '../panels/FileView';
 import PDFViewer from '../panels/PDFViewer';
+import TxtViewer from '../panels/TxtViewer';
 import SourceUploadModal from '../panels/SourceUploadModal';
 import SourceQuotaBar from '../panels/SourceQuotaBar';
 import toggleIcon from '../../assets/icons/toggle-view.png';
@@ -52,6 +53,7 @@ export default function SourcePanel({
   const [showAddFolderInput, setShowAddFolderInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [openedTXT, setOpenedTXT] = useState(null);
 
   // 업로드 트리거 (바뀔 때마다 FileView가 다시 로드)
   const [uploadKey, setUploadKey] = useState(0);
@@ -136,6 +138,7 @@ export default function SourcePanel({
 
   const closePDF = () => {
     setOpenedPDF(null);
+    setOpenedTXT(null);
     setIsPDFOpen(false);
     onBackFromPDF?.();
   };
@@ -184,8 +187,8 @@ export default function SourcePanel({
 
       {!collapsed && (
         <>
-          <div className="source-actions-fixed">
-            {!openedPDF && (
+          <div>
+            {(!openedPDF && !openedTXT) && (
               <div className="action-buttons">
                 <button
                   className={`pill-button ${panelWidth < 250 ? 'icon-only' : ''}`}
@@ -232,10 +235,14 @@ export default function SourcePanel({
           <div className="panel-content" style={{ flexGrow: 1, overflow: 'auto' }}>
             {openedPDF ? (
               <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
-
                 <button className="pdf-back-button" onClick={closePDF}>← 뒤로가기</button>
                 <PDFViewer file={`http://localhost:8000/${openedPDF.pdf_path}`} containerWidth={panelWidth} />
-              </div >
+              </div>
+            ) : openedTXT ? (
+              <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
+                <button className="pdf-back-button" onClick={closePDF}>← 뒤로가기</button>
+                <TxtViewer fileUrl={`http://localhost:8000/${openedTXT.txt_path}`} />
+              </div>
             ) : (
               <FileView
                 brainId={activeProject}
@@ -243,6 +250,10 @@ export default function SourcePanel({
                 setFiles={setFolderTree}
                 onOpenPDF={file => {
                   setOpenedPDF(file);
+                  setIsPDFOpen(true);
+                }}
+                onOpenTXT={file => {
+                  setOpenedTXT(file);
                   setIsPDFOpen(true);
                 }}
                 fileMap={fileMap}
@@ -258,7 +269,8 @@ export default function SourcePanel({
             }
           </div >
         </>
-      )}
+      )
+      }
 
       <SourceUploadModal
         visible={showUploadModal}
@@ -272,8 +284,10 @@ export default function SourcePanel({
             // fileMap에 pdf_id → PdfResponse 매핑
             setFileMap(prev => {
               const m = { ...prev };
-              uploadedFiles.forEach(pdf => {
-                m[pdf.pdf_id] = pdf;
+              uploadedFiles.forEach(file => {
+                if (file.pdf_id) m[file.pdf_id] = file;
+                else if (file.txt_id) m[file.txt_id] = file;
+                else if (file.voice_id) m[file.voice_id] = file;
               });
               return m;
             });
