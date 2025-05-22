@@ -79,10 +79,12 @@ function GraphView({
   const startTimelapse = () => {
     const nodes = [...graphData.nodes];
     const links = [...graphData.links];
-    const totalDuration = 6000;
-    const fadeDuration = 300;
     const N = nodes.length;
     if (N === 0) return;
+
+    // 🧠 노드 수에 따라 전체 재생 시간 동적으로 조정
+    const totalDuration = Math.min(6000, 800 + N * 80); // 노드 수 많을수록 길어짐 (최대 6초)
+    const fadeDuration = Math.max(200, Math.min(800, N * 10)); // 페이드 시간도 노드 수에 비례
 
     // 노드 셔플
     const shuffledNodes = d3.shuffle(nodes);
