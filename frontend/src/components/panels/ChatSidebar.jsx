@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './styles/ChatSidebar.css';
 import { GoPencil } from 'react-icons/go';
 import { RiDeleteBinLine } from 'react-icons/ri';
@@ -17,6 +17,21 @@ function ChatSidebar({
     const [openMenuId, setOpenMenuId] = useState(null);
     const [isEditingId, setIsEditingId] = useState(null);
     const [editingTitle, setEditingTitle] = useState('');
+    const menuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setOpenMenuId(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
 
     const formatDate = timestamp => {
         const date = new Date(Number(timestamp));
@@ -97,7 +112,7 @@ function ChatSidebar({
                                 </div>
                             )}
 
-                            <div className="session-menu-wrapper" onClick={(e) => e.stopPropagation()}>
+                            <div className="session-menu-wrapper" ref={menuRef} onClick={(e) => e.stopPropagation()}>
                                 <button className="menu-button" onClick={() => toggleMenu(session.id)}>⋯</button>
                                 {openMenuId === session.id && (
                                     <div className="dropdown-menu">
