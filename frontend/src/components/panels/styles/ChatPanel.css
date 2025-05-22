@@ -163,44 +163,106 @@
 }
 
 /* ─── 공통 레이아웃(변경 없음) ─── */
-.message-wrapper         { display:flex; margin-bottom:40px; padding:0 16px; width:100%; overflow:visible; }
-.user-message            { justify-content:flex-end; }
-.bot-message             { justify-content:flex-start; }
+.message-wrapper {
+  display: flex;
+  margin-bottom: 40px;
+  padding: 0 16px;
+  width: 100%;
+  overflow: visible;
+  animation: messageSlideIn 0.25s ease-out;
+}
 
-.message                 { position:relative; max-width:70%; min-width:200px; padding:16px 20px;
-                           border-radius:18px; word-wrap:break-word; overflow-wrap:break-word; }
+.user-message {
+  justify-content: flex-end;
+}
 
-.user-message .message   { background:#F4F4F4; border:1px solid #e5e7eb;
-                           border-radius:18px 18px 4px 18px; }
-.bot-message  .message   { background:#F8F9FA; border:1px solid #f1f3f4;
-                           border-radius:18px 18px 18px 4px; }
+.bot-message {
+  justify-content: flex-start;
+}
 
-.message-body            { font-size:16px; line-height:1.7; color:#1f2937; white-space:pre-wrap; }
+/* 💬 말풍선 개선 */
+.message {
+  position: relative;
+  max-width: 72%;
+  padding: 16px 20px;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  font-size: 15.5px;
+  font-weight: 460;
+  letter-spacing: -0.01em;
+  transition: box-shadow 0.2s ease;
+}
 
-/* ─── 복사 버튼 ─── */
-.message-actions         { position:absolute; bottom:-14px; opacity:0; transition:opacity .2s ease; }
+.user-message .message {
+  background: #fefefe;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px 18px 6px 18px;
+}
 
-.user-message .message-actions { right:0;  }  /* 말풍선 아래 오른쪽 */
-.bot-message  .message-actions { left :0;  }  /* 말풍선 아래 왼쪽  */
+.bot-message .message {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px 18px 18px 6px;
+}
+
+.message-body {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #1f2937;
+  white-space: pre-wrap;
+}
+
+/* ✂️ 복사 버튼 위치 & 효과 개선 */
+.message-actions {
+  position: absolute;
+  bottom: -15px;
+  right: 5px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.user-message .message-actions {
+  right: 0;
+}
+
+/* 말풍선 아래 오른쪽 */
+.bot-message .message-actions {
+  left: 0;
+}
+
+/* 말풍선 아래 왼쪽  */
 
 .message:hover .message-actions,
-.message-actions:hover   { opacity:1; }
+.message-actions:hover {
+  opacity: 1;
+}
 
-.copy-button             { width:30px; height:30px; border-radius:8px; background:#fff;
-                           border:1px solid #e5e7eb; display:flex; align-items:center;
-                           justify-content:center; cursor:pointer; box-shadow:0 1px 3px rgba(0,0,0,.12);
-                           transition:all .18s ease; }
-.copy-button:hover       { background:#f9fafb; box-shadow:0 2px 6px rgba(0,0,0,.14); }
+.copy-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease-in-out;
+}
 
-/* .copy-icon               { width:14px; height:14px; } */
-.copy-icon { width:16px; height:16px; }   /* 필요 시 20px 등으로 변경 */
+.copy-button:hover {
+  background-color: #f3f4f6;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
 
-
-/* 빈 공간이 생기지 않도록 메시지 간 간격 ↑20px 증가 → margin-bottom:40px (위) */
-
-
-
-
+.copy-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.8;
+}
 
 /* Chat controls */
 .chat-controls {
@@ -248,6 +310,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -264,8 +327,9 @@
   align-items: center;
   gap: 8px;
   padding: 16px 0;
-  color: #6b7280;
-  font-size: 14px;
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 13.5px;
 }
 
 .thinking-dots {
@@ -281,23 +345,123 @@
   animation: thinkingPulse 1.4s infinite ease-in-out;
 }
 
-.thinking-dot:nth-child(1) { animation-delay: 0s; }
-.thinking-dot:nth-child(2) { animation-delay: 0.2s; }
-.thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+.thinking-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.thinking-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.thinking-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
 @keyframes thinkingPulse {
-  0%, 80%, 100% {
+
+  0%,
+  80%,
+  100% {
     transform: scale(0);
     opacity: 0.5;
   }
+
   40% {
     transform: scale(1);
     opacity: 1;
   }
 }
+
 .chat-content,
-.empty-chat-content {        /* 대화 중 / 첫 화면 모두 */
-  width: 100%;              /* ← 부모 패널 가로폭에 맞춰 늘어남  */
-  flex: 1 1 auto;           /* ← flex-item이라도 ‘꽉’ 차도록     */
-  align-self: stretch;      /* ← 혹시 align-items:center 여파 방지 */
+.empty-chat-content {
+  /* 대화 중 / 첫 화면 모두 */
+  width: 100%;
+  /* ← 부모 패널 가로폭에 맞춰 늘어남  */
+  flex: 1 1 auto;
+  /* ← flex-item이라도 ‘꽉’ 차도록     */
+  align-self: stretch;
+  /* ← 혹시 align-items:center 여파 방지 */
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: #374151;
+  cursor: pointer;
+  padding: 6px 8px;
+  margin-right: -10px;
+}
+
+.back-button:hover {
+  background-color: #f3f4f6;
+  /* 연한 회색 배경 */
+  box-shadow: 1px 2px 6px rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  padding: 1px;
+  border: none;
+  /* 부드러운 그림자 */
+}
+
+.chat-title-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+
+.chat-title-display:hover .edit-icon-button {
+  display: inline-block;
+  border: none;
+  outline: none;
+  background-color: white;
+}
+
+.chat-title-input {
+  font-size: 20px;
+  font-weight: 600;
+  border: none;
+  outline: none;
+  border-radius: 4px;
+}
+
+.edit-icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  margin-left: 3px;
+  padding: 10px;
+}
+
+.edit-icon-button:hover {
+  transform: scale(1.1);
+}
+
+.graph-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease-in-out;
+}
+
+.graph-button:hover {
+  background-color: #f3f4f6;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.graph-icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.75;
 }

@@ -1,5 +1,6 @@
 // src/components/layout/MainLayout.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Panel,
   PanelGroup,
@@ -7,16 +8,12 @@ import {
 } from 'react-resizable-panels';
 import './MainLayout.css';
 
-// 패널 컴포넌트 가져오기
 import ProjectPanel from '../panels/ProjectPanel';
 import SourcePanel from '../panels/SourcePanel';
 import ChatPanel from '../panels/ChatPanel';
+import ChatSidebar from '../panels/ChatSidebar';
 import MemoPanel from '../panels/MemoPanel';
-
-import { useParams, useNavigate } from 'react-router-dom';
-/* API ─ backend */
 import { listUserBrains } from '../../../../backend/services/backend'
-
 
 // 리사이즈 핸들 컴포넌트
 function ResizeHandle() {
@@ -31,6 +28,11 @@ function MainLayout() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [hasProject, setHasProject] = useState(true);
+  const [sessions, setSessions] = useState([]);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [showChatPanel, setShowChatPanel] = useState(false); // ← 채팅 보기 여부
+  const [newlyCreatedSessionId, setNewlyCreatedSessionId] = useState(null);
+  const lastSavedProjectRef = useRef(null);
 
   const DEFAULT_SOURCE_PANEL_SIZE = 18;
   const DEFAULT_CHAT_PANEL_SIZE = 50;  // 추가된 기본 채팅 패널 크기
@@ -42,12 +44,17 @@ function MainLayout() {
 
   // 참고된 노드 목록을 위한 state 추가
   const [referencedNodes, setReferencedNodes] = useState([]);
+  const [allNodeNames, setAllNodeNames] = useState([]);
 
   // 그래프 Refresh 용도
   const [graphRefreshTrigger, setGraphRefreshTrigger] = useState(0);
   // FileView에서 호출할 함수
   const handleGraphRefresh = () => {
     setGraphRefreshTrigger(prev => prev + 1);
+  };
+  const handleGraphDataUpdate = (graphData) => {
+    const nodeNames = graphData?.nodes?.map(n => n.name) || [];
+    setAllNodeNames(nodeNames); // ✅ allNodeNames state 업데이트
   };
 
 
@@ -70,28 +77,81 @@ function MainLayout() {
   };
 
   const handleProjectChange = (projectId) => {
+    // 이전 프로젝트 저장
+    if (activeProject && sessions.length > 0) {
+      localStorage.setItem(`sessions-${activeProject}`, JSON.stringify(sessions));
+    }
+
+    // ✅ 초기화는 하지 않음
     setActiveProject(projectId);
+    setShowChatPanel(false); // ✅ 무조건 리스트로 이동
     navigate(`/project/${projectId}`);
-    // 프로젝트가 변경되면 참고된 노드 초기화
     setReferencedNodes([]);
   };
 
+
   // 패널 리사이즈 핸들러들
   const handleSourceResize = (size) => {
-    if (!sourceCollapsed) {
-      setSourcePanelSize(size);
-    }
+    if (!sourceCollapsed) { setSourcePanelSize(size); }
   };
 
-  const handleChatResize = (size) => {
-    setChatPanelSize(size);
-  };
+  const handleChatResize = (size) => { setChatPanelSize(size); };
 
   const handleMemoResize = (size) => {
-    if (!memoCollapsed) {
-      setMemoPanelSize(size);
+    if (!memoCollapsed) { setMemoPanelSize(size); }
+  };
+
+  const onReferencedNodesUpdate = (nodes) => {
+    setReferencedNodes(nodes);
+  };
+
+  const onRenameSession = (id, newTitle) => {
+    setSessions(prev => prev.map(s => s.id === id ? { ...s, title: newTitle } : s));
+  };
+
+  const onDeleteSession = (id) => {
+    setSessions(prev => prev.filter(s => s.id !== id));
+    if (id === currentSessionId) {
+      setCurrentSessionId(null);
     }
   };
+
+  useEffect(() => {
+    setActiveProject(projectId);
+    setShowChatPanel(false);  // ✅ 프로젝트 이동 시 채팅 리스트로 초기화
+  }, [projectId]);
+
+  // 저장
+  useEffect(() => {
+    if (!activeProject || !showChatPanel) return;
+
+    const activeProjectStr = String(activeProject);
+    const projectIdStr = String(projectId);
+
+    // 마지막으로 저장된 프로젝트가 같다면 중복 저장 방지
+    if (
+      activeProjectStr === projectIdStr &&
+      lastSavedProjectRef.current !== activeProjectStr
+    ) {
+      localStorage.setItem(`sessions-${activeProjectStr}`, JSON.stringify(sessions));
+      lastSavedProjectRef.current = activeProjectStr;
+    }
+  }, [sessions, activeProject, projectId, showChatPanel]);
+
+
+  // 불러오기
+  useEffect(() => {
+    if (!activeProject) return;
+    const saved = localStorage.getItem(`sessions-${activeProject}`);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      setSessions(parsed);
+      setCurrentSessionId(parsed[0]?.id || null);
+    } else {
+      setSessions([]);
+      setCurrentSessionId(null);
+    }
+  }, [activeProject]);
 
   // 소스 패널 크기 변경 효과
   useEffect(() => {
@@ -217,10 +277,50 @@ function MainLayout() {
         >
           <div className="layout-inner chat-inner">
             {/* <ChatPanel activeProject={Number(activeProject)} /> */}
-            <ChatPanel
-              activeProject={Number(activeProject)}
-              onReferencedNodesUpdate={setReferencedNodes} // ChatPanel에 함수 전달
-            />
+            {!showChatPanel ? (
+              <ChatSidebar
+                sessions={sessions}
+                currentSessionId={currentSessionId}
+                onSelectSession={(id) => {
+                  setCurrentSessionId(id);
+                  setShowChatPanel(true);
+                }}
+                onNewSession={(firstMessageText = '') => {
+                  const newId = Date.now().toString();
+                  const newSession = {
+                    id: newId,
+                    title: firstMessageText.slice(0, 20) || 'Untitled',
+                    messages: firstMessageText ? [{ text: firstMessageText, isUser: true }] : [],
+                  };
+                  const updated = [...sessions, newSession];
+                  setSessions(updated);
+                  setNewlyCreatedSessionId(newId);
+                  setTimeout(() => {
+                    setCurrentSessionId(newId);
+                    setShowChatPanel(true);
+                    setNewlyCreatedSessionId(null);
+                  }, 1200);
+                  return newSession; // ✅ 추가: ChatSidebar에서 이 값을 기대함
+                }}
+                onRenameSession={onRenameSession}
+                onDeleteSession={onDeleteSession}
+                newlyCreatedSessionId={newlyCreatedSessionId}
+                setNewlyCreatedSessionId={setNewlyCreatedSessionId}
+              />
+            ) : (
+              <ChatPanel
+                activeProject={activeProject}
+                onReferencedNodesUpdate={onReferencedNodesUpdate}
+                sessions={sessions}
+                setSessions={setSessions}
+                currentSessionId={currentSessionId}
+                setCurrentSessionId={setCurrentSessionId}
+                showChatPanel={showChatPanel}
+                setShowChatPanel={setShowChatPanel}
+
+                allNodeNames={allNodeNames}
+              />
+            )}
           </div>
         </Panel>
 
@@ -235,17 +335,13 @@ function MainLayout() {
           onResize={handleMemoResize}
         >
           <div className="layout-inner memo-inner">
-            {/* <MemoPanel
-              activeProject={Number(activeProject)}
-              collapsed={memoCollapsed}
-              setCollapsed={setMemoCollapsed}
-            /> */}
             <MemoPanel
               activeProject={Number(activeProject)}
               collapsed={memoCollapsed}
               setCollapsed={setMemoCollapsed}
               referencedNodes={referencedNodes} // MemoPanel에 참고된 노드 목록 전달
               graphRefreshTrigger={graphRefreshTrigger} // 그래프 refesh 용도
+              onGraphDataUpdate={handleGraphDataUpdate}
             />
           </div>
         </Panel>
