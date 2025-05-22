@@ -9,6 +9,10 @@ import { MdKeyboardBackspace } from "react-icons/md";
 import { BsTrash } from "react-icons/bs";
 import micOff from '../../assets/icons/mic_off.png'
 import micOn from '../../assets/icons/mic_on.png'
+import { TbTrashX } from "react-icons/tb";
+import { IoTrashBinOutline } from "react-icons/io5";
+import { CgNotes } from "react-icons/cg";
+import { LuTrash } from "react-icons/lu";
 
 function formatTime(seconds) {
     const min = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -110,6 +114,30 @@ function MemoListPanel({
             </div>
 
             <div className="memo-list">
+                {displayedMemos.length === 0 && (
+                    <div className="memo-empty-state">
+                        {!isTrash ? (
+                            <>
+                                <CgNotes className="memo-empty-icon" />
+                                <div className="memo-empty-text">저장된 메모가 여기에 표시됩니다</div>
+                                <div className="memo-empty-subtext">
+                                    중요한 생각을 메모로 남기고<br />드래그해서 소스로 추가하면 그래프에 반영됩니다.
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <LuTrash className="memo-empty-icon" />
+                                <div className="memo-empty-text">휴지통이 비어 있어요</div>
+                                <div className="memo-empty-subtext">
+                                    삭제된 메모가 이곳에 표시됩니다.<br />
+                                    메모는 30일 후 자동으로 완전히 삭제돼요.
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
+
                 {displayedMemos.map((memo) => {
                     const filename = `${memo.title || '메모'}.txt`;
                     const content = memo.content || '';
@@ -143,7 +171,7 @@ function MemoListPanel({
                                         onDelete(memo.id);
                                     }}
                                 >
-                                    <MdOutlineDeleteForever />
+                                    <IoTrashBinOutline size={18} />
                                 </button>
                             ) : (
                                 <button

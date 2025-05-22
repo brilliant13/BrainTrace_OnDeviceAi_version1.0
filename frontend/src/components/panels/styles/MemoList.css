@@ -195,6 +195,10 @@
     color: #e53935;
 }
 
+.delete-button:active {
+    outline: none;
+}
+
 .restore-button {
     background: none;
     border: none;
@@ -390,4 +394,33 @@
 
 .tooltip-container:hover .tooltip-text {
     visibility: visible;
+}
+
+.memo-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    text-align: center;
+    padding: 40px 20px;
+    height: 100%;
+    margin-top: -30px;
+}
+
+.memo-empty-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+}
+
+.memo-empty-text {
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.memo-empty-subtext {
+    font-size: 18px;
+    line-height: 1.5;
+    color: #999;
 }

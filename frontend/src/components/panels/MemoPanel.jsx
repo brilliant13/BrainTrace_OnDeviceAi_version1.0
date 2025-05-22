@@ -15,7 +15,7 @@ import memoOnIcon from '../../assets/icons/memo-on.png';
 import memoOffIcon from '../../assets/icons/memo-off.png';
 import GraphViewWithModal from './GraphViewWithModal';
 
-function MemoPanel({ activeProject, collapsed, setCollapsed, referencedNodes = [], graphRefreshTrigger }) {
+function MemoPanel({ activeProject, collapsed, setCollapsed, referencedNodes = [], graphRefreshTrigger, onGraphDataUpdate }) {
   const projectId = activeProject;
   const MEMO_STORAGE_KEY = `brainTrace-memos-${projectId}`;
   const DELETED_MEMO_STORAGE_KEY = `brainTrace-deleted-${projectId}`;
@@ -171,7 +171,7 @@ function MemoPanel({ activeProject, collapsed, setCollapsed, referencedNodes = [
                 height={showMemo ? graphHeight : 1022}
                 referencedNodes={referencedNodes} // MainLayout에서 받은 참고된 노드 목록 전달
                 graphRefreshTrigger={graphRefreshTrigger}
-
+                onGraphDataUpdate={onGraphDataUpdate}
               />
             </div>
           )}

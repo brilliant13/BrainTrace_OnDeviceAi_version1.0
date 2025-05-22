@@ -1,6 +1,6 @@
 // src/components/SourceQuotaBar.jsx
 import React from 'react';
-import { FaFileAlt } from 'react-icons/fa'; // React 아이콘
+import { MdUploadFile } from "react-icons/md";
 import './styles/SourceQuotaBar.css';
 
 function SourceQuotaBar({ current, max }) {
@@ -9,7 +9,7 @@ function SourceQuotaBar({ current, max }) {
     return (
         <div className="source-quota-bar">
             <div className="quota-label">
-                <FaFileAlt style={{ marginRight: '6px' }} />
+                <MdUploadFile style={{ marginRight: '7px', marginBottom: '3px' }} size={18} />
                 소스 한도
             </div>
             <div className="quota-progress-wrapper">
