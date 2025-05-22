@@ -7,7 +7,7 @@ import { easeCubicInOut } from 'd3-ease';
 import './styles/GraphView.css'; // 상단에 CSS import 추가
 function GraphView({
   brainId = 'default-brain-id',
-  height = '1022px', // 안예찬이 직접 찾은 최적의 그래프뷰 높이
+  height = '100%', // 안예찬이 직접 찾은 최적의 그래프뷰 높이
   graphData: initialGraphData = null,
   referencedNodes = [],
   graphRefreshTrigger, // 그래프 새로고침 트리거 prop 추가
@@ -58,10 +58,13 @@ function GraphView({
     const calcHeight =
       typeof height === 'number'
         ? height
-        : containerRef.current.clientHeight || 550;
+        : height === '100%'
+          ? window.innerHeight
+          : containerRef.current.clientHeight || 550;
 
     setDimensions({ width, height: calcHeight });
   };
+
 
   const getInitialZoomScale = (nodeCount) => {
     if (nodeCount >= 1000) return 0.045;
