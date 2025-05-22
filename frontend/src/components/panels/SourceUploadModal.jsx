@@ -11,6 +11,7 @@ import {
 import { pdfjs } from 'react-pdf';
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min?url';
 import SourceQuotaBar from './SourceQuotaBar';
+import { color } from 'd3';
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 function SourceUploadModal({ visible, onClose, onUpload, onGraphRefresh, folderId = null, brainId = null, currentCount = 0 }) {
@@ -178,7 +179,8 @@ function SourceUploadModal({ visible, onClose, onUpload, onGraphRefresh, folderI
               <button className="source-button">복사된 텍스트</button>
             </div>
             <div className="footer">
-              <SourceQuotaBar current={uploadQueue.length + currentCount} max={50} />
+              <SourceQuotaBar style={{ border: 'none', outline: 'none', color: 'red' }}
+                current={uploadQueue.length + currentCount} max={50} />
             </div>
 
           </>

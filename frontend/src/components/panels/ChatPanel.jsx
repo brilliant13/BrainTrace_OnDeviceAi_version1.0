@@ -1,101 +1,299 @@
-// ChatPanel.jsx – Claude-style 채팅(아바타 제거, 복사 버튼 포함)
-import React, { useState, useRef, useEffect } from 'react';
-import './styles/Common.css';
+import React, { useState, useEffect, useRef } from 'react';
 import './styles/ChatPanel.css';
 import './styles/Scrollbar.css';
-// import { requestAnswer } from '../../tmpAPI';
-import { requestAnswer } from '../../api/tmpAPI'; // API 요청 함수
-import projectData from '../../data/projectData';
-import copyIcon from '../../assets/icons/copy.png';   // 경로는 jsx 파일 → icons 폴더까지 상대경로
+import { requestAnswer } from '../../api/tmpAPI';
+//import projectData from '../../data/projectData';
+import copyIcon from '../../assets/icons/copy.png';
+import graphIcon from '../../assets/icons/graph-off.png';
+import { TbPencil } from "react-icons/tb";
+import { MdOutlineFormatListBulleted } from "react-icons/md";
+import { FaProjectDiagram } from 'react-icons/fa'; // 아이콘 추가
+import { HiOutlineBars4 } from "react-icons/hi2";
 
-// function ChatPanel({ activeProject }) {
-function ChatPanel({ activeProject, onReferencedNodesUpdate }) {
+import { getReferencedNodes } from '../../../../backend/services/backend';
+
+function ChatPanel({
+  activeProject,
+  onReferencedNodesUpdate,
+  sessions,
+  setSessions,
+  currentSessionId,
+  setCurrentSessionId,
+  showChatPanel,
+  setShowChatPanel,
+  allNodeNames = []
+}) {
+
   const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editingTitle, setEditingTitle] = useState('');
+  const titleInputRef = useRef(null);
+
   const messagesEndRef = useRef(null);
 
-  const project = projectData.find(p => p.id === activeProject) || projectData[0];
-  const { title } = project.chat || { title: '' };
+  //const project = projectData.find(p => p.id === activeProject) || projectData[0];
+  //const { title } = project.chat || { title: '' };
+  const [hoveredMessageIndex, setHoveredMessageIndex] = useState(null);
+  // 🔁 상태값 추가
+  const [hoveredChatId, setHoveredChatId] = useState(null); // 현재 hover 중인 메시지의 chatId
 
-  /* ===== 공통 유틸 ===== */
-  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  useEffect(scrollToBottom, [messages]);
 
-  const handleSubmit = async e => {
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+  useEffect(scrollToBottom, [sessions, currentSessionId]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        isEditingTitle &&
+        titleInputRef.current &&
+        !titleInputRef.current.contains(e.target)
+      ) {
+        handleTitleSave(); // 외부 클릭 시 저장
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isEditingTitle, editingTitle]);
+
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      const input = titleInputRef.current;
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length); // 커서 끝으로
+    }
+  }, [isEditingTitle]);
+
+  const createNewSession = (firstMessageText) => {
+    const newId = Date.now().toString();
+    const newSession = {
+      id: newId,
+      title: firstMessageText ? firstMessageText.slice(0, 20) : '새 대화',
+      messages: firstMessageText ? [{ text: firstMessageText, isUser: true }] : [],
+    };
+    const updated = [...sessions, newSession];
+    setSessions(prev => [...prev, newSession]);
+    setCurrentSessionId(newId);
+    localStorage.setItem(`sessions-${activeProject}`, JSON.stringify(updated));
+    return newSession;
+  };
+
+  const getCurrentMessages = () => {
+    const session = sessions.find(s => s.id === currentSessionId);
+    return session ? session.messages : [];
+  };
+
+  const updateSessionMessages = (messages) => {
+    setSessions(prev =>
+      prev.map(s =>
+        s.id === currentSessionId ? { ...s, messages } : s
+      )
+    );
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inputText.trim() || isLoading) return;
 
-    // ① 사용자 메시지
-    const userMessage = { text: inputText, isUser: true };
-    setMessages(prev => [...prev, userMessage]);
-    setInputText('');
     setIsLoading(true);
+    const userMessage = { text: inputText, isUser: true };
+
+    let newSession = null;
+    if (!currentSessionId) {
+      newSession = createNewSession(inputText);
+    }
+
+    const sessionId = newSession?.id || currentSessionId;
+    setCurrentSessionId(sessionId);
+
+    const targetSession = sessions.find(s => s.id === sessionId);
+    const newMessages = [...(targetSession?.messages || []), userMessage];
+    updateSessionMessages(newMessages);
+    setInputText('');
 
     try {
-      // ② LLM 호출
-      // const { answer = '' } = await requestAnswer(inputText, '1');
-      // const { answer = '' } = await requestAnswer(inputText, activeProject.toString());
       const response = await requestAnswer(inputText, activeProject.toString());
       const { answer = '', referenced_nodes = [] } = response;
-      // 참고된 노드 목록 업데이트 (MainLayout로 전달)
+
       if (referenced_nodes && onReferencedNodesUpdate) {
         onReferencedNodesUpdate(referenced_nodes);
       }
-      const botMessage = { text: answer, isUser: false };
-      setMessages(prev => [...prev, botMessage]);
+
+      const botMessage = {
+        text: answer,
+        isUser: false,
+        referencedNodes: referenced_nodes,
+        chatId: response.chat_id  // FastAPI 응답에서 chat_id를 반드시 포함시켜야 함
+      };
+      console.log("📦 botMessage:", botMessage);  // ✅ 디버깅
+      updateSessionMessages([...newMessages, botMessage]);
     } catch (err) {
       console.error(err);
-      setMessages(prev => [...prev, { text: '죄송합니다. 응답 생성 중 오류가 발생했어요.', isUser: false }]);
+      updateSessionMessages([...newMessages, { text: '죄송합니다. 응답 생성 중 오류가 발생했어요.', isUser: false }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyPress = e => {
+  const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) handleSubmit(e);
   };
 
-  const copyToClipboard = async text => {
+  const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      // TODO: 토스트 등 복사 성공 알림
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error('복사 실패:', err);
     }
   };
 
-  /* ====== 뷰 ====== */
-  const hasChatStarted = messages.length > 0;
+  const handleTitleEdit = () => {
+    const currentTitle = sessions.find(s => s.id === currentSessionId)?.title || '';
+    setEditingTitle(currentTitle);
+    setIsEditingTitle(true);
+  };
+
+  const handleTitleSave = () => {
+    if (editingTitle.trim()) {
+      setSessions(prev =>
+        prev.map(s =>
+          s.id === currentSessionId ? { ...s, title: editingTitle.trim() } : s
+        )
+      );
+    }
+    setIsEditingTitle(false);
+  };
+
+
+  const messages = getCurrentMessages();
+  const hasChatStarted = messages.some(msg => msg.text.trim() !== '');
 
   return (
     <div className="panel-container">
       <div className="panel-header">
-        <span className="header-title" style={{ fontSize: 16 }}>Chat</span>
+        <span className="header-title">Chat</span>
+        <button onClick={() => setShowChatPanel(false)} className="back-button">
+          <HiOutlineBars4 />
+        </button>
       </div>
 
       {hasChatStarted ? (
-        /* ───── 채팅 진행 중 ───── */
         <div className="panel-content chat-content">
-          <div className="chat-header"><div className="message-title">{title}</div></div>
+          <div
+            className="chat-title-container"
+          >
+            {isEditingTitle ? (
+              <input
+
+                ref={titleInputRef} // 추가
+                className="chat-title-input"
+                value={editingTitle}
+                onChange={e => setEditingTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleTitleSave();
+                  }
+                  if (e.key === 'Escape') {
+                    setIsEditingTitle(false); // ← 편집 취소
+                  }
+                }}
+              />
+            ) : (
+              <div
+                className="chat-title-display"
+                onMouseEnter={() => setIsEditingTitle(false)} // 숨김 상태 초기화
+              >
+                <span className="header-title" style={{ fontSize: '20px', fontWeight: '600' }}>
+                  {sessions.find(s => s.id === currentSessionId)?.title || '무제'}
+                </span>
+                <button className="edit-icon-button" onClick={handleTitleEdit} title="수정">
+                  <TbPencil />
+                </button>
+              </div>
+            )}
+          </div>
+
 
           <div className="chat-messages">
-            {messages.map((m, i) => (
-              <div key={i} className={`message-wrapper ${m.isUser ? 'user-message' : 'bot-message'}`}>
-                <div className="message">
-                  <div className="message-body">{m.text}</div>
+            {messages.map((m, i) => {
+              if (!m.text.trim()) return null;
 
-                  {/* 복사 버튼 – 말풍선 내부 */}
-                  <div className="message-actions">
-                    <button className="copy-button" title="복사" onClick={() => copyToClipboard(m.text)}>
-                      <img src={copyIcon} alt="복사" className="copy-icon" />
-                    </button>
+              const messageRefNodes = m.referencedNodes || [];
+
+              return (
+                <div
+                  key={i}
+                  className={`message-wrapper ${m.isUser ? 'user-message' : 'bot-message'}`}
+                  onMouseEnter={async () => {
+                    setHoveredMessageIndex(i);
+                    if (!m.isUser && m.chatId) {
+
+                      console.log("🟡 Hover한 메시지 chatId:", m.chatId); // ✅ 디버깅 출력
+                      setHoveredChatId(m.chatId);  // ✅ 현재 hover된 메시지의 chatId 저장
+                    }
+                  }}
+                  onMouseLeave={() => setHoveredMessageIndex(null)}
+                >
+
+                  <div className="message">
+                    {/* 그래프 아이콘: bot 메시지이면서 참고된 노드가 있을 경우만 */}
+
+                    <div className="message-body">
+                      {m.text.split(' ').map((word, i) =>
+                        allNodeNames.includes(word) ? (
+                          <span
+                            key={i}
+                            className="referenced-node"
+                            onClick={() => onReferencedNodesUpdate([word])}
+                          >
+                            {word}{' '}
+                          </span>
+                        ) : (
+                          <span key={i}>{word} </span>
+                        )
+                      )}
+                    </div>
+
+                    <div className="message-actions">
+                      <button className="copy-button" title="복사" onClick={() => copyToClipboard(m.text)}>
+                        <img src={copyIcon} alt="복사" className="copy-icon" />
+                      </button>
+
+                      {!m.isUser && hoveredMessageIndex === i && (
+                        <button
+                          className="graph-button"
+                          title="그래프 보기"
+                          onClick={async () => {
+                            if (!hoveredChatId) return;
+                            try {
+                              console.log("🟢 그래프 아이콘 클릭됨 - chatId:", hoveredChatId);
+                              const res = await getReferencedNodes(hoveredChatId);
+                              console.log("🧠 참고된 노드 리스트:", res.referenced_nodes);
+                              if (res.referenced_nodes && res.referenced_nodes.length > 0) {
+                                onReferencedNodesUpdate(res.referenced_nodes);
+                              } else {
+                                console.log("❗참고된 노드가 없습니다.");
+                              }
+                            } catch (err) {
+                              console.error("❌ 참고 노드 불러오기 실패:", err);
+                            }
+                          }}
+                        >
+                          <img src={graphIcon} alt="그래프" className="graph-icon" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
-            {/* 로딩 인디케이터 */}
             {isLoading && (
               <div className="message-wrapper bot-message">
                 <div className="message">
@@ -110,11 +308,9 @@ function ChatPanel({ activeProject, onReferencedNodesUpdate }) {
                 </div>
               </div>
             )}
-
             <div ref={messagesEndRef} />
           </div>
 
-          {/* 입력창 */}
           <form className="chat-controls" onSubmit={handleSubmit}>
             <div className="input-with-button">
               <textarea
@@ -137,15 +333,46 @@ function ChatPanel({ activeProject, onReferencedNodesUpdate }) {
           </form>
         </div>
       ) : (
-        /* ───── 빈 채팅 첫 화면 ───── */
         <div className="panel-content empty-chat-content">
-          <div className="chat-header"><div className="message-title">{title}</div></div>
+          <div
+            className="chat-title-container"
+          >
+            {isEditingTitle ? (
+              <input
+                ref={titleInputRef} // 추가
+                className="chat-title-input"
+                value={editingTitle}
+                onChange={e => setEditingTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleTitleSave();
+                  }
+                  if (e.key === 'Escape') {
+                    setIsEditingTitle(false); // ← 편집 취소
+                  }
+                }}
+              />
+            ) : (
+              <div
+                className="chat-title-display"
+                onMouseEnter={() => setIsEditingTitle(false)} // 숨김 상태 초기화
+              >
+                <span className="header-title" style={{ fontSize: '20px', fontWeight: '600' }}>
+                  {sessions.find(s => s.id === currentSessionId)?.title || '무제'}
+                </span>
+                <button className="edit-icon-button" onClick={handleTitleEdit} title="수정">
+                  <TbPencil size={18} color="#333333" />
+
+                </button>
+              </div>
+            )}
+          </div>
 
           <div className="centered-input-container">
             <div className="hero-section">
-              <h1 className="hero-title">당신의 Second Brain을 추적하세요</h1>
+              <h1 className="hero-title">어떤 과제를 해결하고 싶으신가요?</h1>
             </div>
-
             <form className="input-wrapper" onSubmit={handleSubmit}>
               <div className="input-with-button rounded">
                 <textarea

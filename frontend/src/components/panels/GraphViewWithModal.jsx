@@ -97,7 +97,7 @@ function GraphViewWithModal(props) {
     return (
         <div className="graph-view-wrapper">
             <div className="graph-with-button">
-                <GraphView {...props} isFullscreen={isFullscreen} />
+                <GraphView {...props} isFullscreen={isFullscreen} referencedNodes={props.referencedNodes} />
                 <button className="fullscreen-btn" onClick={() => setIsFullscreen(true)}>
                     {!isFullscreen && (<MdFullscreen size={22} color='black' title='전체화면' />)}
                 </button>
@@ -122,7 +122,7 @@ function GraphViewWithModal(props) {
                                 <MdClose size={25} />
                             </button>
                         </div>
-                        <GraphView {...props} isFullscreen={isFullscreen} />
+                        <GraphView {...props} isFullscreen={isFullscreen} referencedNodes={props.referencedNodes} />
                         <div className="modal-resize-handle" onMouseDown={handleResizeMouseDown} />
                     </div>
                 </div>

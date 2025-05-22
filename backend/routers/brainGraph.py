@@ -186,9 +186,14 @@ async def answer_endpoint(request_data: AnswerRequest):
             final_answer += nodes_text
             
         # AI 답변 저장
-        db_handler.save_chat(True, final_answer, brain_id, referenced_nodes)
+        # AI 답변 저장 및 chat_id 획득
+        chat_id = db_handler.save_chat(True, final_answer, brain_id, referenced_nodes)
 
-        return {"answer": final_answer, "referenced_nodes": referenced_nodes}
+        return {
+            "answer": final_answer,
+            "referenced_nodes": referenced_nodes,
+            "chat_id": chat_id   # ✅ 반드시 포함!
+        }
     except Exception as e:
         logging.error("answer 오류: %s", str(e))
         raise HTTPException(status_code=500, detail=str(e))

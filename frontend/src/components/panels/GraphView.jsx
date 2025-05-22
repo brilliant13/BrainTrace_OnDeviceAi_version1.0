@@ -11,7 +11,8 @@ function GraphView({
   graphData: initialGraphData = null,
   referencedNodes = [],
   graphRefreshTrigger, // 그래프 새로고침 트리거 prop 추가
-  isFullscreen = false
+  isFullscreen = false,
+  onGraphDataUpdate
 }) {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -63,11 +64,16 @@ function GraphView({
   };
 
   const getInitialZoomScale = (nodeCount) => {
-    if (nodeCount >= 1000) return 0.05;
-    else if (nodeCount >= 500) return 0.08;
-    else if (nodeCount >= 100) return 0.1;
-    else if (nodeCount >= 50) return 0.2;
-    return 0.3; // 노드가 매우 적을 때는 확대
+    if (nodeCount >= 1000) return 0.045;
+    else if (nodeCount >= 500) return 0.05;
+    else if (nodeCount >= 100) return 0.07;
+    else if (nodeCount >= 50) return 0.15;
+    else if (nodeCount >= 40) return 0.2;
+    else if (nodeCount >= 30) return 0.25;
+    else if (nodeCount >= 20) return 0.3;
+    else if (nodeCount >= 10) return 0.4;
+    else if (nodeCount >= 5) return 0.8;
+    return 1; // 노드가 매우 적을 때는 확대
   };
 
   const startTimelapse = () => {
@@ -199,7 +205,6 @@ function GraphView({
 
   // graphRefreshTrigger가 변경될 때마다 그래프 새로고침
   useEffect(() => {
-    // 트리거가 없거나 초기값(0, undefined)이면 무시
     if (!graphRefreshTrigger) return;
 
     const loadAndDetect = async () => {
@@ -292,7 +297,7 @@ function GraphView({
           fg.zoom(targetZoom, 1000);
         }, 1000);
       }, 900);
-    }, 2000);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [showReferenced, referencedNodes, graphData, referencedSet]);
@@ -401,6 +406,10 @@ function GraphView({
     setGraphData(processedData);
     prevGraphDataRef.current = processedData; // 이전 상태 저장
     setLoading(false);
+    if (onGraphDataUpdate) {
+      onGraphDataUpdate(processedData); // 👈 전체 노드 이름 전달
+    }
+
 
   };
 

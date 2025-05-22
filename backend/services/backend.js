@@ -157,3 +157,13 @@ export const getVoicesByBrain = (brainId, folderId = null) => {
 export const getDefaultPdfs = () => api.get(`/pdfs/default`).then(r => r.data);
 export const getDefaultTextfiles = () => api.get(`/textfiles/default`).then(r => r.data);
 export const getDefaultVoices = () => api.get(`/voices/default`).then(r => r.data);
+
+/* ───────── CHAT ───────── */
+export const deleteChat = chat_id =>
+    api.delete(`/chat/${chat_id}/delete`).then(r => r.data);
+
+export const getReferencedNodes = chat_id =>
+    api.get(`/chat/${chat_id}/referenced_nodes`).then(r => r.data);
+
+export const listChatsByBrain = brain_id =>
+    api.get(`/chat/chatList/${brain_id}`).then(r => r.data);
