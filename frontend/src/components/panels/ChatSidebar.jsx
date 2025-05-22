@@ -18,6 +18,14 @@ function ChatSidebar({
     const [isEditingId, setIsEditingId] = useState(null);
     const [editingTitle, setEditingTitle] = useState('');
 
+    const formatDate = timestamp => {
+        const date = new Date(Number(timestamp));
+        const year = date.getFullYear();
+        const month = `${date.getMonth() + 1}`.padStart(2, '0');
+        const day = `${date.getDate()}`.padStart(2, '0');
+        return `${year}.${month}.${day}`;
+    };
+
     const toggleMenu = (sessionId) => {
         setOpenMenuId(openMenuId === sessionId ? null : sessionId);
     };
@@ -61,47 +69,52 @@ function ChatSidebar({
             </div>
 
             <ul className="session-list">
-                {sessions.map(session => (
-                    <li
-                        key={session.id}
-                        className={`session-item 
+                {[...sessions]  // ← 원본 배열 복사
+                    .sort((a, b) => Number(b.id) - Number(a.id))  // 가장 최신 순으로 정렬
+                    .map(session => (
+                        <li
+                            key={session.id}
+                            className={`session-item 
               ${session.id === currentSessionId ? 'active' : ''} 
               ${session.id === newlyCreatedSessionId ? 'blinking' : ''}`}
-                        onClick={() => onSelectSession(session.id)}
-                    >
-                        {isEditingId === session.id ? (
-                            <input
-                                className="session-edit-input"
-                                value={editingTitle}
-                                autoFocus
-                                onChange={e => setEditingTitle(e.target.value)}
-                                onBlur={handleEditFinish}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') handleEditFinish();
-                                }}
-                            />
-                        ) : (
-                            <span className="session-title">{session.title || '무제'}</span>
-                        )}
-
-                        <div className="session-menu-wrapper" onClick={(e) => e.stopPropagation()}>
-                            <button className="menu-button" onClick={() => toggleMenu(session.id)}>⋯</button>
-                            {openMenuId === session.id && (
-                                <div className="dropdown-menu">
-                                    <div className="popup-item" onClick={() => handleEditStart(session)}>
-                                        <GoPencil size={15} style={{ marginRight: 6 }} />
-                                        채팅 이름 바꾸기
-                                    </div>
-                                    <div className="popup-item" onClick={() => onDeleteSession(session.id)}>
-                                        <RiDeleteBinLine size={15} style={{ marginRight: 6 }} />
-                                        채팅 삭제
-                                    </div>
+                            onClick={() => onSelectSession(session.id)}
+                        >
+                            {isEditingId === session.id ? (
+                                <input
+                                    className="session-edit-input"
+                                    value={editingTitle}
+                                    autoFocus
+                                    onChange={e => setEditingTitle(e.target.value)}
+                                    onBlur={handleEditFinish}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') handleEditFinish();
+                                    }}
+                                />
+                            ) : (
+                                <div className="session-text-block">
+                                    <span className="session-title">{session.title || 'Untitled'}</span>
+                                    <span className="session-date">{formatDate(session.id)}</span>
                                 </div>
-
                             )}
-                        </div>
-                    </li>
-                ))}
+
+                            <div className="session-menu-wrapper" onClick={(e) => e.stopPropagation()}>
+                                <button className="menu-button" onClick={() => toggleMenu(session.id)}>⋯</button>
+                                {openMenuId === session.id && (
+                                    <div className="dropdown-menu">
+                                        <div className="popup-item" onClick={() => handleEditStart(session)}>
+                                            <GoPencil size={15} style={{ marginRight: 6 }} />
+                                            채팅 이름 바꾸기
+                                        </div>
+                                        <div className="popup-item" onClick={() => onDeleteSession(session.id)}>
+                                            <RiDeleteBinLine size={15} style={{ marginRight: 6 }} />
+                                            채팅 삭제
+                                        </div>
+                                    </div>
+
+                                )}
+                            </div>
+                        </li>
+                    ))}
             </ul>
         </div>
     );
