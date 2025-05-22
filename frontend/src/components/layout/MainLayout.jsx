@@ -138,7 +138,6 @@ function MainLayout() {
     }
   }, [sessions, activeProject, projectId, showChatPanel]);
 
-
   // 불러오기
   useEffect(() => {
     if (!activeProject) return;

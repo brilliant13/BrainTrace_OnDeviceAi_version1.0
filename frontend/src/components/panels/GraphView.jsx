@@ -7,7 +7,7 @@ import { easeCubicInOut } from 'd3-ease';
 import './styles/GraphView.css'; // 상단에 CSS import 추가
 function GraphView({
   brainId = 'default-brain-id',
-  height = '1022px', // 안예찬이 직접 찾은 최적의 그래프뷰 높이
+  height = '100%', // 안예찬이 직접 찾은 최적의 그래프뷰 높이
   graphData: initialGraphData = null,
   referencedNodes = [],
   graphRefreshTrigger, // 그래프 새로고침 트리거 prop 추가
@@ -58,10 +58,13 @@ function GraphView({
     const calcHeight =
       typeof height === 'number'
         ? height
-        : containerRef.current.clientHeight || 550;
+        : height === '100%'
+          ? window.innerHeight
+          : containerRef.current.clientHeight || 550;
 
     setDimensions({ width, height: calcHeight });
   };
+
 
   const getInitialZoomScale = (nodeCount) => {
     if (nodeCount >= 1000) return 0.045;
@@ -79,10 +82,12 @@ function GraphView({
   const startTimelapse = () => {
     const nodes = [...graphData.nodes];
     const links = [...graphData.links];
-    const totalDuration = 6000;
-    const fadeDuration = 300;
     const N = nodes.length;
     if (N === 0) return;
+
+    // 🧠 노드 수에 따라 전체 재생 시간 동적으로 조정
+    const totalDuration = Math.min(6000, 800 + N * 80); // 노드 수 많을수록 길어짐 (최대 6초)
+    const fadeDuration = Math.max(200, Math.min(800, N * 10)); // 페이드 시간도 노드 수에 비례
 
     // 노드 셔플
     const shuffledNodes = d3.shuffle(nodes);

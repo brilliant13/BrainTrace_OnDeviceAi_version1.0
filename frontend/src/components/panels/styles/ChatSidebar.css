@@ -52,12 +52,24 @@
     transition: background-color 0.2s ease;
 }
 
+.session-date {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
 .session-item:hover {
     background-color: #f3f4f6;
 }
 
 .session-item:hover {
     background-color: #f3f4f6;
+}
+
+.session-text-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
 }
 
 /* 제목 */

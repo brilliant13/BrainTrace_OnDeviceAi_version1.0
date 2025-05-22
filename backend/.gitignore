@@ -10,3 +10,6 @@
 /node_modules/
 /data
 /__pycache__/
+
+/uploaded_txts/
+/uploaded_pdfs/
