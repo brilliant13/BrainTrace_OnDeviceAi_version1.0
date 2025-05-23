@@ -366,50 +366,46 @@ class SQLiteHandler:
             cursor.execute("BEGIN TRANSACTION")
             
             try:
-                # 1. Memo 테이블에서 삭제
-                cursor.execute("DELETE FROM Memo WHERE brain_id = ?", (brain_id,))
-                
-                # 2. Pdf 테이블에서 삭제
+                logging.info("🧹 Pdf 테이블에서 brain_id=%s 삭제 시도", brain_id)
                 cursor.execute("DELETE FROM Pdf WHERE brain_id = ?", (brain_id,))
                 
-                # 3. Voice 테이블에서 삭제
+                logging.info("🧹 Voice 테이블에서 brain_id=%s 삭제 시도", brain_id)
                 cursor.execute("DELETE FROM Voice WHERE brain_id = ?", (brain_id,))
                 
-                # 4. TextFile 테이블에서 삭제
+                logging.info("🧹 TextFile 테이블에서 brain_id=%s 삭제 시도", brain_id)
                 cursor.execute("DELETE FROM TextFile WHERE brain_id = ?", (brain_id,))
                 
-                # 5. Chat 테이블에서 삭제
+                logging.info("🧹 Chat 테이블에서 brain_id=%s 삭제 시도", brain_id)
                 cursor.execute("DELETE FROM Chat WHERE brain_id = ?", (brain_id,))
                 
-                # 6. Folder 테이블에서 삭제
+                logging.info("🧹 Folder 테이블에서 brain_id=%s 삭제 시도", brain_id)
                 cursor.execute("DELETE FROM Folder WHERE brain_id = ?", (brain_id,))
                 
-                # 7. Brain 테이블에서 삭제
+                logging.info("🧹 Brain 테이블에서 brain_id=%s 삭제 시도", brain_id)
                 cursor.execute("DELETE FROM Brain WHERE brain_id = ?", (brain_id,))
                 deleted = cursor.rowcount > 0
                 
-                # 트랜잭션 커밋
                 conn.commit()
                 
                 if deleted:
-                    logging.info("브레인 및 관련 데이터 삭제 완료: brain_id=%s", brain_id)
+                    logging.info("✅ 브레인 및 관련 데이터 삭제 완료: brain_id=%s", brain_id)
                 else:
-                    logging.warning("브레인 삭제 실패: 존재하지 않는 brain_id=%s", brain_id)
+                    logging.warning("⚠️ 브레인 삭제 실패: 존재하지 않는 brain_id=%s", brain_id)
                 
                 return deleted
-                
+            
             except Exception as e:
-                # 오류 발생 시 롤백
                 conn.rollback()
+                logging.error("❌ DELETE 중 오류 발생: %s", str(e))
                 raise e
-                
+            
             finally:
                 conn.close()
-                
+        
         except Exception as e:
-            logging.error("브레인 삭제 오류: %s", str(e))
+            logging.error("❌ 브레인 삭제 오류: %s", str(e))
             raise RuntimeError(f"브레인 삭제 오류: {str(e)}")
-    
+
     def update_brain_name(self, brain_id: int, new_brain_name: str) -> bool:
         """브레인 이름 업데이트"""
         try:
