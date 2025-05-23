@@ -210,7 +210,7 @@ function ChatPanel({
                 onMouseEnter={() => setIsEditingTitle(false)} // 숨김 상태 초기화
               >
                 <span className="header-title" style={{ fontSize: '20px', fontWeight: '600' }}>
-                  {sessions.find(s => s.id === currentSessionId)?.title || '무제'}
+                  {sessions.find(s => s.id === currentSessionId)?.title || 'Untitled'}
                 </span>
                 <button className="edit-icon-button" onClick={handleTitleEdit} title="수정">
                   <TbPencil />
@@ -359,7 +359,7 @@ function ChatPanel({
                 onMouseEnter={() => setIsEditingTitle(false)} // 숨김 상태 초기화
               >
                 <span className="header-title" style={{ fontSize: '20px', fontWeight: '600' }}>
-                  {sessions.find(s => s.id === currentSessionId)?.title || '무제'}
+                  {sessions.find(s => s.id === currentSessionId)?.title || 'Untitled'}
                 </span>
                 <button className="edit-icon-button" onClick={handleTitleEdit} title="수정">
                   <TbPencil size={18} color="#333333" />
@@ -371,7 +371,7 @@ function ChatPanel({
 
           <div className="centered-input-container">
             <div className="hero-section">
-              <h1 className="hero-title">어떤 과제를 해결하고 싶으신가요?</h1>
+              <h1 className="hero-title">당신의 세컨드 브레인을 추적해보세요.</h1>
             </div>
             <form className="input-wrapper" onSubmit={handleSubmit}>
               <div className="input-with-button rounded">
@@ -390,6 +390,11 @@ function ChatPanel({
           </div>
         </div>
       )}
+      {/* ⬇️ 안내 문구 추가 */}
+      <p className="chat-disclaimer">
+        BrainTrace는 학습된 정보 기반으로 응답하며, 실제와 다를 수 있습니다.
+      </p>
+
     </div>
   );
 }
