@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './styles/ChatSidebar.css';
 import { GoPencil } from 'react-icons/go';
 import { RiDeleteBinLine } from 'react-icons/ri';
-import { HiOutlineBars4 } from "react-icons/hi2";
+import { PiChatsCircle } from "react-icons/pi";
 
 function ChatSidebar({
     sessions,
@@ -107,7 +107,10 @@ function ChatSidebar({
                                 />
                             ) : (
                                 <div className="session-text-block">
-                                    <span className="session-title">{session.title || 'Untitled'}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                        <PiChatsCircle size={16} color="#999" style={{ marginRight: 7 }} />
+                                        <span className="session-title">{session.title || 'Untitled'}</span>
+                                    </div>
                                     <span className="session-date">{formatDate(session.id)}</span>
                                 </div>
                             )}
