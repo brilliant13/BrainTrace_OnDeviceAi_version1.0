@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     listUserBrains,
     deleteBrain,
-    renameBrain,
+    renameBrain, createBrain
 } from '../../../../backend/services/backend';
 
 import AppHeader from './AppHeader';
@@ -28,6 +28,7 @@ export default function ProjectListView() {
     const [editingId, setEditingId] = useState(null);
     const [tempTitle, setTempTitle] = useState('');
     const [confirmId, setConfirmId] = useState(null);
+    const [highlightId, setHighlightId] = useState(null);
 
     /* ───────── DB 요청 ───────── */
     const fetchBrains = () => {
@@ -115,7 +116,7 @@ export default function ProjectListView() {
                         return (
                             <div
                                 key={p.brain_id}
-                                className="project-card"
+                                className={`project-card ${highlightId === p.brain_id ? 'highlighted' : ''}`}
                                 data-id={p.brain_id}
                                 onClick={e => {
                                     if (e.target.closest('.card-menu')) return;
@@ -206,7 +207,30 @@ export default function ProjectListView() {
                         );
                     })}
 
-                    <div className="project-card add-card" onClick={() => setShowModal(true)}>
+                    <div
+                        className="project-card add-card"
+                        onClick={async () => {
+                            const uid = Number(localStorage.getItem('userId'));
+                            if (!uid) return alert('로그인이 필요합니다');
+
+                            try {
+                                const newBrain = await createBrain({
+                                    brain_name: 'Untitled',
+                                    user_id: uid,
+                                    icon_key: 'BsGraphUp'
+                                });
+
+                                setBrains(prev => [newBrain, ...prev]); // 먼저 리스트에 반영
+                                setHighlightId(newBrain.brain_id);      // 깜빡임용 설정
+
+                                setTimeout(() => {
+                                    nav(`/project/${newBrain.brain_id}`);
+                                }, 1800); // 1.8초 후 이동
+                            } catch (err) {
+                                alert(err.response?.data?.detail ?? '생성 실패');
+                            }
+                        }}
+                    >
                         <div className="add-card-content">
                             <FaPlus size={26} />
                             <span>새 프로젝트</span>

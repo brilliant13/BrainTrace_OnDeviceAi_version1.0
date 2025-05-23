@@ -19,20 +19,6 @@ function ChatSidebar({
     const [editingTitle, setEditingTitle] = useState('');
     const menuRef = useRef(null);
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (menuRef.current && !menuRef.current.contains(event.target)) {
-                setOpenMenuId(null);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
-
-
     const formatDate = timestamp => {
         const date = new Date(Number(timestamp));
         const year = date.getFullYear();
@@ -69,6 +55,31 @@ function ChatSidebar({
         setIsEditingId(null);
         setEditingTitle('');
     };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setOpenMenuId(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (sessions.length === 0) {
+            const firstMessageText = '';
+            const newSession = onNewSession(firstMessageText);
+            setNewlyCreatedSessionId(newSession.id);
+            setTimeout(() => {
+                onSelectSession(newSession.id);
+                setNewlyCreatedSessionId(null);
+            }, 0);
+        }
+    }, [sessions, onNewSession, onSelectSession, setNewlyCreatedSessionId]);
 
     return (
         <div className="panel-container">

@@ -263,3 +263,30 @@
 .popup-item:hover {
     background: #e9ecef;
 }
+
+.project-card.highlighted {
+    animation: blinkHighlight 1s ease-in-out;
+    background: #dde3e7;
+}
+
+@keyframes blinkHighlight {
+    0% {
+        opacity: 1;
+    }
+
+    25% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    75% {
+        opacity: 0.6;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
