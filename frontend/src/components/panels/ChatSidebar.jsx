@@ -119,7 +119,7 @@ function ChatSidebar({
                             ) : (
                                 <div className="session-text-block">
                                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                                        <PiChatsCircle size={16} color="#999" style={{ marginRight: 7 }} />
+                                        <PiChatsCircle size={17} color="#999" style={{ marginRight: 7 }} />
                                         <span className="session-title">{session.title || 'Untitled'}</span>
                                     </div>
                                     <span className="session-date">{formatDate(session.id)}</span>
@@ -145,6 +145,10 @@ function ChatSidebar({
                         </li>
                     ))}
             </ul>
+            {/* ⬇️ 안내 문구 추가 */}
+            <p className="chat-disclaimer">
+                BrainTrace는 학습된 정보 기반으로 응답하며, 실제와 다를 수 있습니다.
+            </p>
         </div>
     );
 }
