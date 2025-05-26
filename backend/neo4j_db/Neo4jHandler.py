@@ -351,5 +351,29 @@ class Neo4jHandler:
             logging.error(f"❌ 노드 descriptions 조회 실패: {str(e)}")
             raise RuntimeError(f"노드 descriptions 조회 실패: {str(e)}")
 
+    def get_nodes_by_source_id(self, source_id: str, brain_id: str) -> List[str]:
+        """
+        특정 source_id가 descriptions에 포함된 모든 노드의 이름을 반환합니다.
+        
+        Args:
+            source_id: 찾을 source_id
+            brain_id: 브레인 ID
+            
+        Returns:
+            List[str]: 노드 이름 목록
+        """
+        try:
+            query = """
+            MATCH (n:Node {brain_id: $brain_id})
+            WHERE ANY(desc IN n.descriptions WHERE desc CONTAINS $source_id)
+            RETURN n.name as name
+            """
+            result = self._execute_with_retry(query, {"source_id": source_id, "brain_id": brain_id})
+            return [record["name"] for record in result]
+            
+        except Exception as e:
+            logging.error(f"❌ source_id로 노드 조회 실패: {str(e)}")
+            raise RuntimeError(f"source_id로 노드 조회 실패: {str(e)}")
+
     def __del__(self):
         self.close()
