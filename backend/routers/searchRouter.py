@@ -18,7 +18,7 @@ class SearchResponse(BaseModel):
     source_ids: List[str]  # 중복 제거된 source_id 목록
 
 @router.post("/getSimilarSourceIds",
-    summary="유사도 기반 소스스 검색",
+    summary="유사도 기반 소스 검색",
     description="입력된 설명이나 키워드와 유사한 문장을 벡터DB에서 찾아 해당 source_id들을 반환합니다.",
     response_model=SearchResponse)
 async def search_similar_descriptions(request: SearchRequest):
