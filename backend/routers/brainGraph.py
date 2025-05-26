@@ -234,3 +234,32 @@ async def get_source_ids(node_name: str, brain_id: str):
     except Exception as e:
         logging.error("source_id 조회 오류: %s", str(e))
         raise HTTPException(status_code=500, detail=f"source_id 조회 중 오류가 발생했습니다: {str(e)}")
+
+@router.get("/getNodesBySourceId",
+    summary="source_id로 노드 조회",
+    description="특정 source_id가 descriptions에 포함된 모든 노드의 이름을 반환합니다.",
+    response_description="노드 이름 목록을 반환합니다.")
+async def get_nodes_by_source_id(source_id: str, brain_id: str):
+    """
+    source_id로 노드를 조회합니다:
+    
+    - **source_id**: 찾을 source_id
+    - **brain_id**: 브레인 ID
+    
+    반환값:
+    - **nodes**: 노드 이름 목록
+    """
+    logging.info(f"getNodesBySourceId 엔드포인트 호출됨 - source_id: {source_id}, brain_id: {brain_id}")
+    try:
+        neo4j_handler = Neo4jHandler()
+        logging.info("Neo4j 핸들러 생성됨")
+        
+        # Neo4j에서 source_id로 노드 조회
+        node_names = neo4j_handler.get_nodes_by_source_id(source_id, brain_id)
+        logging.info(f"조회된 노드 이름: {node_names}")
+        
+        return {"nodes": node_names}
+        
+    except Exception as e:
+        logging.error("노드 조회 오류: %s", str(e))
+        raise HTTPException(status_code=500, detail=f"노드 조회 중 오류가 발생했습니다: {str(e)}")
