@@ -181,7 +181,7 @@ function MemoPanel({ activeProject, collapsed, setCollapsed, referencedNodes = [
             <div
               style={{
                 height: '10px',
-                cursor: 'row-resize',
+                cursor: 'ns-resize',
                 borderBottom: '2px solid #ccc',
                 backgroundColor: '#fafafa',
               }}
