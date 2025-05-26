@@ -314,6 +314,66 @@ def delete_collection(brain_id: str) -> None:
     except Exception as e:
         logging.warning("컬렉션 %s가 존재하지 않을 수 있습니다: %s", collection_name, str(e))
 
+
+def search_similar_descriptions(
+    embedding: List[float],
+    brain_id: str,
+    limit: int = 10,
+    threshold: float = 0.1
+) -> List[Dict[str, str]]:
+    """
+    입력된 임베딩과 유사한 문장들을 검색합니다.
+    
+    Args:
+        embedding: 검색할 임베딩 벡터
+        brain_id: 브레인 ID
+        limit: 반환할 최대 결과 수
+        threshold: 최소 유사도 임계값
+        
+    Returns:
+        List[Dict[str, str]]: 유사한 문장들의 목록 (각 항목은 source_id와 description 포함)
+    """
+    collection_name = get_collection_name(brain_id)
+    
+    try:
+        # 검색 실행
+        search_results = client.search(
+            collection_name=collection_name,
+            query_vector=embedding,
+            limit=limit * 5  # 중복 제거를 위해 더 많은 결과를 가져옴
+        )
+        
+        # 결과 처리
+        seen_source_ids = set()
+        results = []
+        
+        for result in search_results:
+            if result.score < threshold:
+                continue
+                
+            payload = result.payload or {}
+            source_id = payload.get("source_id", "")
+            
+            # 이미 처리한 source_id는 스킵
+            if source_id in seen_source_ids:
+                continue
+                
+            seen_source_ids.add(source_id)
+            results.append({
+                "source_id": source_id,
+                "description": payload.get("description", ""),
+                "score": result.score
+            })
+            
+            if len(results) >= limit:
+                break
+                
+        return results
+        
+    except Exception as e:
+        logging.error("유사 문장 검색 실패: %s", str(e))
+        raise RuntimeError(f"유사 문장 검색 실패: {str(e)}")
+
 # 예시: 서버 시작 시 특정 brain_id에 대해 컬렉션 초기화
 if __name__ == "__main__":
     test_brain_id = "1"
