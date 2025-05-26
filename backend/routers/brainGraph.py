@@ -197,3 +197,40 @@ async def answer_endpoint(request_data: AnswerRequest):
     except Exception as e:
         logging.error("answer 오류: %s", str(e))
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/getSourceIds",
+    summary="노드의 모든 source_id 조회",
+    description="특정 노드의 descriptions 배열에서 모든 source_id를 추출하여 반환합니다.",
+    response_description="source_id 목록을 반환합니다.")
+async def get_source_ids(node_name: str, brain_id: str):
+    """
+    노드의 모든 source_id를 반환합니다:
+    
+    - **node_name**: 조회할 노드의 이름
+    - **brain_id**: 브레인 ID
+    
+    반환값:
+    - **source_ids**: source_id 목록
+    """
+    logging.info(f"getSourceIds 엔드포인트 호출됨 - node_name: {node_name}, brain_id: {brain_id}")
+    try:
+        neo4j_handler = Neo4jHandler()
+        logging.info("Neo4j 핸들러 생성됨")
+        
+        # Neo4j에서 노드의 descriptions 배열 조회
+        descriptions = neo4j_handler.get_node_descriptions(node_name, brain_id)
+        if not descriptions:
+            return {"source_ids": []}
+            
+        # descriptions 배열에서 모든 source_id 추출
+        source_ids = set()  # 중복 제거를 위해 set 사용
+        for desc in descriptions:
+            if "source_id" in desc:
+                source_ids.add(desc["source_id"])
+        
+        logging.info(f"추출된 source_ids: {source_ids}")
+        return {"source_ids": list(source_ids)}
+        
+    except Exception as e:
+        logging.error("source_id 조회 오류: %s", str(e))
+        raise HTTPException(status_code=500, detail=f"source_id 조회 중 오류가 발생했습니다: {str(e)}")

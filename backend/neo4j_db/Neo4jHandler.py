@@ -313,5 +313,43 @@ class Neo4jHandler:
             logging.error(f"❌ Neo4j 데이터 삭제 실패: {str(e)}")
             raise RuntimeError(f"Neo4j 데이터 삭제 실패: {str(e)}")
 
+    def get_node_descriptions(self, node_name: str, brain_id: str) -> List[Dict]:
+        """
+        특정 노드의 descriptions 배열을 조회합니다.
+        
+        Args:
+            node_name: 조회할 노드의 이름
+            brain_id: 브레인 ID
+            
+        Returns:
+            List[Dict]: descriptions 배열 (각 항목은 description과 source_id를 포함)
+        """
+        try:
+            query = """
+            MATCH (n:Node {name: $node_name, brain_id: $brain_id})
+            RETURN n.descriptions as descriptions
+            """
+            result = self._execute_with_retry(query, {"node_name": node_name, "brain_id": brain_id})
+            
+            if not result or not result[0].get("descriptions"):
+                return []
+                
+            # descriptions 배열의 각 항목을 JSON으로 파싱
+            descriptions = []
+            for desc in result[0]["descriptions"]:
+                if isinstance(desc, str):
+                    try:
+                        descriptions.append(json.loads(desc))
+                    except json.JSONDecodeError:
+                        logging.warning(f"JSON 파싱 실패: {desc}")
+                else:
+                    descriptions.append(desc)
+                    
+            return descriptions
+            
+        except Exception as e:
+            logging.error(f"❌ 노드 descriptions 조회 실패: {str(e)}")
+            raise RuntimeError(f"노드 descriptions 조회 실패: {str(e)}")
+
     def __del__(self):
         self.close()
