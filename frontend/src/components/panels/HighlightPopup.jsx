@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const colors = ['#fff7a3', '#ffd8c2', '#c9ffd9', '#cfe9ff', '#f2ccff'];
 
-const HighlightPopup = ({ position, containerRef, onSelectColor, onCopyText }) => {
+const HighlightPopup = ({ position, containerRef, onSelectColor, onCopyText, onClose }) => {
   const popupRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -21,6 +21,21 @@ const HighlightPopup = ({ position, containerRef, onSelectColor, onCopyText }) =
       });
     }
   }, [position]);
+
+  // ✅ 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (popupRef.current && !popupRef.current.contains(e.target)) {
+        onClose?.(); // 외부 클릭 시 onClose 호출
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
 
   const handleMouseDown = (e) => {
     e.preventDefault();

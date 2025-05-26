@@ -17,6 +17,8 @@ function ChatSidebar({
     const [openMenuId, setOpenMenuId] = useState(null);
     const [isEditingId, setIsEditingId] = useState(null);
     const [editingTitle, setEditingTitle] = useState('');
+    const [isSessionsLoaded, setIsSessionsLoaded] = useState(false);
+
     const menuRef = useRef(null);
 
     const formatDate = timestamp => {
@@ -33,14 +35,13 @@ function ChatSidebar({
 
     const handleNewSession = () => {
         const firstMessageText = '';
-        const newSession = onNewSession(firstMessageText); // ← 수정
+        const newSession = onNewSession(firstMessageText);
         setNewlyCreatedSessionId(newSession.id);
         setTimeout(() => {
             onSelectSession(newSession.id);
             setNewlyCreatedSessionId(null);
         }, 1500);
     };
-
 
     const handleEditStart = (session) => {
         setIsEditingId(session.id);
@@ -70,7 +71,12 @@ function ChatSidebar({
     }, []);
 
     useEffect(() => {
-        if (sessions.length === 0) {
+        if (!isSessionsLoaded && sessions.length >= 0) {
+            setIsSessionsLoaded(true);
+        }
+
+        // 세션이 0개이고, 로딩이 끝났을 때만 새 세션 자동 생성
+        if (isSessionsLoaded && sessions.length === 0) {
             const firstMessageText = '';
             const newSession = onNewSession(firstMessageText);
             setNewlyCreatedSessionId(newSession.id);
@@ -79,7 +85,7 @@ function ChatSidebar({
                 setNewlyCreatedSessionId(null);
             }, 0);
         }
-    }, [sessions, onNewSession, onSelectSession, setNewlyCreatedSessionId]);
+    }, [sessions, isSessionsLoaded, onNewSession, onSelectSession, setNewlyCreatedSessionId]);
 
     return (
         <div className="panel-container">

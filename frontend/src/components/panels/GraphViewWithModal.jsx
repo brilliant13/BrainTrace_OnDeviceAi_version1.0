@@ -93,12 +93,23 @@ function GraphViewWithModal(props) {
         window.addEventListener('mousemove', onMouseMove);
         window.addEventListener('mouseup', onMouseUp);
     };
+    const openExternalGraphWindow = () => {
+        const brainId = props.brainId || 'default-brain-id';
+        const url = `${window.location.origin}/graph-view?brainId=${encodeURIComponent(brainId)}`;
+
+        window.open(
+            url,
+            '_blank',
+            'width=1200,height=800,scrollbars=no,resizable=yes'
+        );
+    };
+
 
     return (
         <div className="graph-view-wrapper">
             <div className="graph-with-button">
                 <GraphView {...props} isFullscreen={isFullscreen} referencedNodes={props.referencedNodes} />
-                <button className="fullscreen-btn" onClick={() => setIsFullscreen(true)}>
+                <button className="fullscreen-btn" onClick={openExternalGraphWindow}>
                     {!isFullscreen && (<MdFullscreen size={22} color='black' title='전체화면' />)}
                 </button>
             </div>

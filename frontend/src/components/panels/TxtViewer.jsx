@@ -74,6 +74,10 @@ export default function TxtViewer({ fileUrl }) {
                     containerRef={containerRef}
                     onSelectColor={addHighlight}
                     onCopyText={copyText}
+                    onClose={() => {
+                        setPopup(null);
+                        window.getSelection().removeAllRanges(); // 선택 해제까지 함께
+                    }}
                 />
             )}
 

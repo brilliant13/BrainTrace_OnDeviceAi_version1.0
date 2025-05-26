@@ -21,6 +21,8 @@ const PDFViewer = ({ file, containerWidth }) => {
     }
   }, [containerWidth]);
 
+
+
   const onDocumentLoadSuccess = ({ numPages }) => setNumPages(numPages);
 
   const onTextSelection = () => {
@@ -127,6 +129,10 @@ const PDFViewer = ({ file, containerWidth }) => {
             containerRef={viewerRef}
             onSelectColor={addHighlight}
             onCopyText={copyText}
+            onClose={() => {
+              setPopup(null);
+              window.getSelection().removeAllRanges(); // 팝업 닫힐 때 선택도 해제
+            }}
           />
         )}
 

@@ -12,9 +12,9 @@
 }
 
 .app-logo {
-    width: 26px;
-    height: 26px;
-    margin: 5px;
+    width: 30px;
+    height: 30px;
+    margin: 0px;
     margin-right: 10px;
 }
 
@@ -38,11 +38,11 @@
     color: #333;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
+    padding: 8px 14px;
     border: 1px solid #ddd;
     background-color: #fff;
     border-radius: 9999px;
-    font-size: 14px;
+    font-size: 15px;
     cursor: pointer;
     color: black;
 }
