@@ -213,7 +213,7 @@ function ChatPanel({
                   {sessions.find(s => s.id === currentSessionId)?.title || 'Untitled'}
                 </span>
                 <button className="edit-icon-button" onClick={handleTitleEdit} title="수정">
-                  <TbPencil />
+                  <TbPencil color='black' />
                 </button>
               </div>
             )}

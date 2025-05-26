@@ -45,6 +45,7 @@ function MainLayout() {
   // 참고된 노드 목록을 위한 state 추가
   const [referencedNodes, setReferencedNodes] = useState([]);
   const [allNodeNames, setAllNodeNames] = useState([]);
+  const [focusNodeNames, setFocusNodeNames] = useState([]);
 
   // 그래프 Refresh 용도
   const [graphRefreshTrigger, setGraphRefreshTrigger] = useState(0);
@@ -104,6 +105,17 @@ function MainLayout() {
   const onReferencedNodesUpdate = (nodes) => {
     setReferencedNodes(nodes);
   };
+
+  const handleFocusNodeNames = (nodeObject) => {
+    if (Array.isArray(nodeObject)) {
+      setFocusNodeNames(nodeObject); // 이미 배열이면 그대로 저장
+    } else if (nodeObject && nodeObject.nodes) {
+      setFocusNodeNames(nodeObject.nodes); // ✅ 이 라인이 핵심
+    } else {
+      setFocusNodeNames([]);
+    }
+  };
+
 
   const onRenameSession = (id, newTitle) => {
     setSessions(prev => prev.map(s => s.id === id ? { ...s, title: newTitle } : s));
@@ -262,6 +274,7 @@ function MainLayout() {
               setIsPDFOpen={setIsPDFOpen}
               onBackFromPDF={handleBackFromPDF}
               onGraphRefresh={handleGraphRefresh} // 그래프 refresh 용도
+              onFocusNodeNamesUpdate={handleFocusNodeNames}
             />
           </div>
         </Panel>
@@ -341,6 +354,7 @@ function MainLayout() {
               referencedNodes={referencedNodes} // MemoPanel에 참고된 노드 목록 전달
               graphRefreshTrigger={graphRefreshTrigger} // 그래프 refesh 용도
               onGraphDataUpdate={handleGraphDataUpdate}
+              focusNodeNames={focusNodeNames}
             />
           </div>
         </Panel>

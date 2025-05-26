@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   listBrainFolders,
   createFolder,
@@ -43,7 +43,8 @@ export default function SourcePanel({
   setCollapsed,
   setIsPDFOpen,
   onBackFromPDF,
-  onGraphRefresh
+  onGraphRefresh,
+  onFocusNodeNamesUpdate
 }) {
   const panelRef = useRef();
   const [panelWidth, setPanelWidth] = useState(0);
@@ -58,7 +59,6 @@ export default function SourcePanel({
   // 업로드 트리거 (바뀔 때마다 FileView가 다시 로드)
   const [uploadKey, setUploadKey] = useState(0);
   const [sourceCount, setSourceCount] = useState(0);
-  const maxQuota = 50; // 예시로 최대 50개 제한
 
   useEffect(() => {
     if (!panelRef.current) return;
@@ -264,6 +264,7 @@ export default function SourcePanel({
                   // 소스 수 갱신
                   refreshSourceCount();
                 }}
+                onFocusNodeNamesUpdate={onFocusNodeNamesUpdate}
               />
             )
             }

@@ -167,3 +167,14 @@ export const getReferencedNodes = chat_id =>
 
 export const listChatsByBrain = brain_id =>
     api.get(`/chat/chatList/${brain_id}`).then(r => r.data);
+
+
+export const getNodesBySourceId = (sourceId, brainId) =>
+    api.get(`/brainGraph/getNodesBySourceId`, {
+        params: { source_id: sourceId, brain_id: brainId }
+    }).then(r => r.data);
+
+export const getSourceIdsByNodeName = (nodeName, brainId) =>
+    api.get(`/brainGraph/getSourceIds`, {
+        params: { node_name: nodeName, brain_id: brainId }
+    }).then(r => r.data);

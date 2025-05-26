@@ -201,6 +201,8 @@
 /* 점점점 hover 시 효과 */
 .file-menu-button:hover {
   color: #333;
+  transform: scale(1.1);
+  transition: transform 0.15s ease;
 }
 
 .popup-item {
