@@ -6,6 +6,7 @@ import ProjectListView from './components/layout/ProjectListView';
 import Login from './components/layout/Login';
 import Register from './components/layout/Register';
 import MainLayout from './components/layout/MainLayout';
+import GraphViewStandalone from './components/panels/GraphViewStandalone';
 
 function App() {
 
@@ -20,6 +21,7 @@ function App() {
           element={isLoggedIn ? <ProjectListView /> : <Navigate to="/login" replace />}
         />
         <Route path="/project/:projectId" element={<MainLayout />} />
+        <Route path="/graph-view" element={<GraphViewStandalone />} />
       </Routes>
     </Router>
   );

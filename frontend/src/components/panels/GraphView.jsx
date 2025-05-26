@@ -188,6 +188,10 @@ function GraphView({
   }, [loading, graphData]);
 
   useEffect(() => {
+    console.log("📦 loading 상태:", loading);
+  }, [loading]);
+
+  useEffect(() => {
     // 초기 데이터가 제공되면 사용
     if (initialGraphData) {
       processGraphData(initialGraphData);
@@ -443,7 +447,10 @@ function GraphView({
 
       {/* 로딩 및 에러 처리 */}
       {loading && (
-        <div className="graph-loading">로딩 중...</div>
+        <div className="graph-loading">
+          <div className="graph-loading-spinner"></div>
+          <div>그래프를 불러오는 중입니다...</div>
+        </div>
       )}
       {error && (
         <div className="graph-error">{error}</div>
@@ -469,15 +476,15 @@ function GraphView({
           nodeRelSize={6}
           linkColor={() => "#dedede"}
           linkWidth={1}
-          linkDirectionalArrowLength={3.5}
+          linkDirectionalArrowLength={6.5}
           linkDirectionalArrowRelPos={1}
-          cooldownTime={3000}
+          cooldownTime={5000}
           d3VelocityDecay={0.2}
           d3Force={fg => {
             fg.force("center", d3.forceCenter(dimensions.width / 2, dimensions.height / 2));
             // 노드 간 반발력(밀어내는 힘).절대값이 클수록 강하게 밀어냄냄
             fg.force("charge", d3.forceManyBody().strength(-80));
-            fg.force("link", d3.forceLink().id(d => d.id).distance(100).strength(0.2)); // ✅ 느슨한 연결
+            fg.force("link", d3.forceLink().id(d => d.id).distance(200).strength(0.2)); // ✅ 느슨한 연결
             fg.force("collide", d3.forceCollide(50)); // ✅ 충돌 반경 조정
           }}
           nodeCanvasObject={(node, ctx, globalScale) => {
