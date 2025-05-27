@@ -8,8 +8,8 @@ import {
   createVoice,
   getPdfsByBrain,
   getTextfilesByBrain,
-  getVoicesByBrain
-
+  getVoicesByBrain,
+  getSimilarSourceIds
 } from '../../../../backend/services/backend';
 import FileView from '../panels/FileView';
 import PDFViewer from '../panels/PDFViewer';
@@ -25,7 +25,8 @@ import './styles/Scrollbar.css';
 import { TbCylinderPlus } from "react-icons/tb";
 import { TbFolderPlus } from "react-icons/tb";
 import { IoIosSearch } from "react-icons/io";
-
+import { IoSearchSharp } from "react-icons/io5";
+import { IoMdSearch } from "react-icons/io";
 function normalizeApiTree(apiFolders = []) {
   return apiFolders.map(folder => ({
     type: 'folder',
@@ -56,10 +57,13 @@ export default function SourcePanel({
   const [newFolderName, setNewFolderName] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [openedTXT, setOpenedTXT] = useState(null);
-
-  // 업로드 트리거 (바뀔 때마다 FileView가 다시 로드)
   const [uploadKey, setUploadKey] = useState(0);
   const [sourceCount, setSourceCount] = useState(0);
+  const [showSearchInput, setShowSearchInput] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [filteredSourceIds, setFilteredSourceIds] = useState(null); // null이면 전체 표시
+  const searchInputRef = useRef(null);  // 검색 input 포커싱용
+
 
   useEffect(() => {
     if (!panelRef.current) return;
@@ -172,19 +176,42 @@ export default function SourcePanel({
       className={`panel-container modern-panel ${collapsed ? 'collapsed' : ''}`}
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
     >
-      {/* 헤더 */}
       <div
         className="panel-header"
-        style={{ justifyContent: collapsed ? 'center' : 'space-between' }}
+        style={{ justifyContent: collapsed ? 'center' : 'space-between', alignItems: 'center' }}
       >
         {!collapsed && <span className="header-title">Source</span>}
-        <img
-          src={toggleIcon}
-          alt="Toggle"
-          style={{ width: '23px', height: '23px', cursor: 'pointer' }}
-          onClick={() => setCollapsed(prev => !prev)}
-        />
+
+        <div className="header-right-icons" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div
+            className={`search-icon-container ${showSearchInput ? 'active' : ''}`}
+            onClick={() => {
+              setShowSearchInput(prev => {
+                const next = !prev;
+                if (next) {
+                  setTimeout(() => {
+                    searchInputRef.current?.focus();
+                  }, 0);
+                } else {
+                  setFilteredSourceIds(null);
+                  setSearchText('');
+                }
+                return next;
+              });
+            }}
+          >
+            <IoMdSearch size={20} style={{ cursor: 'pointer' }} />
+          </div>
+
+          <img
+            src={toggleIcon}
+            alt="Toggle"
+            style={{ width: '23px', height: '23px', cursor: 'pointer' }}
+            onClick={() => setCollapsed(prev => !prev)}
+          />
+        </div>
       </div>
+
 
       {!collapsed && (
         <>
@@ -212,11 +239,50 @@ export default function SourcePanel({
             )}
 
           </div>
-          {(folderTree.length > 0 || sourceCount > 0) && (
-            <div className="search-icon-container">
-              <IoIosSearch size={19} style={{ cursor: 'pointer' }} />
-            </div>
+          {showSearchInput && (
+            <form
+              onSubmit={async e => {
+                e.preventDefault();
+                if (!searchText.trim()) return;
+                console.log("🔍 검색 요청", {
+                  query: searchText,
+                  brain_id: activeProject
+                });
+
+                try {
+                  const res = await getSimilarSourceIds(searchText, activeProject);
+                  const ids = (res.source_ids || []).map(id => String(id)); // 문자열로 강제 변환
+                  setFilteredSourceIds(ids);
+                } catch (err) {
+                  console.error('검색 실패:', err);
+                  alert('검색 중 오류 발생');
+                }
+              }}
+              style={{ padding: '10px 16px' }}
+            >
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="설명이나 키워드를 입력하세요"
+                value={searchText}
+                onChange={e => {
+                  const text = e.target.value;
+                  setSearchText(text);
+                  if (text.trim() === '') {
+                    setFilteredSourceIds(null); // 검색어 지워졌을 때 전체 보여주기
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  padding: '6px 10px',
+                  fontSize: '14px',
+                  borderRadius: '6px',
+                  border: '1px solid #ccc'
+                }}
+              />
+            </form>
           )}
+
 
           {showAddFolderInput && (
             <form className="add-form fancy-form" onSubmit={handleAddFolder}>
@@ -242,13 +308,12 @@ export default function SourcePanel({
           <div className="panel-content" style={{ flexGrow: 1, overflow: 'auto' }}>
             {openedPDF ? (
               <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
-                <button className="pdf-back-button" onClick={closePDF}>← 뒤로가기</button>
-                <PDFViewer file={`http://localhost:8000/${openedPDF.pdf_path}`} containerWidth={panelWidth} />
+                <PDFViewer file={`http://localhost:8000/${openedPDF.pdf_path}`} containerWidth={panelWidth}
+                  onBack={closePDF} />
               </div>
             ) : openedTXT ? (
               <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
-                <button className="pdf-back-button" onClick={closePDF}>← 뒤로가기</button>
-                <TxtViewer fileUrl={`http://localhost:8000/${openedTXT.txt_path}`} />
+                <TxtViewer fileUrl={`http://localhost:8000/${openedTXT.txt_path}`} onBack={closePDF} />
               </div>
             ) : (
               <FileView
@@ -272,6 +337,7 @@ export default function SourcePanel({
                   refreshSourceCount();
                 }}
                 onFocusNodeNamesUpdate={onFocusNodeNamesUpdate}
+                filteredSourceIds={filteredSourceIds}
               />
             )
             }
