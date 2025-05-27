@@ -24,6 +24,7 @@ import './styles/Scrollbar.css';
 
 import { TbCylinderPlus } from "react-icons/tb";
 import { TbFolderPlus } from "react-icons/tb";
+import { IoIosSearch } from "react-icons/io";
 
 function normalizeApiTree(apiFolders = []) {
   return apiFolders.map(folder => ({
@@ -207,9 +208,13 @@ export default function SourcePanel({
                     : <>＋ 소스</>}
                 </button>
               </div>
-            )}
-          </div>
 
+            )}
+
+          </div>
+          <div className="search-icon-container">
+            <IoIosSearch size={19} style={{ cursor: 'pointer' }} />
+          </div>
 
           {showAddFolderInput && (
             <form className="add-form fancy-form" onSubmit={handleAddFolder}>
