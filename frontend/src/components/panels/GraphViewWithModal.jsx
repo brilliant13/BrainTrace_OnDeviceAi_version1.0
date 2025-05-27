@@ -87,15 +87,62 @@ function GraphViewWithModal(props) {
         window.addEventListener('mouseup', onMouseUp);
     };
 
+    // const openExternalGraphWindow = () => {
+    //     const brainId = props.brainId || 'default-brain-id';
+    //     const url = `${window.location.origin}/graph-view?brainId=${encodeURIComponent(brainId)}`;
+
+    //     window.open(
+    //         url,
+    //         '_blank',
+    //         'width=1200,height=800,scrollbars=no,resizable=yes'
+    //     );
+    // };
+
+    // GraphViewWithModal.jsx의 openExternalGraphWindow 함수 개선
     const openExternalGraphWindow = () => {
         const brainId = props.brainId || 'default-brain-id';
-        const url = `${window.location.origin}/graph-view?brainId=${encodeURIComponent(brainId)}`;
 
-        window.open(
+        // URL 파라미터로 추가 정보 전달
+        const params = new URLSearchParams({
+            brainId: brainId
+        });
+
+        // 참고된 노드가 있다면 URL에 포함
+        if (props.referencedNodes && props.referencedNodes.length > 0) {
+            params.set('referencedNodes', encodeURIComponent(JSON.stringify(props.referencedNodes)));
+        }
+
+        // 현재 그래프 상태 정보도 전달 가능
+        if (props.graphData) {
+            // 필요시 그래프 데이터의 요약 정보나 특정 상태를 URL에 포함
+            params.set('nodeCount', props.graphData.nodes?.length || 0);
+        }
+
+        const url = `${window.location.origin}/graph-view?${params.toString()}`;
+
+        const newWindow = window.open(
             url,
             '_blank',
             'width=1200,height=800,scrollbars=no,resizable=yes'
         );
+
+        // 새 창과의 통신을 위한 메시지 리스너 (선택사항)
+        const handleMessage = (event) => {
+            if (event.source === newWindow) {
+                // 새 창에서 보낸 메시지 처리
+                console.log('Message from standalone window:', event.data);
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+
+        // 새 창이 닫히면 리스너 제거
+        const checkClosed = setInterval(() => {
+            if (newWindow.closed) {
+                window.removeEventListener('message', handleMessage);
+                clearInterval(checkClosed);
+            }
+        }, 1000);
     };
 
 
@@ -109,7 +156,7 @@ function GraphViewWithModal(props) {
                 </button>
             </div>
 
-            {isFullscreen && (
+            {/* {isFullscreen && (
                 <div className="fullscreen-modal" onMouseDown={handleBackdropClick}>
                     <div
                         className="modal-graph-container"
@@ -133,7 +180,7 @@ function GraphViewWithModal(props) {
                         <div className="modal-resize-handle" onMouseDown={handleResizeMouseDown} />
                     </div>
                 </div>
-            )}
+            )} */}
         </div>
     );
 }

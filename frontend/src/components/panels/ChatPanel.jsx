@@ -182,6 +182,7 @@ function ChatPanel({
         </button>
       </div>
 
+
       {hasChatStarted ? (
         <div className="panel-content chat-content">
           <div
@@ -215,6 +216,25 @@ function ChatPanel({
                 <button className="edit-icon-button" onClick={handleTitleEdit} title="수정">
                   <TbPencil color='black' />
                 </button>
+                {/* 👇 최근 세션 리스트 추가 */}
+                <div className="inline-recent-session-bar">
+                  {[...sessions]
+                    .filter(s => s.id !== currentSessionId)
+                    .sort((a, b) => Number(b.id) - Number(a.id))
+                    .slice(0, 3)
+                    .map(session => (
+                      <span
+                        key={session.id}
+                        className="inline-recent-session-item"
+                        onClick={() => setCurrentSessionId(session.id)}
+                        title={session.title}
+                      >
+                        {/* 왼쪽 작은 바 */}
+                        <span className="session-bar" />
+                        {session.title.length > 10 ? session.title.slice(0, 10) + '...' : session.title}
+                      </span>
+                    ))}
+                </div>
               </div>
             )}
           </div>
