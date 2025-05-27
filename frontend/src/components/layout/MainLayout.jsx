@@ -52,6 +52,8 @@ function MainLayout() {
   // FileView에서 호출할 함수
   const handleGraphRefresh = () => {
     setGraphRefreshTrigger(prev => prev + 1);
+    syncToStandaloneWindow({ action: 'refresh' }); // 추가
+
   };
   const handleGraphDataUpdate = (graphData) => {
     const nodeNames = graphData?.nodes?.map(n => n.name) || [];
@@ -68,6 +70,16 @@ function MainLayout() {
   const [chatPanelSize, setChatPanelSize] = useState(DEFAULT_CHAT_PANEL_SIZE);  // 추가된 채팅 패널 크기 상태
   const [memoPanelSize, setMemoPanelSize] = useState(DEFAULT_MEMO_PANEL_SIZE);
   const [isPDFOpen, setIsPDFOpen] = useState(false);
+
+  const syncToStandaloneWindow = (data) => {
+    localStorage.setItem('graphStateSync', JSON.stringify({
+      brainId: activeProject,
+      timestamp: Date.now(),
+      ...data
+    }));
+  };
+  
+
 
   const handleBackFromPDF = () => {
     setIsPDFOpen(false);
@@ -104,6 +116,7 @@ function MainLayout() {
 
   const onReferencedNodesUpdate = (nodes) => {
     setReferencedNodes(nodes);
+    syncToStandaloneWindow({ referencedNodes: nodes }); // 추가
   };
 
   const handleFocusNodeNames = (nodeObject) => {
@@ -114,6 +127,8 @@ function MainLayout() {
     } else {
       setFocusNodeNames([]);
     }
+    syncToStandaloneWindow({ focusNodeNames: Array.isArray(nodeObject) ? nodeObject : nodeObject.nodes }); // 추가
+
   };
 
 
@@ -354,7 +369,7 @@ function MainLayout() {
               referencedNodes={referencedNodes} // MemoPanel에 참고된 노드 목록 전달
               graphRefreshTrigger={graphRefreshTrigger} // 그래프 refesh 용도
               onGraphDataUpdate={handleGraphDataUpdate}
-              focusNodeNames={focusNodeNames}
+              focusNodeNames={focusNodeNames} // SourcePanel에서 노드보기 눌렀을 때 노드 목록 전달
             />
           </div>
         </Panel>

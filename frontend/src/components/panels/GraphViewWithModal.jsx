@@ -155,32 +155,6 @@ function GraphViewWithModal(props) {
                     {!isFullscreen && (<MdFullscreen size={22} color='black' title='전체화면' />)}
                 </button>
             </div>
-
-            {/* {isFullscreen && (
-                <div className="fullscreen-modal" onMouseDown={handleBackdropClick}>
-                    <div
-                        className="modal-graph-container"
-                        ref={modalRef}
-                        style={{
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            position: 'fixed'
-                        }}
-                        onMouseDown={(e) => e.stopPropagation()} // 내부 클릭은 닫힘 방지
-                    >
-                        <div className="modal-header" onMouseDown={handleMouseDown}>
-                            <div className="modal-title">Graph</div>
-                            <button className="close-btn" onClick={() => setIsFullscreen(false)}>
-                                <MdClose size={25} />
-                            </button>
-                        </div>
-                        <GraphView {...props} isFullscreen={isFullscreen} referencedNodes={props.referencedNodes} focusNodeNames={props.focusNodeNames}
-                            height={isFullscreen ? '100%' : props.height} />
-                        <div className="modal-resize-handle" onMouseDown={handleResizeMouseDown} />
-                    </div>
-                </div>
-            )} */}
         </div>
     );
 }
