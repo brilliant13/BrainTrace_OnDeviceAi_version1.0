@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import List, Dict
 import logging
 from services import embedding_service
+from sqlite_db.sqlite_handler import SQLiteHandler
 
 router = APIRouter(
     prefix="/search",
@@ -34,29 +35,47 @@ async def search_similar_descriptions(request: SearchRequest):
     logging.info(f"유사 문장 검색 시작 - query: {request.query}, brain_id: {request.brain_id}")
     
     try:
-        # 1. 컬렉션이 없으면 초기화
+        # 1. 텍스트 기반 제목 검색 (우선)
+        db = SQLiteHandler()
+        title_results = db.search_titles_by_query(request.query, int(request.brain_id))
+        
+        # 제목 검색 결과의 source_id 추출 (숫자만)
+        title_source_ids = []
+        seen_ids = set()  # 중복 체크를 위한 set
+        
+        for result in title_results:
+            id_num = str(result['id'])
+            if id_num not in seen_ids:
+                seen_ids.add(id_num)
+                title_source_ids.append(id_num)
+        
+        # 2. 벡터 DB 검색
         if not embedding_service.is_index_ready(request.brain_id):
             embedding_service.initialize_collection(request.brain_id)
             logging.info("Qdrant 컬렉션 초기화 완료: %s", request.brain_id)
         
-        # 2. 검색어 임베딩
         query_embedding = embedding_service.encode_text(request.query)
         
-        # 3. 유사 문장 검색 (새로운 핸들러 사용)
         similar_descriptions = embedding_service.search_similar_descriptions(
             embedding=query_embedding,
             brain_id=request.brain_id,
             limit=10
         )
         
-        if not similar_descriptions:
-            return {"source_ids": []}
+        # 벡터 검색 결과의 source_id 추출 (숫자만)
+        vector_source_ids = []
+        for desc in similar_descriptions:
+            # source_id에서 숫자만 추출 (예: "pdf_123" -> "123")
+            id_num = ''.join(filter(str.isdigit, desc["source_id"]))
+            if id_num and id_num not in seen_ids:
+                seen_ids.add(id_num)
+                vector_source_ids.append(id_num)
         
-        # 4. source_id 추출 (이미 중복 제거되어 있음)
-        source_ids = [desc["source_id"] for desc in similar_descriptions]
+        # 3. 결과 병합 (제목 검색 결과를 우선)
+        final_source_ids = title_source_ids + vector_source_ids
         
-        logging.info(f"검색 결과: {len(source_ids)}개의 고유 source_id 발견")
-        return {"source_ids": source_ids}
+        logging.info(f"검색 결과: {len(final_source_ids)}개의 고유 source_id 발견")
+        return {"source_ids": final_source_ids}
         
     except Exception as e:
         logging.error("검색 오류: %s", str(e))
