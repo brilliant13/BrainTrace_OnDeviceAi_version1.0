@@ -44,13 +44,6 @@ function GraphViewWithModal(props) {
             const newLeft = e.clientX - offset.current.x;
             const newTop = e.clientY - offset.current.y;
 
-            // 화면 밖으로 나가지 않게 제한
-            // const maxLeft = window.innerWidth - modal.offsetWidth;
-            // const maxTop = window.innerHeight - modal.offsetHeight;
-
-            // modal.style.left = `${Math.min(Math.max(0, newLeft), maxLeft)}px`;
-            // modal.style.top = `${Math.min(Math.max(0, newTop), maxTop)}px`;
-
             // 제한 없이 자유롭게 이동 가능
             modal.style.left = `${newLeft}px`;
             modal.style.top = `${newTop}px`;
@@ -93,6 +86,7 @@ function GraphViewWithModal(props) {
         window.addEventListener('mousemove', onMouseMove);
         window.addEventListener('mouseup', onMouseUp);
     };
+
     // const openExternalGraphWindow = () => {
     //     const brainId = props.brainId || 'default-brain-id';
     //     const url = `${window.location.origin}/graph-view?brainId=${encodeURIComponent(brainId)}`;
@@ -155,7 +149,8 @@ function GraphViewWithModal(props) {
     return (
         <div className="graph-view-wrapper">
             <div className="graph-with-button">
-                <GraphView {...props} isFullscreen={isFullscreen} referencedNodes={props.referencedNodes} />
+                <GraphView {...props} isFullscreen={isFullscreen} referencedNodes={props.referencedNodes}
+                    focusNodeNames={props.focusNodeNames} />
                 <button className="fullscreen-btn" onClick={openExternalGraphWindow}>
                     {!isFullscreen && (<MdFullscreen size={22} color='black' title='전체화면' />)}
                 </button>
@@ -180,7 +175,7 @@ function GraphViewWithModal(props) {
                                 <MdClose size={25} />
                             </button>
                         </div>
-                        <GraphView {...props} isFullscreen={isFullscreen} referencedNodes={props.referencedNodes}
+                        <GraphView {...props} isFullscreen={isFullscreen} referencedNodes={props.referencedNodes} focusNodeNames={props.focusNodeNames}
                             height={isFullscreen ? '100%' : props.height} />
                         <div className="modal-resize-handle" onMouseDown={handleResizeMouseDown} />
                     </div>

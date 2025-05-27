@@ -50,41 +50,34 @@ export default function ProjectPanel({ activeProject, onProjectChange }) {
         <div className="sidebar-icons">
           {brains.slice().sort((a, b) => b.brain_id - a.brain_id)
             .map(b => {
-              //const Icon = activeProject ? iconByKey['Brain'] :  iconByKey['Brain']
-              //const Icon = iconByKey[b.icon_key] ?? iconByKey.BsGraphUp;
               return (
                 <div
                   key={b.brain_id}
                   className={`sidebar-icon ${activeProject === b.brain_id ? 'active' : ''}`}
                   onClick={() => handleProjectClick(b.brain_id)}
-                  title={b.brain_name}
                 >
-                  <img width={30} src={activeProject === b.brain_id ? '/brainbanzzak.png' : '/brain.png'} />
-                  {/* <Icon size={20} /> */}
+                  <img
+                    width={30}
+                    src={activeProject === b.brain_id ? '/brainbanzzak.png' : '/brain.png'}
+                    style={{ flexShrink: 0 }}
+                  />
+                  <span>{b.brain_name}</span>
                 </div>
               );
             })}
 
-          {/* + 버튼 – 새 프로젝트(홈) */}
-          <div
-            className="sidebar-icon add-icon"
-            // onClick={() => nav('/')}
-            onClick={() => setShowModal(true)}
-            title="새 프로젝트"
-          >
-            <AiOutlinePlus size={25} style={{ margin: 'auto' }} />
+          <div className="sidebar-icon add-icon" onClick={() => setShowModal(true)}>
+            <AiOutlinePlus size={27} />
+            <span>새 프로젝트</span>
           </div>
+
         </div>
       </div>
-      {/* 하단 고정 홈 아이콘 */}
-      <div
-        className="sidebar-icon home-icon"
-        onClick={() => nav('/')}
-        title="홈으로"
-      >
-        <IoHomeOutline size={26} />
+      <div className="sidebar-icon home-icon" onClick={() => nav('/')}>
+        <IoHomeOutline size={25} />
+        <span>홈으로</span>
       </div>
-      {/* 새 브레인 모달 */}
+
       {showModal && (
         <NewBrainModal
           onClose={() => setShowModal(false)}

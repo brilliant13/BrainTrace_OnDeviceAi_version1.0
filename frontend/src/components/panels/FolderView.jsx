@@ -33,6 +33,7 @@ export default function FolderView({
     onSelectFile,
     onDropFileToFolder,
     onOpenPDF,
+    onOpenTXT,
     fileMap,
     moveItem,      // 부모 FileView의 moveItem
     refreshParent, // 부모 FileView의 전체 트리 갱신 함수
@@ -48,7 +49,6 @@ export default function FolderView({
     const [editingId, setEditingId] = useState(null);
     const [tempName, setTempName] = useState('');
     const [fileToDelete, setFileToDelete] = useState(null);
-    // 파일 추가 로딩 큐  
     const [uploadQueue, setUploadQueue] = useState([]);
 
     // 폴더 열 때, 자식 파일들 API 호출
@@ -335,6 +335,8 @@ export default function FolderView({
                                 onSelectFile(path);
                                 if (child.filetype === 'pdf') {
                                     onOpenPDF(child.meta);
+                                } else if (child.filetype === 'txt') {
+                                    onOpenTXT(child.meta);
                                 }
                             }}
                             draggable

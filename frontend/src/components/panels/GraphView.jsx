@@ -12,7 +12,8 @@ function GraphView({
   referencedNodes = [],
   graphRefreshTrigger, // 그래프 새로고침 트리거 prop 추가
   isFullscreen = false,
-  onGraphDataUpdate
+  onGraphDataUpdate,
+  focusNodeNames,
 }) {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -21,6 +22,7 @@ function GraphView({
   const [error, setError] = useState(null);
   const [referencedSet, setReferencedSet] = useState(new Set()); // 참고된 노드들을 Set으로 관리
   const [showReferenced, setShowReferenced] = useState(true); // 참고된 노드 표시 여부를 위한 상태
+  const [showFocus, setShowFocus] = useState(true); // 소스로 생성된 노드 표시 여부
   const fgRef = useRef();
   const [visibleNodes, setVisibleNodes] = useState([]);
   const [visibleLinks, setVisibleLinks] = useState([]);
@@ -79,7 +81,7 @@ function GraphView({
     return 1; // 노드가 매우 적을 때는 확대
   };
 
-  const startTimelapse = () => {
+  const startTimelapse = () => { // 애니메이션
     const nodes = [...graphData.nodes];
     const links = [...graphData.links];
     const N = nodes.length;
@@ -192,6 +194,59 @@ function GraphView({
   }, [loading]);
 
   useEffect(() => {
+    if (focusNodeNames && focusNodeNames.length > 0) {
+      setShowFocus(true);
+      setPulseStartTime(Date.now()); // ✅ 이 라인 추가
+    }
+  }, [focusNodeNames]);
+
+
+  useEffect(() => { // 소스 클릭 시 소스와 연결된 노드를 찾아줌
+    if (!focusNodeNames || !focusNodeNames.length || !graphData.nodes.length) return;
+
+    const focusNodes = graphData.nodes.filter(n => focusNodeNames.includes(n.name));
+    console.log("🎯 Focus 대상 노드:", focusNodes.map(n => n.name));
+
+    const validNodes = focusNodes.filter(n => typeof n.x === 'number' && typeof n.y === 'number');
+    console.log("🧭 위치 정보 포함된 유효 노드:", validNodes.map(n => ({ name: n.name, x: n.x, y: n.y })));
+
+    if (validNodes.length === 0) {
+      console.warn("⚠️ 유효한 위치 정보가 없어 카메라 이동 생략됨");
+      return;
+    }
+    const fg = fgRef.current;
+    if (!fg || !dimensions.width || !dimensions.height) return;
+
+    const avgX = validNodes.reduce((sum, n) => sum + n.x, 0) / validNodes.length;
+    const avgY = validNodes.reduce((sum, n) => sum + n.y, 0) / validNodes.length;
+
+    const xs = validNodes.map(n => n.x);
+    const ys = validNodes.map(n => n.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    const boxWidth = maxX - minX;
+    const boxHeight = maxY - minY;
+    const padding = 500;
+    const zoomScaleX = dimensions.width / (boxWidth + padding);
+    const zoomScaleY = dimensions.height / (boxHeight + padding);
+    const targetZoom = Math.min(zoomScaleX, zoomScaleY, 5);
+
+    // Step 1: 줌 아웃
+    fg.zoom(0.05, 800);
+
+    // Step 2: 이동
+    setTimeout(() => {
+      fg.centerAt(avgX, avgY, 1000);
+      setTimeout(() => {
+        fg.zoom(targetZoom, 1000);
+      }, 1000);
+    }, 900);
+  }, [focusNodeNames, graphData]);
+
+  useEffect(() => {
     // 초기 데이터가 제공되면 사용
     if (initialGraphData) {
       processGraphData(initialGraphData);
@@ -248,6 +303,12 @@ function GraphView({
 
     loadAndDetect();
   }, [graphRefreshTrigger, brainId]);
+
+  useEffect(() => {
+    if (focusNodeNames && focusNodeNames.length > 0) {
+      setShowFocus(true);
+    }
+  }, [focusNodeNames]);
 
   // referencedNodes가 변경될 때 Set 업데이트
   useEffect(() => {
@@ -418,8 +479,6 @@ function GraphView({
     if (onGraphDataUpdate) {
       onGraphDataUpdate(processedData); // 👈 전체 노드 이름 전달
     }
-
-
   };
 
   return (
@@ -442,6 +501,19 @@ function GraphView({
         <div className="graph-popup">
           <span>참고된 노드: {referencedNodes.join(', ')}</span>
           <span className="close-x" onClick={() => setShowReferenced(false)}>×</span>
+        </div>
+      )}
+
+      {/* 소스로 생성된 노드 UI 표시 */}
+      {showFocus && Array.isArray(focusNodeNames) && focusNodeNames.length > 0 && (
+        <div className="graph-popup">
+          <span>소스로 생성된 노드: {focusNodeNames.join(', ')}</span>
+          <span
+            className="close-x"
+            onClick={() => { setShowFocus(false); }}
+          >
+            ×
+          </span>
         </div>
       )}
 
@@ -495,6 +567,7 @@ function GraphView({
             const isReferenced = showReferenced && referencedSet.has(node.name);
             const isImportantNode = node.linkCount >= 3;
             const isNewlyAdded = newlyAddedNodeNames.includes(node.name);
+            const isFocus = showFocus && focusNodeNames?.includes(node.name);
             const isRef = showReferenced && referencedSet.has(label);
             const r = (5 + Math.min(node.linkCount * 0.5, 3)) / globalScale;
             // 노드 크기 - 연결이 많을수록 더 큰 노드로 표시
@@ -511,15 +584,15 @@ function GraphView({
             ctx.fill();
 
             // 노드 테두리 그리기 - 참고된 노드는 주황색 테두리
-            const fontSize = (isReferenced || isNewlyAdded) ? 13 / globalScale : 9 / globalScale;
+            const fontSize = (isReferenced || isNewlyAdded || isFocus) ? 13 / globalScale : 9 / globalScale;
 
-            ctx.font = (isReferenced || isNewlyAdded)
+            ctx.font = (isReferenced || isNewlyAdded || isFocus)
               ? `bold ${fontSize}px Sans-Serif`
               : `${fontSize}px Sans-Serif`;
 
 
             // — 2) 신규 펄스 링
-            if (isNewlyAdded && pulseStartTime) {
+            if ((isNewlyAdded || isFocus) && pulseStartTime) {
               const elapsed = (Date.now() - pulseStartTime) % pulseDuration;
               const t = elapsed / pulseDuration;        // 0 → 1
               const ringR = r * (1 + t * (pulseScale - 1));
@@ -542,7 +615,7 @@ function GraphView({
             }
 
             // 외곽선 스타일
-            if (isNewlyAdded) {
+            if (isNewlyAdded || isFocus) {
               ctx.strokeStyle = '#2196f3'; // 파란색 계열 테두리
               ctx.lineWidth = 4 / globalScale;
               ctx.shadowColor = '#90caf9'; // 밝은 파랑으로 glow
@@ -560,7 +633,7 @@ function GraphView({
             ctx.stroke();
 
             // 노드 아래에 텍스트 그리기
-            const textColor = (isImportantNode || isReferenced || isNewlyAdded) ? '#222' : '#555';
+            const textColor = (isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#222' : '#555';
 
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
