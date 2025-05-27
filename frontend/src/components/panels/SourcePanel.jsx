@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   listBrainFolders,
   createFolder,
@@ -24,6 +24,7 @@ import './styles/Scrollbar.css';
 
 import { TbCylinderPlus } from "react-icons/tb";
 import { TbFolderPlus } from "react-icons/tb";
+import { IoIosSearch } from "react-icons/io";
 
 function normalizeApiTree(apiFolders = []) {
   return apiFolders.map(folder => ({
@@ -43,7 +44,8 @@ export default function SourcePanel({
   setCollapsed,
   setIsPDFOpen,
   onBackFromPDF,
-  onGraphRefresh
+  onGraphRefresh,
+  onFocusNodeNamesUpdate
 }) {
   const panelRef = useRef();
   const [panelWidth, setPanelWidth] = useState(0);
@@ -58,7 +60,6 @@ export default function SourcePanel({
   // 업로드 트리거 (바뀔 때마다 FileView가 다시 로드)
   const [uploadKey, setUploadKey] = useState(0);
   const [sourceCount, setSourceCount] = useState(0);
-  const maxQuota = 50; // 예시로 최대 50개 제한
 
   useEffect(() => {
     if (!panelRef.current) return;
@@ -207,9 +208,13 @@ export default function SourcePanel({
                     : <>＋ 소스</>}
                 </button>
               </div>
-            )}
-          </div>
 
+            )}
+
+          </div>
+          <div className="search-icon-container">
+            <IoIosSearch size={19} style={{ cursor: 'pointer' }} />
+          </div>
 
           {showAddFolderInput && (
             <form className="add-form fancy-form" onSubmit={handleAddFolder}>
@@ -264,6 +269,7 @@ export default function SourcePanel({
                   // 소스 수 갱신
                   refreshSourceCount();
                 }}
+                onFocusNodeNamesUpdate={onFocusNodeNamesUpdate}
               />
             )
             }

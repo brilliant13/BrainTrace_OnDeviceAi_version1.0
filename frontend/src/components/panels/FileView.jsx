@@ -15,6 +15,7 @@ import { processText, deleteDB } from '../../api/graphApi';
 import { fetchGraphData } from '../../api/graphApi';
 import ConfirmDialog from '../ConfirmDialog'
 import { AiOutlineLoading3Quarters } from 'react-icons/ai'
+import { AiOutlineNodeIndex } from "react-icons/ai";
 import {
   listBrainFolders,
   getPdfsByBrain,
@@ -37,7 +38,8 @@ import {
   updateTextFile,
   updateVoice,
   createTextToGraph,
-  uploadTextfiles
+  uploadTextfiles,
+  getNodesBySourceId
 } from '../../../../backend/services/backend'
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
@@ -91,6 +93,7 @@ export default function FileView({
   setFileMap = () => { },
   refreshTrigger,
   onGraphRefresh,
+  onFocusNodeNamesUpdate
 }) {
   const [selectedFile, setSelectedFile] = useState(null)
   const [isRootDrag, setIsRootDrag] = useState(false)
@@ -450,6 +453,7 @@ export default function FileView({
             onSelectFile={setSelectedFile}
             onDropFileToFolder={handleDropToFolder}
             onOpenPDF={onOpenPDF}
+            onOpenTXT={onOpenTXT}
             fileMap={fileMap}
             moveItem={moveItem}
             refreshParent={refresh}
@@ -492,7 +496,7 @@ export default function FileView({
               if (f.filetype === 'pdf' && fileMap[f.id]) {
                 onOpenPDF(fileMap[f.id]);
               } else if (f.filetype === 'txt' && fileMap[f.id]) {
-                onOpenTXT(fileMap[f.id]);  // ✅ 이 부분 추가
+                onOpenTXT(fileMap[f.id]);
               }
             }}
           >
@@ -536,6 +540,25 @@ export default function FileView({
                   <div className="popup-item" onClick={() => openDeleteConfirm(f)}>
                     <RiDeleteBinLine size={14} style={{ marginRight: 4 }} /> 소스 삭제
                   </div>
+                  <div
+                    className="popup-item"
+                    onClick={async () => {
+                      try {
+                        const names = await getNodesBySourceId(f.id, brainId);
+                        if (onFocusNodeNamesUpdate) {
+                          onFocusNodeNamesUpdate(names); // ✅ 이름 수정
+                        }
+                      } catch (err) {
+                        console.error('노드 조회 실패:', err);
+                        alert('해당 소스에서 생성된 노드를 가져오지 못했습니다.');
+                      }
+                      setMenuOpenId(null);
+                    }}
+                  >
+                    <AiOutlineNodeIndex size={18} style={{ marginRight: 4 }} />
+                    노드 보기
+                  </div>
+
                 </div>
               )}
             </div>
