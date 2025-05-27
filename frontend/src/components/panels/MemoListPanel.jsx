@@ -72,7 +72,7 @@ function MemoListPanel({
                         ) : (
                             <>
                                 <CiMemoPad className="memo-title-icon" />
-                                <span className="memo-title-text">note</span>
+                                <span className="memo-title-text">Note</span>
                             </>
                         )}
                     </div>
