@@ -453,6 +453,7 @@ export default function FileView({
             onSelectFile={setSelectedFile}
             onDropFileToFolder={handleDropToFolder}
             onOpenPDF={onOpenPDF}
+            onOpenTXT={onOpenTXT}
             fileMap={fileMap}
             moveItem={moveItem}
             refreshParent={refresh}
