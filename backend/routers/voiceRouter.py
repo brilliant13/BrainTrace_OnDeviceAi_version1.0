@@ -1,8 +1,11 @@
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, status, Query, File, UploadFile
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from sqlite_db.sqlite_handler import SQLiteHandler
+from services.voiceService import transcribe
 import logging
+import os
+import tempfile
 
 sqlite_handler = SQLiteHandler()
 router = APIRouter(
@@ -188,6 +191,7 @@ async def move_voice_out_of_folder(
     except Exception as e:
         logging.error("음성 파일 폴더 제거 오류: %s", e)
         raise HTTPException(status_code=500, detail="내부 서버 오류")
+
 # ───────── GET BY FOLDER ─────────
 @router.get("/folder/{folder_id}", response_model=List[VoiceResponse],
     summary="폴더의 음성 파일 목록 조회")
@@ -219,3 +223,39 @@ async def get_voices_by_brain(
     except Exception as e:
         logging.error("음성 파일 조회 오류: %s", e)
         raise HTTPException(status_code=500, detail="서버 오류")
+
+@router.post("/transcribe",
+    summary="음성 파일 텍스트 변환",
+    description="MP3 파일을 텍스트로 변환합니다.",
+    response_model=dict)
+async def transcribe_audio(file: UploadFile = File(...)):
+    """
+    MP3 파일을 텍스트로 변환합니다:
+    
+    - **file**: MP3 파일 (multipart/form-data)
+    
+    반환값:
+    - **text**: 변환된 텍스트
+    """
+    try:
+        # 임시 파일 생성
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+            # 업로드된 파일 내용을 임시 파일에 저장
+            content = await file.read()
+            temp_file.write(content)
+            temp_file_path = temp_file.name
+
+        # 음성 파일 텍스트 변환
+        text = transcribe(temp_file_path)
+        
+        # 임시 파일 삭제
+        os.unlink(temp_file_path)
+        
+        return {"text": text}
+        
+    except Exception as e:
+        logging.error("음성 변환 오류: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"음성 변환 중 오류가 발생했습니다: {str(e)}"
+        )
