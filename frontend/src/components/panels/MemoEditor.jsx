@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './styles/MemoEditor.css';
-import { IoArrowBack } from "react-icons/io5";
-import { RiArrowGoBackFill } from "react-icons/ri";
 import { MdKeyboardBackspace } from "react-icons/md";
+import { TbArrowsMinimize } from "react-icons/tb";
+import { TbArrowsDiagonalMinimize2 } from "react-icons/tb";
+import { LuMoveDiagonal } from "react-icons/lu";
+import { RiCollapseDiagonalFill } from "react-icons/ri";
 function MemoEditor({ memo, onSaveAndClose }) {
   const [title, setTitle] = useState(memo?.title || '');
   const [body, setBody] = useState(memo?.content || '');
@@ -29,7 +31,7 @@ function MemoEditor({ memo, onSaveAndClose }) {
   return (
     <div className="notion-editor">
       <button className="back-button small-top-left" onClick={handleBack}>
-        <MdKeyboardBackspace size={28} />
+        <RiCollapseDiagonalFill size={25} />
       </button>
 
       <input

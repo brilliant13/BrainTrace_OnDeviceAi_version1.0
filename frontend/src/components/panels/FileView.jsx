@@ -573,7 +573,7 @@ export default function FileView({
                       setMenuOpenId(null);
                     }}
                   >
-                    <AiOutlineNodeIndex size={18} style={{ marginRight: 4 }} />
+                    <AiOutlineNodeIndex size={17} style={{ marginRight: 1 }} />
                     노드 보기
                   </div>
 

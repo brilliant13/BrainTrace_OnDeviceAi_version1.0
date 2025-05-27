@@ -83,6 +83,7 @@
     font-size: 22px;
     border: none;
     border-radius: 8px;
+    margin-right: 5px;
     background-color: transparent;
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;

@@ -308,13 +308,12 @@ export default function SourcePanel({
           <div className="panel-content" style={{ flexGrow: 1, overflow: 'auto' }}>
             {openedPDF ? (
               <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
-                <button className="pdf-back-button" onClick={closePDF}>← 뒤로가기</button>
-                <PDFViewer file={`http://localhost:8000/${openedPDF.pdf_path}`} containerWidth={panelWidth} />
+                <PDFViewer file={`http://localhost:8000/${openedPDF.pdf_path}`} containerWidth={panelWidth}
+                  onBack={closePDF} />
               </div>
             ) : openedTXT ? (
               <div className="pdf-viewer-wrapper" style={{ height: '100%' }}>
-                <button className="pdf-back-button" onClick={closePDF}>← 뒤로가기</button>
-                <TxtViewer fileUrl={`http://localhost:8000/${openedTXT.txt_path}`} />
+                <TxtViewer fileUrl={`http://localhost:8000/${openedTXT.txt_path}`} onBack={closePDF} />
               </div>
             ) : (
               <FileView

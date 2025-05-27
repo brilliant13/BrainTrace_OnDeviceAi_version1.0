@@ -296,10 +296,6 @@ button.add-button.icon-only:active {
 }
 
 .pdf-back-button {
-  position: absolute;
-  top: 70px;
-  left: 70px;
-  z-index: 10;
   background-color: white;
   border: 1px solid #ccc;
   padding: 6px 12px;
