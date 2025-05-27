@@ -212,9 +212,11 @@ export default function SourcePanel({
             )}
 
           </div>
-          <div className="search-icon-container">
-            <IoIosSearch size={19} style={{ cursor: 'pointer' }} />
-          </div>
+          {(folderTree.length > 0 || sourceCount > 0) && (
+            <div className="search-icon-container">
+              <IoIosSearch size={19} style={{ cursor: 'pointer' }} />
+            </div>
+          )}
 
           {showAddFolderInput && (
             <form className="add-form fancy-form" onSubmit={handleAddFolder}>
