@@ -1,16 +1,3 @@
-import os
-import sys
-
-# 현재 파일의 절대 경로를 얻습니다.
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# backend 폴더
-backend_dir = os.path.dirname(current_dir)
-# 프로젝트 루트
-project_root = os.path.dirname(backend_dir)
-
-# 프로젝트 루트를 sys.path의 맨 앞에 추가
-sys.path.insert(0, project_root)
-
 from transformers import pipeline
 import torch
 import librosa
@@ -43,15 +30,3 @@ def transcribe(audio_path: str) -> str:
     except Exception as e:
         logging.error(f"음성 변환 중 오류 발생: {str(e)}")
         raise Exception(f"음성 변환 실패: {str(e)}")
-
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python voiceService.py <audio_path>")
-        sys.exit(1)
-
-    audio_file = sys.argv[1]
-    transcription = transcribe(audio_file)
-
-    print("=== Transcription Result ===")
-    print(transcription)
