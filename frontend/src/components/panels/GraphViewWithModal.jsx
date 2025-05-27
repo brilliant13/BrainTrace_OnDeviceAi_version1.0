@@ -86,6 +86,7 @@ function GraphViewWithModal(props) {
         window.addEventListener('mousemove', onMouseMove);
         window.addEventListener('mouseup', onMouseUp);
     };
+
     const openExternalGraphWindow = () => {
         const brainId = props.brainId || 'default-brain-id';
         const url = `${window.location.origin}/graph-view?brainId=${encodeURIComponent(brainId)}`;

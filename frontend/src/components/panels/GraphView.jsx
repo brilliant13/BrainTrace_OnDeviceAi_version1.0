@@ -201,7 +201,7 @@ function GraphView({
   }, [focusNodeNames]);
 
 
-  useEffect(() => {
+  useEffect(() => { // 소스 클릭 시 소스와 연결된 노드를 찾아줌
     if (!focusNodeNames || !focusNodeNames.length || !graphData.nodes.length) return;
 
     const focusNodes = graphData.nodes.filter(n => focusNodeNames.includes(n.name));
