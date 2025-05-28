@@ -78,8 +78,6 @@ function MainLayout() {
       ...data
     }));
   };
-  
-
 
   const handleBackFromPDF = () => {
     setIsPDFOpen(false);
@@ -131,17 +129,22 @@ function MainLayout() {
 
   };
 
-
   const onRenameSession = (id, newTitle) => {
     setSessions(prev => prev.map(s => s.id === id ? { ...s, title: newTitle } : s));
   };
 
   const onDeleteSession = (id) => {
-    setSessions(prev => prev.filter(s => s.id !== id));
+    const updated = sessions.filter(s => s.id !== id);
+    setSessions(updated);
+    localStorage.setItem(`sessions-${activeProject}`, JSON.stringify(updated));
+    // ✅ 삭제한 세션이 현재 열려 있던 세션이라면
     if (id === currentSessionId) {
+      // 기존에는 다음 세션으로 이동 + showChatPanel(true) → ❌ 문제
       setCurrentSessionId(null);
+      setShowChatPanel(false); // ✅ 무조건 리스트로 이동
     }
   };
+
 
   useEffect(() => {
     setActiveProject(projectId);

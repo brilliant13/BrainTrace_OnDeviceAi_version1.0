@@ -169,6 +169,20 @@ function ChatPanel({
     setIsEditingTitle(false);
   };
 
+  const handleDeleteSession = (sessionId) => {
+    const updated = sessions.filter(s => s.id !== sessionId);
+    setSessions(updated);
+    localStorage.setItem(`sessions-${activeProject}`, JSON.stringify(updated));
+
+    // 선택 중인 세션이 삭제되면 첫 번째 세션으로 이동
+    if (sessionId === currentSessionId && updated.length > 0) {
+      setCurrentSessionId(updated[0].id);
+    } else if (updated.length === 0) {
+      setCurrentSessionId(null);
+    }
+  };
+
+
 
   const messages = getCurrentMessages();
   const hasChatStarted = messages.some(msg => msg.text.trim() !== '');

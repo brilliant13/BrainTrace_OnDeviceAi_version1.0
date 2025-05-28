@@ -128,12 +128,6 @@
     background-color: #f9fafb;
 }
 
-.session-menu-wrapper {
-    position: relative;
-    margin-left: 8px;
-    flex-shrink: 0;
-}
-
 .session-list::-webkit-scrollbar {
     width: 6px;
 }
