@@ -114,20 +114,26 @@ function MainLayout() {
     if (!memoCollapsed) { setMemoPanelSize(size); }
   };
 
+  // 참고된 노드 목록 업데이트
   const onReferencedNodesUpdate = (nodes) => {
     setReferencedNodes(nodes);
     syncToStandaloneWindow({ referencedNodes: nodes }); // 추가
+
   };
 
+  // 노드 이름 포커스 처리
   const handleFocusNodeNames = (nodeObject) => {
     if (Array.isArray(nodeObject)) {
       setFocusNodeNames(nodeObject); // 이미 배열이면 그대로 저장
+      syncToStandaloneWindow({ focusNodeNames: nodeObject }); // 🟢 추가
     } else if (nodeObject && nodeObject.nodes) {
       setFocusNodeNames(nodeObject.nodes); // ✅ 이 라인이 핵심
+      syncToStandaloneWindow({ focusNodeNames: nodeObject.nodes }); // 🟢 추가
     } else {
       setFocusNodeNames([]);
+      syncToStandaloneWindow({ focusNodeNames: [] }); // 🟢 추가
     }
-    syncToStandaloneWindow({ focusNodeNames: Array.isArray(nodeObject) ? nodeObject : nodeObject.nodes }); // 추가
+    // syncToStandaloneWindow({ focusNodeNames: Array.isArray(nodeObject) ? nodeObject : nodeObject.nodes }); // 추가
 
   };
 

@@ -1,0 +1,381 @@
+/* src/components/panels/styles/GraphViewForFullscreen.css */
+
+/* 기존 .graph-area와 충돌 방지를 위해 고유한 클래스명 사용 */
+.graph-fullscreen-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #f8f9fa;
+    overflow: hidden;
+  }
+  
+  .fullscreen-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 1000;
+  }
+  
+  /* 상단 툴바 */
+  .fullscreen-toolbar {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: auto;
+    gap: 20px;
+  }
+  
+  .toolbar-left,
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  /* 검색 컨트롤 */
+  .fullscreen-search-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .fullscreen-search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 0 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    min-width: 320px;
+  }
+  
+  .fullscreen-search-icon {
+    font-size: 16px;
+    margin-right: 10px;
+    color: #6b7280;
+  }
+  
+  .fullscreen-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 12px 0;
+    font-size: 14px;
+    color: #1f2937;
+    background: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  
+  .fullscreen-search-input::placeholder {
+    color: #9ca3af;
+  }
+  
+  .fullscreen-clear-search-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .fullscreen-clear-search-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  
+  .fullscreen-search-results {
+    font-size: 12px;
+    color: #6b7280;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 6px 12px;
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+  }
+  
+  /* 컨트롤 버튼들 */
+  .fullscreen-control-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(10px);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  
+  .fullscreen-control-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+  
+  .fullscreen-control-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+  
+  .fullscreen-clear-btn {
+    background: rgba(254, 242, 242, 0.95);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+  }
+  
+  .fullscreen-clear-btn:hover {
+    background: rgba(254, 242, 242, 1);
+  }
+  
+  .fullscreen-btn-icon {
+    font-size: 16px;
+  }
+  
+  /* 고급 컨트롤 패널 */
+  .fullscreen-advanced-controls-panel {
+    position: absolute;
+    top: 80px;
+    right: 20px;
+    width: 320px;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    pointer-events: auto;
+  }
+  
+  .fullscreen-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  .fullscreen-panel-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+  
+  .fullscreen-close-panel-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  
+  .fullscreen-close-panel-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  
+  .fullscreen-panel-content {
+    padding: 20px 24px;
+  }
+  
+  .fullscreen-control-group {
+    margin-bottom: 20px;
+  }
+  
+  .fullscreen-control-group:last-child {
+    margin-bottom: 0;
+  }
+  
+  .fullscreen-control-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 12px;
+  }
+  
+  .fullscreen-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  
+  .fullscreen-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  .fullscreen-stat-label {
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+  
+  .fullscreen-stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+  }
+  
+  /* 하단 상태바 */
+  .fullscreen-statusbar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    pointer-events: auto;
+  }
+  
+  .fullscreen-status-left,
+  .fullscreen-status-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .fullscreen-highlighted-nodes {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 400px;
+  }
+  
+  .fullscreen-status-icon {
+    font-size: 14px;
+  }
+  
+  .fullscreen-status-text {
+    font-size: 14px;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .fullscreen-keyboard-shortcuts {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .fullscreen-shortcut {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 20px;
+    padding: 0 6px;
+    background: rgba(0, 0, 0, 0.08);
+    color: #374151;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 4px;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  }
+  
+  .fullscreen-shortcut-desc {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  
+  /* 반응형 디자인 */
+  @media (max-width: 768px) {
+    .fullscreen-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+    
+    .toolbar-left,
+    .toolbar-right {
+      justify-content: center;
+    }
+    
+    .fullscreen-search-input-wrapper {
+      min-width: auto;
+    }
+    
+    .fullscreen-advanced-controls-panel {
+      right: 10px;
+      left: 10px;
+      width: auto;
+    }
+    
+    .fullscreen-statusbar {
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 16px;
+    }
+    
+    .fullscreen-keyboard-shortcuts {
+      order: -1;
+    }
+  }
+  
+  /* 다크 모드 대응 */
+  @media (prefers-color-scheme: dark) {
+    .graph-fullscreen-container {
+      background: #111827;
+    }
+    
+    .fullscreen-search-input-wrapper,
+    .fullscreen-control-btn,
+    .fullscreen-advanced-controls-panel,
+    .fullscreen-statusbar {
+      background: rgba(31, 41, 55, 0.95);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .fullscreen-search-input,
+    .fullscreen-panel-header h4,
+    .fullscreen-stat-value,
+    .fullscreen-status-text {
+      color: #f9fafb;
+    }
+    
+    .fullscreen-search-icon,
+    .fullscreen-clear-search-btn,
+    .fullscreen-close-panel-btn,
+    .fullscreen-stat-label,
+    .fullscreen-shortcut-desc {
+      color: #9ca3af;
+    }
+    
+    .fullscreen-control-btn {
+      color: #e5e7eb;
+    }
+    
+    .fullscreen-shortcut {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e5e7eb;
+    }
+  }
