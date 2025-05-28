@@ -2,27 +2,36 @@ import React, { useRef, useEffect, useState } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import * as d3 from 'd3';
 import { fetchGraphData } from '../../api/graphApi';
-import { PiMagicWand } from "react-icons/pi";
 import { easeCubicInOut } from 'd3-ease';
-import './styles/GraphView.css'; // 상단에 CSS import 추가
+import './styles/GraphView.css';
+
 function GraphView({
   brainId = 'default-brain-id',
-  height = '100%', // 안예찬이 직접 찾은 최적의 그래프뷰 높이
+  height = '100%',
   graphData: initialGraphData = null,
   referencedNodes = [],
-  graphRefreshTrigger, // 그래프 새로고침 트리거 prop 추가
+  focusNodeNames = [],
+  graphRefreshTrigger,
   isFullscreen = false,
   onGraphDataUpdate,
-  focusNodeNames,
+  onTimelapse,
+  showPopups = true,
+  onNewlyAddedNodes,
+  onGraphViewReady,
+  externalShowReferenced,
+  externalShowFocus, 
+  externalShowNewlyAdded,
+  clearTrigger, // ✅ 추가
+  isDarkMode = false // ✅ 추가
 }) {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [referencedSet, setReferencedSet] = useState(new Set()); // 참고된 노드들을 Set으로 관리
-  const [showReferenced, setShowReferenced] = useState(true); // 참고된 노드 표시 여부를 위한 상태
-  const [showFocus, setShowFocus] = useState(true); // 소스로 생성된 노드 표시 여부
+  const [referencedSet, setReferencedSet] = useState(new Set());
+  const [showReferenced, setShowReferenced] = useState(true);
+  const [showFocus, setShowFocus] = useState(true);
   const fgRef = useRef();
   const [visibleNodes, setVisibleNodes] = useState([]);
   const [visibleLinks, setVisibleLinks] = useState([]);
@@ -30,26 +39,29 @@ function GraphView({
   const [newlyAddedNodeNames, setNewlyAddedNodeNames] = useState([]);
   const [showNewlyAdded, setShowNewlyAdded] = useState(false);
   const prevGraphDataRef = useRef({ nodes: [], links: [] });
-  // 여기에 펄스 시작 시간 저장
   const [pulseStartTime, setPulseStartTime] = useState(null);
   const [refPulseStartTime, setRefPulseStartTime] = useState(null);
-  // 더블클릭 감지용 레퍼런스
   const lastClickRef = useRef({ node: null, time: 0 });
   const clickTimeoutRef = useRef();
 
-  // 앱 디자인에 맞는 모노크로매틱 + 포인트 색상 팔레트
-  const colorPalette = [
-    '#444444', // 진한 회색 (주요 노드)
-    '#666666', // 중간 회색
-    '#888888', // 연한 회색
-    '#aaaaaa', // 매우 연한 회색
-    '#3366bb', // 포인트 색상 - 파랑
-    '#333333', // 거의 검정색
-    '#777777', // 다른 회색 톤
-    '#999999', // 또 다른 회색 톤
-    '#5588cc', // 밝은 파랑 (포인트)
-    '#555555', // 또 다른 진한 회색
+  // ✅ 콜백 등록 상태 추적
+  const callbacksRegisteredRef = useRef(false);
+  const prevNewlyAddedRef = useRef([]);
+
+  // 색상 팔레트
+  // ✅ 다크모드용 색상 팔레트 추가
+  const lightColorPalette = [
+    '#444444', '#666666', '#888888', '#aaaaaa', '#3366bb',
+    '#333333', '#777777', '#999999', '#5588cc', '#555555',
   ];
+
+  const darkColorPalette = [
+    '#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#60a5fa',
+    '#f1f5f9', '#d1d5db', '#9ca3af', '#3b82f6', '#e5e7eb',
+  ];
+   // ✅ 현재 팔레트 선택
+   const colorPalette = isDarkMode ? darkColorPalette : lightColorPalette;
+
 
   // 컨테이너 사이즈 계산
   const updateDimensions = () => {
@@ -75,22 +87,20 @@ function GraphView({
     else if (nodeCount >= 20) return 0.3;
     else if (nodeCount >= 10) return 0.4;
     else if (nodeCount >= 5) return 0.8;
-    return 1; // 노드가 매우 적을 때는 확대
+    return 1;
   };
 
-  const startTimelapse = () => { // 애니메이션
+  // 타임랩스 함수
+  const startTimelapse = () => {
     const nodes = [...graphData.nodes];
     const links = [...graphData.links];
     const N = nodes.length;
     if (N === 0) return;
 
-    // 🧠 노드 수에 따라 전체 재생 시간 동적으로 조정
-    const totalDuration = Math.min(6000, 800 + N * 80); // 노드 수 많을수록 길어짐 (최대 6초)
-    const fadeDuration = Math.max(200, Math.min(800, N * 10)); // 페이드 시간도 노드 수에 비례
+    const totalDuration = Math.min(6000, 800 + N * 80);
+    const fadeDuration = Math.max(200, Math.min(800, N * 10));
 
-    // 노드 셔플
     const shuffledNodes = d3.shuffle(nodes);
-
     const appearTimes = shuffledNodes.map((_, i) =>
       (i / (N - 1)) * (totalDuration - fadeDuration)
     );
@@ -101,7 +111,7 @@ function GraphView({
 
     if (fgRef.current) {
       const currentZoom = fgRef.current.zoom();
-      fgRef.current.zoom(currentZoom, 0); // 카메라 줌 유지 (위치 이동 제거)
+      fgRef.current.zoom(currentZoom, 0);
     }
 
     const startTime = performance.now();
@@ -141,25 +151,20 @@ function GraphView({
     requestAnimationFrame(tick);
   };
 
-
-  // 노드 클릭 핸들러 (더블클릭 감지 포함)
+  // 노드 클릭 핸들러
   const handleNodeClick = (node) => {
     const now = Date.now();
     const { node: lastNode, time: lastTime } = lastClickRef.current;
 
-    // 같은 노드를 300ms 이내에 두 번 클릭했으면 “더블클릭” 처리
     if (lastNode === node && now - lastTime < 300) {
       clearTimeout(clickTimeoutRef.current);
       lastClickRef.current = { node: null, time: 0 };
 
-      // 더블클릭 액션: 해당 노드로 센터+줌
       if (fgRef.current) {
-        // 더블클릭 액션
         fgRef.current.centerAt(node.x, node.y, 800);
-        fgRef.current.zoom(2, 800);  // 2배율로 0.8초 동안 줌
+        fgRef.current.zoom(2, 800);
       }
     } else {
-      // 최초 클릭으로 간주, 300ms 지나면 리셋
       lastClickRef.current = { node, time: now };
       clickTimeoutRef.current = setTimeout(() => {
         lastClickRef.current = { node: null, time: 0 };
@@ -168,32 +173,87 @@ function GraphView({
   };
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !fgRef.current) return;
+    if (clearTrigger > 0) {
+      console.log('🧹 GraphView에서 하이라이팅 해제 트리거 감지:', clearTrigger);
+      
+      // 모든 하이라이팅 상태 해제
+      setShowReferenced(false);
+      setShowFocus(false);
+      setShowNewlyAdded(false);
+      setNewlyAddedNodeNames([]);
+      
+      // 펄스 애니메이션도 중지
+      setPulseStartTime(null);
+      setRefPulseStartTime(null);
+    }
+  }, [clearTrigger]);
+  
 
-    const handleDoubleClick = (e) => {
-      // 노드가 아닌 곳에서 더블클릭 시 줌인
-      // 예외적으로 마우스 커서가 노드 위가 아니었는지 확인하는 조건 필요
-      if (!document.body.style.cursor.includes('pointer')) {
-        const fg = fgRef.current;
-        const boundingRect = container.getBoundingClientRect();
-        const mouseX = e.clientX - boundingRect.left;
-        const mouseY = e.clientY - boundingRect.top;
+  // ✅ 외부에서 제어되는 상태들과 동기화
+  useEffect(() => {
+    if (typeof externalShowReferenced === 'boolean') {
+      setShowReferenced(externalShowReferenced);
+    }
+  }, [externalShowReferenced]);
 
-        const graphCoords = fg.screen2GraphCoords(mouseX, mouseY);
-        fg.centerAt(graphCoords.x, graphCoords.y, 800);
-        fg.zoom(fg.zoom() * 2, 800); // 현재 줌에서 2배 확대
-      }
-    };
+  useEffect(() => {
+    if (typeof externalShowFocus === 'boolean') {
+      setShowFocus(externalShowFocus);
+    }
+  }, [externalShowFocus]);
 
-    container.addEventListener('dblclick', handleDoubleClick);
+  useEffect(() => {
+    if (typeof externalShowNewlyAdded === 'boolean') {
+      setShowNewlyAdded(externalShowNewlyAdded);
+    }
+  }, [externalShowNewlyAdded]);
 
-    return () => {
-      container.removeEventListener('dblclick', handleDoubleClick);
-    };
-  }, [dimensions]);
+  // ✅ 콜백 등록 - 한 번만 실행되도록 완전히 수정
+  useEffect(() => {
+    if (onGraphViewReady && !callbacksRegisteredRef.current) {
+      console.log('📡 GraphView 콜백 등록 (최초 1회만)');
+      
+      // setState 함수들을 직접 전달하지 않고 래퍼 함수로 전달
+      const callbacks = {
+        setShowReferenced: (value) => {
+          console.log('🔄 setShowReferenced 호출:', value);
+          setShowReferenced(value);
+        },
+        setShowFocus: (value) => {
+          console.log('🔄 setShowFocus 호출:', value);
+          setShowFocus(value);
+        },
+        setShowNewlyAdded: (value) => {
+          console.log('🔄 setShowNewlyAdded 호출:', value);
+          setShowNewlyAdded(value);
+        },
+        setNewlyAddedNodeNames: (value) => {
+          console.log('🔄 setNewlyAddedNodeNames 호출:', value);
+          setNewlyAddedNodeNames(value);
+        }
+      };
+      
+      onGraphViewReady(callbacks);
+      callbacksRegisteredRef.current = true;
+    }
+  }, []); // ✅ 의존성 배열 완전히 비움
 
+  // ✅ 새로 추가된 노드 알림 - 중복 방지 로직 추가
+  useEffect(() => {
+    if (!onNewlyAddedNodes || newlyAddedNodeNames.length === 0) return;
+    
+    // 이전 값과 비교해서 실제로 변경된 경우만 알림
+    const prevNodes = prevNewlyAddedRef.current;
+    const isChanged = JSON.stringify(prevNodes) !== JSON.stringify(newlyAddedNodeNames);
+    
+    if (isChanged) {
+      console.log('🆕 새로 추가된 노드 외부 알림:', newlyAddedNodeNames);
+      onNewlyAddedNodes(newlyAddedNodeNames);
+      prevNewlyAddedRef.current = [...newlyAddedNodeNames];
+    }
+  }, [newlyAddedNodeNames]); // ✅ onNewlyAddedNodes 의존성 제거
 
+  // 나머지 useEffect들은 그대로 유지...
   useEffect(() => {
     updateDimensions();
     const resizeObserver = new ResizeObserver(updateDimensions);
@@ -213,19 +273,16 @@ function GraphView({
     }
   }, [loading, graphData]);
 
-  useEffect(() => {
-    console.log("📦 loading 상태:", loading);
-  }, [loading]);
-
+  // focusNodeNames 변경 시 펄스 시작
   useEffect(() => {
     if (focusNodeNames && focusNodeNames.length > 0) {
       setShowFocus(true);
-      setPulseStartTime(Date.now()); // ✅ 이 라인 추가
+      setPulseStartTime(Date.now());
     }
   }, [focusNodeNames]);
 
-
-  useEffect(() => { // 소스 클릭 시 소스와 연결된 노드를 찾아줌
+  // 포커스 노드 카메라 이동
+  useEffect(() => {
     if (!focusNodeNames || !focusNodeNames.length || !graphData.nodes.length) return;
 
     const focusNodes = graphData.nodes.filter(n => focusNodeNames.includes(n.name));
@@ -238,6 +295,7 @@ function GraphView({
       console.warn("⚠️ 유효한 위치 정보가 없어 카메라 이동 생략됨");
       return;
     }
+
     const fg = fgRef.current;
     if (!fg || !dimensions.width || !dimensions.height) return;
 
@@ -258,20 +316,18 @@ function GraphView({
     const zoomScaleY = dimensions.height / (boxHeight + padding);
     const targetZoom = Math.min(zoomScaleX, zoomScaleY, 5);
 
-    // Step 1: 줌 아웃
     fg.zoom(0.05, 800);
 
-    // Step 2: 이동
     setTimeout(() => {
       fg.centerAt(avgX, avgY, 1000);
       setTimeout(() => {
         fg.zoom(targetZoom, 1000);
       }, 1000);
     }, 900);
-  }, [focusNodeNames, graphData]);
+  }, [focusNodeNames, graphData.nodes]);
 
+  // 그래프 데이터 로딩
   useEffect(() => {
-    // 초기 데이터가 제공되면 사용
     if (initialGraphData) {
       processGraphData(initialGraphData);
       return;
@@ -291,7 +347,7 @@ function GraphView({
     loadGraphData();
   }, [brainId, initialGraphData]);
 
-  // graphRefreshTrigger가 변경될 때마다 그래프 새로고침
+  // 그래프 새로고침
   useEffect(() => {
     if (!graphRefreshTrigger) return;
 
@@ -299,23 +355,19 @@ function GraphView({
       try {
         setLoading(true);
 
-        // 1) 새 데이터 가져오기
         const data = await fetchGraphData(brainId);
 
-        // 2) diff: 이전 그래프(prevGraphDataRef.current) vs. new data
         const prevNames = new Set(prevGraphDataRef.current.nodes.map(n => n.name));
         const added = data.nodes
           .map(n => n.name)
           .filter(name => !prevNames.has(name));
 
-        // 3) UI 상태에 반영
         setNewlyAddedNodeNames(added);
         setShowNewlyAdded(added.length > 0);
         if (added.length > 0) {
-          setPulseStartTime(Date.now());  // 펄스 시작 시각
+          setPulseStartTime(Date.now());
         }
 
-        // 4) 그래프 그리기
         processGraphData(data);
 
       } catch (err) {
@@ -328,24 +380,18 @@ function GraphView({
     loadAndDetect();
   }, [graphRefreshTrigger, brainId]);
 
+  // referencedNodes 처리
   useEffect(() => {
-    if (focusNodeNames && focusNodeNames.length > 0) {
-      setShowFocus(true);
-    }
-  }, [focusNodeNames]);
-
-  // referencedNodes가 변경될 때 Set 업데이트
-  useEffect(() => {
-    console.log('referencedNodes:', referencedNodes); // 디버깅용
+    console.log('referencedNodes:', referencedNodes);
     setReferencedSet(new Set(referencedNodes));
-    // referencedNodes가 바뀌면 다시 보여주기 ON
     if (referencedNodes.length > 0) {
       setRefPulseStartTime(Date.now());
       setShowReferenced(true);
     }
   }, [referencedNodes]);
 
-  useEffect(() => { // 질문할 때 관련된 노드로 이동하는 코드
+  // 참고된 노드 카메라 이동
+  useEffect(() => {
     if (!showReferenced || referencedNodes.length === 0 || !graphData.nodes.length) return;
 
     const referenced = graphData.nodes.filter(n => referencedSet.has(n.name));
@@ -358,11 +404,9 @@ function GraphView({
       const fg = fgRef.current;
       if (!fg || !dimensions.width || !dimensions.height) return;
 
-      // 1. 중심 좌표 계산
       const avgX = validNodes.reduce((sum, n) => sum + n.x, 0) / validNodes.length;
       const avgY = validNodes.reduce((sum, n) => sum + n.y, 0) / validNodes.length;
 
-      // 2. 노드들 경계 상자 계산
       const xs = validNodes.map(n => n.x);
       const ys = validNodes.map(n => n.y);
       const minX = Math.min(...xs);
@@ -373,20 +417,15 @@ function GraphView({
       const boxWidth = maxX - minX;
       const boxHeight = maxY - minY;
 
-      // 3. 화면 기준으로 padding 적용하여 적절한 zoom 비율 계산
       const padding = 500;
       const zoomScaleX = dimensions.width / (boxWidth + padding);
       const zoomScaleY = dimensions.height / (boxHeight + padding);
-      const targetZoom = Math.min(zoomScaleX, zoomScaleY, 5);// 최대 5배 이상 확대 제한
+      const targetZoom = Math.min(zoomScaleX, zoomScaleY, 5);
 
-      // Step 1: 먼저 줌 아웃
       fg.zoom(0.05, 800);
 
-      // Step 2: center 이동
       setTimeout(() => {
         fg.centerAt(avgX, avgY, 1000);
-
-        // Step 3: 해당 영역이 다 보이도록 줌인
         setTimeout(() => {
           fg.zoom(targetZoom, 1000);
         }, 1000);
@@ -396,7 +435,8 @@ function GraphView({
     return () => clearTimeout(timer);
   }, [showReferenced, referencedNodes, graphData, referencedSet]);
 
-  useEffect(() => { // 소스 추가 시 추가된 노드로 카메라 이동
+  // 새로 추가된 노드 카메라 이동
+  useEffect(() => {
     if (!newlyAddedNodeNames.length || !graphData.nodes.length) return;
 
     const addedNodes = graphData.nodes.filter(n => newlyAddedNodeNames.includes(n.name));
@@ -409,11 +449,9 @@ function GraphView({
       const fg = fgRef.current;
       if (!fg || !dimensions.width || !dimensions.height) return;
 
-      // 중심 좌표 계산
       const avgX = validNodes.reduce((sum, n) => sum + n.x, 0) / validNodes.length;
       const avgY = validNodes.reduce((sum, n) => sum + n.y, 0) / validNodes.length;
 
-      // 경계 상자 계산
       const xs = validNodes.map(n => n.x);
       const ys = validNodes.map(n => n.y);
       const minX = Math.min(...xs);
@@ -424,20 +462,15 @@ function GraphView({
       const boxWidth = maxX - minX;
       const boxHeight = maxY - minY;
 
-      // 줌 비율 계산
       const padding = 500;
       const zoomScaleX = dimensions.width / (boxWidth + padding);
       const zoomScaleY = dimensions.height / (boxHeight + padding);
       const targetZoom = Math.min(zoomScaleX, zoomScaleY, 5);
 
-      // Step 1: 줌 아웃
       fg.zoom(0.05, 800);
 
-      // Step 2: center 이동
       setTimeout(() => {
         fg.centerAt(avgX, avgY, 1000);
-
-        // Step 3: 줌인
         setTimeout(() => {
           fg.zoom(targetZoom, 1000);
         }, 1000);
@@ -449,8 +482,6 @@ function GraphView({
 
   // 그래프 데이터 처리 함수
   const processGraphData = (data) => {
-
-    // 중요 노드 탐지 (링크가 많은 노드)
     const linkCounts = {};
     data.links.forEach(link => {
       const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
@@ -460,25 +491,21 @@ function GraphView({
       linkCounts[targetId] = (linkCounts[targetId] || 0) + 1;
     });
 
-    // 링크 수에 따라 노드 정렬하여 색상 결정
     const processedData = {
       nodes: data.nodes.map((n, index) => {
         const nodeId = n.id || n.name;
         let nodeColor;
 
-        // 명확한 임계값에 기반한 색상 할당: 연결이 3개 이상인 노드만 파란색으로
         const linkCount = linkCounts[nodeId] || 0;
 
         if (linkCount >= 3) {
-          nodeColor = colorPalette[4]; // 파란색 포인트 색상 (연결 3개 이상)
+          nodeColor = colorPalette[4];
         } else if (linkCount == 2) {
-          nodeColor = colorPalette[0]; // 진한 회색 (연결 2개)
+          nodeColor = colorPalette[0];
         } else {
-          // 나머지는 회색 계열
-          nodeColor = colorPalette[2]; // 연한 회색 (연결 1개 이하)
+          nodeColor = colorPalette[2];
         }
 
-        // 참고된 노드인지 확인
         const nodeName = n.name || n.label || n.id;
 
         return {
@@ -498,62 +525,75 @@ function GraphView({
     };
 
     setGraphData(processedData);
-    prevGraphDataRef.current = processedData; // 이전 상태 저장
+    prevGraphDataRef.current = processedData;
     setLoading(false);
     if (onGraphDataUpdate) {
-      onGraphDataUpdate(processedData); // 👈 전체 노드 이름 전달
+      onGraphDataUpdate(processedData);
     }
   };
 
-  return (
-    <div
-      className="graph-area"
-      ref={containerRef}>
-      {/* 추가된 노드 UI 표시 */}
-      {showNewlyAdded && newlyAddedNodeNames.length > 0 && (
-        <div className="graph-popup">
-          <span>추가된 노드: {newlyAddedNodeNames.join(', ')}</span>
-          <span className="close-x" onClick={() => {
-            setShowNewlyAdded(false);
-            setNewlyAddedNodeNames([]);
-          }}>×</span>
-        </div>
-      )}
+  // 외부에서 팝업 데이터에 접근할 수 있도록 노출
+  React.useImperativeHandle(onTimelapse, () => ({
+    startTimelapse,
+    getPopupData: () => ({
+      showNewlyAdded,
+      newlyAddedNodeNames,
+      showReferenced,
+      referencedNodes,
+      showFocus,
+      focusNodeNames,
+      setShowNewlyAdded,
+      setNewlyAddedNodeNames,
+      setShowReferenced,
+      setShowFocus
+    })
+  }));
 
-      {/* 참고된 노드가 있을 때 디버깅 정보 표시 */}
-      {showReferenced && referencedNodes.length > 0 && (
-        <div className="graph-popup">
-          <span>참고된 노드: {referencedNodes.join(', ')}</span>
-          <span className="close-x" onClick={() => setShowReferenced(false)}>×</span>
-        </div>
-      )}
+  // ✅ 컴포넌트 언마운트 시 정리
+  useEffect(() => {
+    return () => {
+      callbacksRegisteredRef.current = false;
+      prevNewlyAddedRef.current = [];
+    };
+  }, []);
 
-      {/* 소스로 생성된 노드 UI 표시 */}
-      {showFocus && Array.isArray(focusNodeNames) && focusNodeNames.length > 0 && (
-        <div className="graph-popup">
-          <span>소스로 생성된 노드: {focusNodeNames.join(', ')}</span>
-          <span
-            className="close-x"
-            onClick={() => { setShowFocus(false); }}
-          >
-            ×
-          </span>
-        </div>
-      )}
-
+    return (
+    <div 
+      className={`graph-area ${isDarkMode ? 'dark-mode' : ''}`} 
+      ref={containerRef}
+      style={{
+        backgroundColor: isDarkMode ? '#0f172a' : '#fafafa'
+      }}
+    >
       {/* 로딩 및 에러 처리 */}
       {loading && (
-        <div className="graph-loading">
-          <div className="graph-loading-spinner"></div>
+        <div className="graph-loading" style={{
+          backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.8)',
+          color: isDarkMode ? '#f1f5f9' : '#000'
+        }}>
+          <div 
+            className="graph-loading-spinner"
+            style={{
+              borderColor: isDarkMode ? '#475569' : '#adadad',
+              borderTopColor: isDarkMode ? '#f1f5f9' : '#2c2929'
+            }}
+          ></div>
           <div>그래프를 불러오는 중입니다...</div>
         </div>
       )}
       {error && (
-        <div className="graph-error">{error}</div>
+        <div 
+          className="graph-error"
+          style={{
+            backgroundColor: isDarkMode ? '#0f172a' : '#fafafa',
+            color: isDarkMode ? '#fca5a5' : 'red'
+          }}
+        >
+          {error}
+        </div>
       )}
 
       {!loading && graphData.nodes.length > 0 && dimensions.width > 0 && (
-
         <ForceGraph2D
           ref={fgRef}
           width={dimensions.width}
@@ -570,7 +610,8 @@ function GraphView({
           }}
           linkLabel={link => link.relation}
           nodeRelSize={6}
-          linkColor={() => "#dedede"}
+          // ✅ 다크모드에 따른 링크 색상 변경
+          linkColor={() => isDarkMode ? "#64748b" : "#dedede"}
           linkWidth={1}
           linkDirectionalArrowLength={6.5}
           linkDirectionalArrowRelPos={1}
@@ -578,13 +619,104 @@ function GraphView({
           d3VelocityDecay={0.2}
           d3Force={fg => {
             fg.force("center", d3.forceCenter(dimensions.width / 2, dimensions.height / 2));
-            // 노드 간 반발력(밀어내는 힘).절대값이 클수록 강하게 밀어냄냄
             fg.force("charge", d3.forceManyBody().strength(-80));
-            fg.force("link", d3.forceLink().id(d => d.id).distance(200).strength(0.2)); // ✅ 느슨한 연결
-            fg.force("collide", d3.forceCollide(50)); // ✅ 충돌 반경 조정
+            fg.force("link", d3.forceLink().id(d => d.id).distance(200).strength(0.2));
+            fg.force("collide", d3.forceCollide(50));
           }}
-          nodeCanvasObject={(node, ctx, globalScale) => {
 
+          
+          // nodeCanvasObject={(node, ctx, globalScale) => {
+          //   ctx.save();
+          //   ctx.globalAlpha = node.__opacity ?? 1;
+          //   const label = node.name || node.id;
+          //   const isReferenced = showReferenced && referencedSet.has(node.name);
+          //   const isImportantNode = node.linkCount >= 3;
+          //   const isNewlyAdded = newlyAddedNodeNames.includes(node.name);
+          //   const isFocus = showFocus && focusNodeNames?.includes(node.name);
+          //   const isRef = showReferenced && referencedSet.has(label);
+          //   const r = (5 + Math.min(node.linkCount * 0.5, 3)) / globalScale;
+            
+          //   const baseSize = 5;
+          //   const sizeFactor = Math.min(node.linkCount * 0.5, 3);
+          //   const nodeSize = baseSize + sizeFactor;
+          //   const nodeRadius = nodeSize / globalScale;
+          //   const pulseScale = 1.8;
+          //   const pulseDuration = 1000;
+            
+          //   ctx.beginPath();
+          //   ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI, false);
+          //   ctx.fillStyle = node.color;
+          //   ctx.fill();
+
+          //   const fontSize = (isReferenced || isNewlyAdded || isFocus) ? 13 / globalScale : 9 / globalScale;
+
+          //   ctx.font = (isReferenced || isNewlyAdded || isFocus)
+          //     ? `bold ${fontSize}px Sans-Serif`
+          //     : `${fontSize}px Sans-Serif`;
+
+          //   // 포커스 노드와 새로 추가된 노드 파란색 펄스
+          //   if ((isNewlyAdded || isFocus) && pulseStartTime) {
+          //     const elapsed = (Date.now() - pulseStartTime) % pulseDuration;
+          //     const t = elapsed / pulseDuration;
+          //     const ringR = r * (1 + t * (pulseScale - 1));
+          //     ctx.beginPath();
+          //     ctx.arc(node.x, node.y, ringR, 0, 2 * Math.PI);
+          //     // ✅ 다크모드에서 더 밝은 파란색 사용
+          //     ctx.strokeStyle = isDarkMode 
+          //       ? `rgba(96, 165, 250, ${1 - t})` 
+          //       : `rgba(33,150,243,${1 - t})`;
+          //     ctx.lineWidth = 2 / globalScale;
+          //     ctx.stroke();
+          //   }
+            
+          //   if (isRef && refPulseStartTime) {
+          //     const elapsed2 = (Date.now() - refPulseStartTime) % pulseDuration;
+          //     const t2 = elapsed2 / pulseDuration;
+          //     const ringR2 = r * (1 + t2 * (pulseScale - 1));
+          //     ctx.beginPath();
+          //     ctx.arc(node.x, node.y, ringR2, 0, 2 * Math.PI);
+          //     // ✅ 다크모드에서 더 밝은 주황색 사용
+          //     ctx.strokeStyle = isDarkMode 
+          //       ? `rgba(251, 146, 60, ${1 - t2})` 
+          //       : `rgba(217,130,15,${1 - t2})`;
+          //     ctx.lineWidth = 2 / globalScale;
+          //     ctx.stroke();
+          //   }
+
+          //   if (isNewlyAdded || isFocus) {
+          //     ctx.strokeStyle = isDarkMode ? '#60a5fa' : '#2196f3';
+          //     ctx.lineWidth = 4 / globalScale;
+          //     ctx.shadowColor = isDarkMode ? '#3b82f6' : '#90caf9';
+          //     ctx.shadowBlur = 10;
+          //   } else if (isReferenced) {
+          //     ctx.strokeStyle = isDarkMode ? '#fb923c' : '#d9820f';
+          //     ctx.lineWidth = 3 / globalScale;
+          //     ctx.shadowColor = isDarkMode ? '#f97316' : '#ffc107';
+          //     ctx.shadowBlur = 6;
+          //   } else {
+          //     ctx.strokeStyle = isImportantNode 
+          //       ? (isDarkMode ? '#e2e8f0' : 'white') 
+          //       : (isDarkMode ? '#64748b' : '#f0f0f0');
+          //     ctx.lineWidth = 0.5 / globalScale;
+          //     ctx.shadowBlur = 0;
+          //   }
+          //   ctx.stroke();
+
+          //   // ✅ 다크모드에서 텍스트 색상 조정
+          //   const textColor = isDarkMode 
+          //     ? ((isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#f1f5f9' : '#cbd5e1')
+          //     : ((isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#222' : '#555');
+
+          //   ctx.textAlign = 'center';
+          //   ctx.textBaseline = 'top';
+          //   ctx.fillStyle = textColor;
+          //   ctx.fillText(label, node.x, node.y + nodeRadius + 1);
+
+          //   node.__bckgDimensions = [nodeRadius * 2, fontSize].map(n => n + fontSize * 0.2);
+
+          //   ctx.restore();
+          // }
+          nodeCanvasObject={(node, ctx, globalScale) => {
             ctx.save();
             ctx.globalAlpha = node.__opacity ?? 1;
             const label = node.name || node.id;
@@ -594,81 +726,102 @@ function GraphView({
             const isFocus = showFocus && focusNodeNames?.includes(node.name);
             const isRef = showReferenced && referencedSet.has(label);
             const r = (5 + Math.min(node.linkCount * 0.5, 3)) / globalScale;
-            // 노드 크기 - 연결이 많을수록 더 큰 노드로 표시
+            
             const baseSize = 5;
             const sizeFactor = Math.min(node.linkCount * 0.5, 3);
             const nodeSize = baseSize + sizeFactor;
             const nodeRadius = nodeSize / globalScale;
-            const pulseScale = 1.8;    // 반지 크기를 1배→3배까지 키움
-            const pulseDuration = 1000;   // 펄스 한 사이클
-            // 노드 원 그리기
+            const pulseScale = 1.8;
+            const pulseDuration = 1000;
+            
+            // ✅ 다크모드에 따라 실시간으로 노드 색상 결정
+            let nodeColor;
+            if (node.linkCount >= 3) {
+                nodeColor = isDarkMode ? '#60a5fa' : '#3366bb';
+            } else if (node.linkCount == 2) {
+                nodeColor = isDarkMode ? '#e2e8f0' : '#444444';
+            } else {
+                nodeColor = isDarkMode ? '#94a3b8' : '#888888';
+            }
+            
             ctx.beginPath();
             ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI, false);
-            ctx.fillStyle = node.color;
+            ctx.fillStyle = nodeColor; // ✅ 계산된 색상 사용
             ctx.fill();
-
-            // 노드 테두리 그리기 - 참고된 노드는 주황색 테두리
+        
             const fontSize = (isReferenced || isNewlyAdded || isFocus) ? 13 / globalScale : 9 / globalScale;
-
+        
             ctx.font = (isReferenced || isNewlyAdded || isFocus)
-              ? `bold ${fontSize}px Sans-Serif`
-              : `${fontSize}px Sans-Serif`;
-
-
-            // — 2) 신규 펄스 링
+                ? `bold ${fontSize}px Sans-Serif`
+                : `${fontSize}px Sans-Serif`;
+        
+            // 펄스 효과들...
             if ((isNewlyAdded || isFocus) && pulseStartTime) {
-              const elapsed = (Date.now() - pulseStartTime) % pulseDuration;
-              const t = elapsed / pulseDuration;        // 0 → 1
-              const ringR = r * (1 + t * (pulseScale - 1));
-              ctx.beginPath();
-              ctx.arc(node.x, node.y, ringR, 0, 2 * Math.PI);
-              ctx.strokeStyle = `rgba(33,150,243,${1 - t})`;
-              ctx.lineWidth = 2 / globalScale;
-              ctx.stroke();
+                const elapsed = (Date.now() - pulseStartTime) % pulseDuration;
+                const t = elapsed / pulseDuration;
+                const ringR = r * (1 + t * (pulseScale - 1));
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, ringR, 0, 2 * Math.PI);
+                ctx.strokeStyle = isDarkMode 
+                    ? `rgba(96, 165, 250, ${1 - t})` 
+                    : `rgba(33,150,243,${1 - t})`;
+                ctx.lineWidth = 2 / globalScale;
+                ctx.stroke();
             }
-            // — 3) 참고된 노드 펄스 링 (orange)
+            
             if (isRef && refPulseStartTime) {
-              const elapsed2 = (Date.now() - refPulseStartTime) % pulseDuration;
-              const t2 = elapsed2 / pulseDuration;
-              const ringR2 = r * (1 + t2 * (pulseScale - 1));
-              ctx.beginPath();
-              ctx.arc(node.x, node.y, ringR2, 0, 2 * Math.PI);
-              ctx.strokeStyle = `rgba(217,130,15,${1 - t2})`;
-              ctx.lineWidth = 2 / globalScale;
-              ctx.stroke();
+                const elapsed2 = (Date.now() - refPulseStartTime) % pulseDuration;
+                const t2 = elapsed2 / pulseDuration;
+                const ringR2 = r * (1 + t2 * (pulseScale - 1));
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, ringR2, 0, 2 * Math.PI);
+                ctx.strokeStyle = isDarkMode 
+                    ? `rgba(251, 146, 60, ${1 - t2})` 
+                    : `rgba(217,130,15,${1 - t2})`;
+                ctx.lineWidth = 2 / globalScale;
+                ctx.stroke();
             }
-
-            // 외곽선 스타일
+        
+            // 테두리 색상
             if (isNewlyAdded || isFocus) {
-              ctx.strokeStyle = '#2196f3'; // 파란색 계열 테두리
-              ctx.lineWidth = 4 / globalScale;
-              ctx.shadowColor = '#90caf9'; // 밝은 파랑으로 glow
-              ctx.shadowBlur = 10;
+                ctx.strokeStyle = isDarkMode ? '#60a5fa' : '#2196f3';
+                ctx.lineWidth = 4 / globalScale;
+                ctx.shadowColor = isDarkMode ? '#3b82f6' : '#90caf9';
+                ctx.shadowBlur = 10;
             } else if (isReferenced) {
-              ctx.strokeStyle = '#d9820f';
-              ctx.lineWidth = 3 / globalScale;
-              ctx.shadowColor = '#ffc107';
-              ctx.shadowBlur = 6;
+                ctx.strokeStyle = isDarkMode ? '#fb923c' : '#d9820f';
+                ctx.lineWidth = 3 / globalScale;
+                ctx.shadowColor = isDarkMode ? '#f97316' : '#ffc107';
+                ctx.shadowBlur = 6;
             } else {
-              ctx.strokeStyle = isImportantNode ? 'white' : '#f0f0f0';
-              ctx.lineWidth = 0.5 / globalScale;
-              ctx.shadowBlur = 0;
+                ctx.strokeStyle = isImportantNode 
+                    ? (isDarkMode ? '#e2e8f0' : 'white') 
+                    : (isDarkMode ? '#64748b' : '#f0f0f0');
+                ctx.lineWidth = 0.5 / globalScale;
+                ctx.shadowBlur = 0;
             }
             ctx.stroke();
-
-            // 노드 아래에 텍스트 그리기
-            const textColor = (isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#222' : '#555';
-
+        
+            // 텍스트 색상
+            const textColor = isDarkMode 
+                ? ((isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#f1f5f9' : '#cbd5e1')
+                : ((isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#222' : '#555');
+        
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             ctx.fillStyle = textColor;
             ctx.fillText(label, node.x, node.y + nodeRadius + 1);
-
-            // 마우스 오버시 크기 확대
+        
             node.__bckgDimensions = [nodeRadius * 2, fontSize].map(n => n + fontSize * 0.2);
-
+        
             ctx.restore();
-          }}
+        }
+        
+        
+        
+        }
+
+
           enableNodeDrag={true}
           enableZoomPanInteraction={true}
           minZoom={0.01}
@@ -680,23 +833,8 @@ function GraphView({
           onNodeHover={node => {
             document.body.style.cursor = node ? 'pointer' : 'default';
           }}
-
         />
       )}
-
-      {/* 타임랩스 애니메이션 버튼 */}
-      <div
-        className="timelapse-button-container"
-        style={{ top: isFullscreen ? 10 : 55 }}
-      >
-        <div
-          className="timelapse-button"
-          onClick={startTimelapse}
-          title="Start timelapse animation"
-        >
-          <PiMagicWand size={21} color="black" />
-        </div>
-      </div>
     </div>
   );
 }
