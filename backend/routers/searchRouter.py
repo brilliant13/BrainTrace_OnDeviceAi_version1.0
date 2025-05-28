@@ -62,14 +62,13 @@ async def search_similar_descriptions(request: SearchRequest):
             limit=10
         )
         
-        # 벡터 검색 결과의 source_id 추출 (숫자만)
+        # 벡터 검색 결과의 source_id 추출
         vector_source_ids = []
         for desc in similar_descriptions:
-            # source_id에서 숫자만 추출 (예: "pdf_123" -> "123")
-            id_num = ''.join(filter(str.isdigit, desc["source_id"]))
-            if id_num and id_num not in seen_ids:
-                seen_ids.add(id_num)
-                vector_source_ids.append(id_num)
+            source_id = desc["source_id"]
+            if source_id and source_id not in seen_ids:
+                seen_ids.add(source_id)
+                vector_source_ids.append(source_id)
         
         # 3. 결과 병합 (제목 검색 결과를 우선)
         final_source_ids = title_source_ids + vector_source_ids
