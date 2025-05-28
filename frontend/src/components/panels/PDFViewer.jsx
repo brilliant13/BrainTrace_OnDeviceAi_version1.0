@@ -4,10 +4,13 @@ import 'react-pdf/dist/esm/Page/TextLayer.css';
 import HighlightPopup from './HighlightPopup';
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min?url';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import { FaArrowLeftLong } from "react-icons/fa6";
+import { FaPlus } from "react-icons/fa6";
+import { FaMinus } from "react-icons/fa6";
 
 pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
-const PDFViewer = ({ file, containerWidth }) => {
+const PDFViewer = ({ file, containerWidth, onBack }) => {
   const [numPages, setNumPages] = useState(null);
   const [highlights, setHighlights] = useState([]);
   const [popup, setPopup] = useState(null);
@@ -20,8 +23,6 @@ const PDFViewer = ({ file, containerWidth }) => {
       setScale(newScale);
     }
   }, [containerWidth]);
-
-
 
   const onDocumentLoadSuccess = ({ numPages }) => setNumPages(numPages);
 
@@ -79,45 +80,70 @@ const PDFViewer = ({ file, containerWidth }) => {
     setPopup(null);
     window.getSelection().removeAllRanges();
   };
-
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* 플로팅 컨트롤 */}
-      <div style={{
-        position: 'sticky',
-        top: 12,
-        right: 12,
-        zIndex: 20,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        backgroundColor: '#ffffffcc',
-        borderRadius: '6px',
-        padding: '6px 10px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-        fontSize: '14px',
-        fontWeight: 500,
-        justifyContent: 'flex-end',
-        marginLeft: 'auto',
-        marginBottom: '12px',
-        width: 'fit-content',
-      }}>
-        <button
-          onClick={() => setScale(prev => Math.max(prev - 0.2, 0.5))}
-          style={{ background: '#4a4a4a', border: 'none', color: 'white', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}
-        >
-          축소
-        </button>
-        <button
-          onClick={() => setScale(prev => Math.min(prev + 0.2, 3))}
-          style={{ background: '#4a4a4a', border: 'none', color: 'white', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}
-        >
-          확대
-        </button>
-        <span style={{ color: '#333', minWidth: '40px', textAlign: 'center' }}>{Math.round(scale * 100)}%</span>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: 'white',
+          padding: '10px 16px',
+          borderBottom: '1px solid #ddd'
+        }}
+      >
+        {/* ← 뒤로가기 아이콘 */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <FaArrowLeftLong
+            onClick={onBack}
+            style={{
+              cursor: 'pointer',
+              fontSize: '18px',
+              color: '#333'
+            }}
+          />
+        </div>
+
+        {/* 확대/축소 아이콘 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <FaMinus
+            onClick={() => setScale(prev => Math.max(prev - 0.2, 0.5))}
+            style={{
+              cursor: 'pointer',
+              fontSize: '16px',
+              color: '#333',
+              borderRadius: '4px',
+              padding: '2px',
+              border: '1px solid #ccc',
+              backgroundColor: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          />
+          <FaPlus
+            onClick={() => setScale(prev => Math.min(prev + 0.2, 3))}
+            style={{
+              cursor: 'pointer',
+              fontSize: '16px',
+              color: '#333',
+              borderRadius: '4px',
+              padding: '2px',
+              border: '1px solid #ccc',
+              backgroundColor: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          />
+          <span style={{ fontSize: '14px', minWidth: '40px', textAlign: 'center' }}>
+            {Math.round(scale * 100)}%
+          </span>
+        </div>
       </div>
 
-      {/* PDF 뷰어 영역 */}
+
+      {/* 🔽 PDF 문서 렌더링 영역 */}
       <div
         onMouseUp={onTextSelection}
         style={{ flex: 1, overflowY: 'auto', position: 'relative' }}
@@ -131,7 +157,7 @@ const PDFViewer = ({ file, containerWidth }) => {
             onCopyText={copyText}
             onClose={() => {
               setPopup(null);
-              window.getSelection().removeAllRanges(); // 팝업 닫힐 때 선택도 해제
+              window.getSelection().removeAllRanges();
             }}
           />
         )}
@@ -174,6 +200,7 @@ const PDFViewer = ({ file, containerWidth }) => {
       </div>
     </div>
   );
+
 };
 
 export default PDFViewer;
