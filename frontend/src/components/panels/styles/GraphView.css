@@ -1,4 +1,4 @@
-/* GraphView.css - 순수 그래프 렌더링 스타일만 */
+/* GraphView.css - 다크모드 지원 추가 */
 
 .graph-area {
     width: 100%;
@@ -9,6 +9,12 @@
     overflow: hidden;
     position: relative;
     background-color: #fafafa;
+    transition: background-color 0.3s ease;
+}
+
+/* ✅ 다크모드 그래프 영역 */
+.graph-area.dark-mode {
+    background-color: #0f172a;
 }
 
 /* 로딩 오버레이 */
@@ -27,9 +33,10 @@
     color: black;
     font-size: 14px;
     font-weight: 500;
+    transition: all 0.3s ease;
 }
 
-/* 다크 스타일 스피너 */
+/* 로딩 스피너 */
 .graph-loading-spinner {
     width: 40px;
     height: 40px;
@@ -38,6 +45,7 @@
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 12px;
+    transition: border-color 0.3s ease;
 }
 
 @keyframes spin {
@@ -57,7 +65,10 @@
     justify-content: center;
     background-color: #fafafa;
     color: red;
+    transition: all 0.3s ease;
 }
 
-
-
+/* ✅ 다크모드 전환 시 부드러운 애니메이션 */
+.graph-area * {
+    transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}

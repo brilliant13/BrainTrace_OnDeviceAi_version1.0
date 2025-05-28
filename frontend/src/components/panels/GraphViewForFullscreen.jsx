@@ -1,4 +1,5 @@
-// src/components/panels/GraphViewForFullscreen.jsx
+// GraphViewForFullscreen.jsx - 다크모드 기능 추가
+
 import React, { useState, useEffect, useCallback } from 'react';
 import GraphView from './GraphView';
 import './styles/GraphViewForFullscreen.css';
@@ -10,8 +11,21 @@ function GraphViewForFullscreen(props) {
     const [showAdvancedControls, setShowAdvancedControls] = useState(false);
     const [graphStats, setGraphStats] = useState({ nodes: 0, links: 0 });
     const [newlyAddedNodes, setNewlyAddedNodes] = useState([]);
-    const [clearTrigger, setClearTrigger] = useState(0); // ✅ 추가: 해제 트리거
+    const [clearTrigger, setClearTrigger] = useState(0);
+    
+    // ✅ 다크모드 상태 추가
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        // localStorage에서 사용자 설정 불러오기
+        const saved = localStorage.getItem('graphDarkMode');
+        return saved ? JSON.parse(saved) : false;
+    });
 
+    // ✅ 다크모드 토글 함수
+    const toggleDarkMode = () => {
+        const newMode = !isDarkMode;
+        setIsDarkMode(newMode);
+        localStorage.setItem('graphDarkMode', JSON.stringify(newMode));
+    };
 
     // GraphView에서 그래프 데이터 업데이트 시 처리
     const handleGraphDataUpdate = useCallback((graphData) => {
@@ -22,27 +36,20 @@ function GraphViewForFullscreen(props) {
                 links: graphData.links?.length || 0
             });
         }
-        // 부모 컴포넌트의 onGraphDataUpdate도 호출
         if (props.onGraphDataUpdate) {
             props.onGraphDataUpdate(graphData);
         }
     }, [props.onGraphDataUpdate]);
 
-    // 3. 새로 추가된 노드 콜백 함수 추가
     const handleNewlyAddedNodes = useCallback((nodeNames) => {
         console.log('🆕 풀스크린에서 새로 추가된 노드 감지:', nodeNames);
         setNewlyAddedNodes(nodeNames || []);
     }, []);
 
-
-
-
-    // props로 받은 referencedNodes 변경 시 로컬 상태 업데이트
     useEffect(() => {
         setLocalReferencedNodes(props.referencedNodes || []);
     }, [props.referencedNodes]);
 
-    // 검색 기능
     const handleSearch = useCallback((query) => {
         if (!query.trim() || allNodes.length === 0) {
             setLocalReferencedNodes(props.referencedNodes || []);
@@ -65,22 +72,16 @@ function GraphViewForFullscreen(props) {
         handleSearch(query);
     };
 
-    // 검색 초기화
     const clearSearch = () => {
         console.log('🧹 검색 및 하이라이트 해제');
         setSearchQuery('');
-        // setLocalReferencedNodes(props.referencedNodes || []);
-        setLocalReferencedNodes([]); // ✅ 빈 배열로 설정하여 완전히 해제
-        setNewlyAddedNodes([]); // ✅ 새로 추가된 노드도 해제
-        setClearTrigger(prev => prev + 1); // ✅ 추가: GraphView에 해제 신호 전송
+        setLocalReferencedNodes([]);
+        setNewlyAddedNodes([]);
+        setClearTrigger(prev => prev + 1);
 
-
-
-        // 부모 컴포넌트에 해제 알림
         if (props.onClearHighlights) {
             props.onClearHighlights();
         } else {
-            // localStorage를 통해 해제 신호 전송
             localStorage.setItem('graphStateSync', JSON.stringify({
                 brainId: props.brainId,
                 action: 'clear_highlights_from_fullscreen',
@@ -100,45 +101,39 @@ function GraphViewForFullscreen(props) {
                 clearSearch();
                 document.getElementById('fullscreen-node-search')?.blur();
             }
-            // 고급 컨트롤 토글 (Ctrl/Cmd + K)
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
                 setShowAdvancedControls(prev => !prev);
+            }
+            // ✅ 다크모드 단축키 추가 (Ctrl/Cmd + D)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                toggleDarkMode();
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+    }, [isDarkMode]);
 
     return (
-        <div className="graph-fullscreen-container">
-            {/* GraphView 렌더링 */}
-            {/* <GraphView
-                {...props}
-                isFullscreen={true}
-                referencedNodes={localReferencedNodes}
-                onGraphDataUpdate={handleGraphDataUpdate}
-                onNewlyAddedNodes={handleNewlyAddedNodes} // ✅ 추가
-            /> */}
+        <div className={`graph-fullscreen-container ${isDarkMode ? 'dark-mode' : ''}`}>
             <GraphView
                 {...props}
                 isFullscreen={true}
                 referencedNodes={localReferencedNodes}
                 onGraphDataUpdate={handleGraphDataUpdate}
                 onNewlyAddedNodes={handleNewlyAddedNodes}
-                // ✅ 추가: 해제 관련 props
                 externalShowReferenced={localReferencedNodes.length === 0 ? false : undefined}
                 externalShowFocus={localReferencedNodes.length === 0 ? false : undefined}
                 externalShowNewlyAdded={newlyAddedNodes.length === 0 ? false : undefined}
-                clearTrigger={clearTrigger} // ✅ 해제 트리거 전달
+                clearTrigger={clearTrigger}
+                // ✅ 다크모드 prop 전달
+                isDarkMode={isDarkMode}
             />
 
-            {/* 전체화면 전용 UI 오버레이 */}
             <div className="fullscreen-overlay">
-                {/* 상단 툴바 */}
                 <div className="fullscreen-toolbar">
-                    {/* 좌측: 검색 및 기본 컨트롤 */}
                     <div className="toolbar-left">
                         <div className="fullscreen-search-container">
                             <div className="fullscreen-search-input-wrapper">
@@ -169,9 +164,21 @@ function GraphViewForFullscreen(props) {
                         </div>
                     </div>
 
-                    {/* 우측: 액션 버튼들 */}
                     <div className="toolbar-right">
-                        {/* 고급 컨트롤 토글 */}
+                        {/* ✅ 다크모드 토글 버튼 추가 */}
+                        <button
+                            onClick={toggleDarkMode}
+                            className="fullscreen-control-btn darkmode-toggle"
+                            title={`${isDarkMode ? '라이트' : '다크'}모드 (⌘D)`}
+                        >
+                            <span className="fullscreen-btn-icon">
+                                {isDarkMode ? '☀️' : '🌙'}
+                            </span>
+                            <span className="btn-text">
+                                {isDarkMode ? '라이트' : '다크'}
+                            </span>
+                        </button>
+
                         <button
                             onClick={() => setShowAdvancedControls(prev => !prev)}
                             className={`fullscreen-control-btn advanced-toggle ${showAdvancedControls ? 'active' : ''}`}
@@ -181,15 +188,12 @@ function GraphViewForFullscreen(props) {
                             <span className="btn-text">고급</span>
                         </button>
 
-                        {/* 새로고침 버튼 */}
                         <button
                             onClick={() => {
                                 console.log('🔄 새로고침 버튼 클릭됨');
-                                // 부모 컴포넌트의 새로고침 함수 호출
                                 if (props.onRefresh) {
                                     props.onRefresh();
                                 } else {
-                                    // localStorage를 통해 새로고침 신호 전송
                                     localStorage.setItem('graphStateSync', JSON.stringify({
                                         brainId: props.brainId,
                                         action: 'refresh_from_fullscreen',
@@ -204,29 +208,6 @@ function GraphViewForFullscreen(props) {
                             <span className="btn-text">새로고침</span>
                         </button>
 
-                        {/* 하이라이트 해제 */}
-                        {/* {localReferencedNodes.length > 0 && (
-                            <button 
-                                onClick={clearSearch}
-                                className="fullscreen-control-btn fullscreen-clear-btn"
-                                title="하이라이트 해제"
-                            >
-                                <span className="fullscreen-btn-icon">✕</span>
-                                <span className="btn-text">해제</span>
-                            </button>
-                        )} */}
-                        {/* 하이라이트 해제 - ✅ 조건 수정 */}
-                        {/* {(localReferencedNodes.length > 0 || (props.focusNodeNames && props.focusNodeNames.length > 0)) && (
-                            <button
-                                onClick={clearSearch}
-                                className="fullscreen-control-btn fullscreen-clear-btn"
-                                title="하이라이트 해제"
-                            >
-                                <span className="fullscreen-btn-icon">✕</span>
-                                <span className="btn-text">해제</span>
-                            </button>
-                        )} */}
-                        {/* 하이라이트 해제 - ✅ 조건 수정 */}
                         {(localReferencedNodes.length > 0 ||
                             (props.focusNodeNames && props.focusNodeNames.length > 0) ||
                             newlyAddedNodes.length > 0) && (
@@ -239,13 +220,9 @@ function GraphViewForFullscreen(props) {
                                     <span className="btn-text">해제</span>
                                 </button>
                             )}
-
-
-
                     </div>
                 </div>
 
-                {/* 고급 컨트롤 패널 */}
                 {showAdvancedControls && (
                     <div className="fullscreen-advanced-controls-panel">
                         <div className="fullscreen-panel-header">
@@ -277,6 +254,20 @@ function GraphViewForFullscreen(props) {
                             </div>
 
                             <div className="fullscreen-control-group">
+                                <label>테마 설정</label>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    {/* ✅ 고급 패널에 다크모드 토글 추가 */}
+                                    <button
+                                        onClick={toggleDarkMode}
+                                        className="fullscreen-control-btn darkmode-toggle"
+                                        style={{ fontSize: '12px', padding: '6px 12px' }}
+                                    >
+                                        {isDarkMode ? '☀️ 라이트모드' : '🌙 다크모드'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="fullscreen-control-group">
                                 <label>빠른 액션</label>
                                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                     <button
@@ -292,26 +283,6 @@ function GraphViewForFullscreen(props) {
                                         🔄 새로고침
                                     </button>
 
-                                    {/* {localReferencedNodes.length > 0 && (
-                                        <button
-                                            onClick={clearSearch}
-                                            className="fullscreen-control-btn fullscreen-clear-btn"
-                                            style={{ fontSize: '12px', padding: '6px 12px' }}
-                                        >
-                                            ✕ 해제
-                                        </button>
-                                    )} */}
-
-                                    {/* 고급 패널의 해제 버튼도 동일하게 수정 (라인 ~190 근처) */}
-                                    {/* {(localReferencedNodes.length > 0 || (props.focusNodeNames && props.focusNodeNames.length > 0)) && (
-                                        <button
-                                            onClick={clearSearch}
-                                            className="fullscreen-control-btn fullscreen-clear-btn"
-                                            style={{ fontSize: '12px', padding: '6px 12px' }}
-                                        >
-                                            ✕ 해제
-                                        </button>
-                                    )} */}
                                     {(localReferencedNodes.length > 0 ||
                                         (props.focusNodeNames && props.focusNodeNames.length > 0) ||
                                         newlyAddedNodes.length > 0) && (
@@ -323,26 +294,14 @@ function GraphViewForFullscreen(props) {
                                                 ✕ 해제
                                             </button>
                                         )}
-
                                 </div>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* 하단 상태바 */}
                 <div className="fullscreen-statusbar">
                     <div className="fullscreen-status-left">
-                        {/* {localReferencedNodes.length > 0 && (
-                            <div className="fullscreen-highlighted-nodes">
-                                <span className="fullscreen-status-icon">📍</span>
-                                <span className="fullscreen-status-text">
-                                    {props.focusNodeNames && props.focusNodeNames.length > 0 ? '포커스' : '하이라이트'}:
-                                    {localReferencedNodes.slice(0, 3).join(', ')}
-                                    {localReferencedNodes.length > 3 && ` 외 ${localReferencedNodes.length - 3}개`}
-                                </span>
-                            </div>
-                        )} */}
                         {(localReferencedNodes.length > 0 || newlyAddedNodes.length > 0) && (
                             <div className="fullscreen-highlighted-nodes">
                                 <span className="fullscreen-status-icon">📍</span>
@@ -360,6 +319,7 @@ function GraphViewForFullscreen(props) {
                     <div className="fullscreen-status-right">
                         <div className="fullscreen-keyboard-shortcuts">
                             <span className="fullscreen-shortcut">⌘F</span>
+                            <span className="fullscreen-shortcut">⌘D</span>
                             <span className="fullscreen-shortcut">⌘K</span>
                             <span className="fullscreen-shortcut">ESC</span>
                             <span className="fullscreen-shortcut-desc">더블클릭으로 이동</span>
