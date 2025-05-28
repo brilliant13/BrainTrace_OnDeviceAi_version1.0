@@ -319,7 +319,7 @@ def search_similar_descriptions(
     embedding: List[float],
     brain_id: str,
     limit: int = 10,
-    threshold: float = 0.3
+    threshold: float = 0.1
 ) -> List[Dict[str, str]]:
     """
     입력된 임베딩과 유사한 문장들을 검색합니다.
@@ -353,6 +353,7 @@ def search_similar_descriptions(
                 
             payload = result.payload or {}
             source_id = payload.get("source_id", "")
+            description = payload.get("description", "")
             
             # 이미 처리한 source_id는 스킵
             if source_id in seen_source_ids:
@@ -361,9 +362,12 @@ def search_similar_descriptions(
             seen_source_ids.add(source_id)
             results.append({
                 "source_id": source_id,
-                "description": payload.get("description", ""),
+                "description": description,
                 "score": result.score
             })
+            
+            # 유사도 점수 로깅
+            logging.info(f"유사 문장 발견 - ID: {source_id}, 유사도: {result.score:.4f}, 내용: {description[:100]}...")
             
             if len(results) >= limit:
                 break

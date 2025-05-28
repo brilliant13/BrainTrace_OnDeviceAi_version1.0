@@ -35,7 +35,6 @@ export const getFolderVoices = folderId => api.get(`/voices/folder/${folderId}`)
 export const deleteFolderWithMemos = (folderId, brainId) =>
     api.delete(`/folders/deleteAll/${folderId}`, { params: { brain_id: brainId } }).then(r => r.data);
 
-
 /* ───────── MEMOS ───────── */
 export const createMemo = body => api.post('/memos', body).then(r => r.data);
 export const getMemo = id => api.get(`/memos/${id}`).then(r => r.data);
@@ -64,7 +63,6 @@ export const getPdfsByBrain = (brainId, folderId = null) => {
     return api.get(url, { params }).then(r => r.data);
 };
 
-
 /**
  * files: File[] 드래그·드롭 혹은 파일 선택으로 받은 File 객체 배열
  * folderId, brainId: (선택) 기존 createFolder 등에서 쓰던 ID
@@ -82,7 +80,6 @@ export const uploadPdfs = (files, folderId = null, brainId = null) => {
         { headers: { 'Content-Type': 'multipart/form-data' } }
     ).then(res => res.data);
 };
-
 
 /* ───────── TEXT FILES ───────── */
 export const createTextFile = body => api.post('/textfiles', body).then(r => r.data);
@@ -129,7 +126,6 @@ export const uploadTextfiles = (files, folderId = null, brainId = null) => {
     ).then(res => res.data);
 };
 
-
 /* ───────── VOICE FILES ───────── */
 export const createVoice = body => api.post('/voices', body).then(r => r.data);
 export const getVoice = id => api.get(`/voices/${id}`).then(r => r.data);
@@ -168,7 +164,6 @@ export const getReferencedNodes = chat_id =>
 export const listChatsByBrain = brain_id =>
     api.get(`/chat/chatList/${brain_id}`).then(r => r.data);
 
-
 export const getNodesBySourceId = (sourceId, brainId) =>
     api.get(`/brainGraph/getNodesBySourceId`, {
         params: { source_id: sourceId, brain_id: brainId }
@@ -178,3 +173,10 @@ export const getSourceIdsByNodeName = (nodeName, brainId) =>
     api.get(`/brainGraph/getSourceIds`, {
         params: { node_name: nodeName, brain_id: brainId }
     }).then(r => r.data);
+
+// 유사한 설명 기반으로 source_id 목록을 가져옴
+export const getSimilarSourceIds = (query, brainId) =>
+    api.post('/search/getSimilarSourceIds', {
+        query: query,
+        brain_id: String(brainId)
+    }).then(res => res.data);

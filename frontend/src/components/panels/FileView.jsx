@@ -93,7 +93,8 @@ export default function FileView({
   setFileMap = () => { },
   refreshTrigger,
   onGraphRefresh,
-  onFocusNodeNamesUpdate
+  onFocusNodeNamesUpdate,
+  filteredSourceIds
 }) {
   const [selectedFile, setSelectedFile] = useState(null)
   const [isRootDrag, setIsRootDrag] = useState(false)
@@ -105,6 +106,23 @@ export default function FileView({
   const [fileToDelete, setFileToDelete] = useState(null);
   // 드롭 즉시 표시할 업로드 큐
   const [uploadQueue, setUploadQueue] = useState([])
+
+  const visibleFiles = filteredSourceIds
+    ? files.filter(fileOrFolder => {
+      if (fileOrFolder.type === 'folder') {
+        return fileOrFolder.children.some(f =>
+          filteredSourceIds.includes(String(f.memo_id || f.pdf_id || f.txt_id || f.voice_id))
+        );
+
+      }
+      const id = fileOrFolder.memo_id || fileOrFolder.pdf_id || fileOrFolder.txt_id || fileOrFolder.voice_id;
+      return filteredSourceIds.includes(id);
+    })
+    : files;
+
+  const filteredRootFiles = filteredSourceIds
+    ? rootFiles.filter(f => filteredSourceIds.includes(String(f.id)))
+    : rootFiles;
 
   useEffect(() => {
     refresh()
@@ -442,7 +460,7 @@ export default function FileView({
       )}
 
       {/* ── 폴더 트리 ── */}
-      {files.map(node =>
+      {visibleFiles.map(node =>
         node.type === 'folder' ? (
           <FolderView
             key={node.folder_id}
@@ -479,7 +497,7 @@ export default function FileView({
       ))}
 
       {/* ── 루트 레벨 파일들 ── */}
-      {rootFiles.map(f => {
+      {filteredRootFiles.map(f => {
         return (
           <div
             key={`${f.filetype}-${f.id}`}
@@ -516,7 +534,6 @@ export default function FileView({
             ) : (
               <span className="file-name">{f.name}</span>
             )}
-
             <div
               className="file-menu-button"
               onClick={e => {
@@ -527,19 +544,6 @@ export default function FileView({
               ⋮
               {menuOpenId === f.id && (
                 <div className="file-menu-popup" onClick={e => e.stopPropagation()}>
-                  <div
-                    className="popup-item"
-                    onClick={() => {
-                      setEditingId(f.id);
-                      setTempName(f.name);
-                      setMenuOpenId(null);
-                    }}
-                  >
-                    <GoPencil size={14} style={{ marginRight: 4 }} /> 소스 이름 바꾸기
-                  </div>
-                  <div className="popup-item" onClick={() => openDeleteConfirm(f)}>
-                    <RiDeleteBinLine size={14} style={{ marginRight: 4 }} /> 소스 삭제
-                  </div>
                   <div
                     className="popup-item"
                     onClick={async () => {
@@ -555,23 +559,41 @@ export default function FileView({
                       setMenuOpenId(null);
                     }}
                   >
-                    <AiOutlineNodeIndex size={18} style={{ marginRight: 4 }} />
+                    <AiOutlineNodeIndex size={17} style={{ marginRight: 1 }} />
                     노드 보기
                   </div>
-
+                  <div
+                    className="popup-item"
+                    onClick={() => {
+                      setEditingId(f.id);
+                      setTempName(f.name);
+                      setMenuOpenId(null);
+                    }}
+                  >
+                    <GoPencil size={14} style={{ marginRight: 4 }} /> 소스 이름 바꾸기
+                  </div>
+                  <div className="popup-item" onClick={() => openDeleteConfirm(f)}>
+                    <RiDeleteBinLine size={14} style={{ marginRight: 4 }} /> 소스 삭제
+                  </div>
                 </div>
               )}
             </div>
           </div>
         );
       })}
-
       {/* 비어 있을 때 */}
       {files.length === 0 && rootFiles.length === 0 && (
         <div className="empty-state">
           <p className="empty-sub">이 영역에 파일을 <strong>드래그해서 추가</strong>해보세요!</p>
         </div>
       )}
+
+      {filteredSourceIds && visibleFiles.length === 0 && filteredRootFiles.length === 0 && (
+        <div className="empty-state">
+          <p className="empty-sub">검색 결과가 없습니다.</p>
+        </div>
+      )}
+
       {fileToDelete && (
         <ConfirmDialog
           message={`"${fileToDelete.name}" 소스를 삭제하시겠습니까?`}

@@ -239,12 +239,9 @@ function ChatPanel({
             )}
           </div>
 
-
           <div className="chat-messages">
             {messages.map((m, i) => {
               if (!m.text.trim()) return null;
-
-              const messageRefNodes = m.referencedNodes || [];
 
               return (
                 <div
@@ -258,8 +255,7 @@ function ChatPanel({
                       setHoveredChatId(m.chatId);  // ✅ 현재 hover된 메시지의 chatId 저장
                     }
                   }}
-                  onMouseLeave={() => setHoveredMessageIndex(null)}
-                >
+                  onMouseLeave={() => setHoveredMessageIndex(null)} >
 
                   <div className="message">
                     {/* 그래프 아이콘: bot 메시지이면서 참고된 노드가 있을 경우만 */}
@@ -385,6 +381,23 @@ function ChatPanel({
                   <TbPencil size={18} color="#333333" />
 
                 </button>
+                <div className="inline-recent-session-bar">
+                  {[...sessions]
+                    .filter(s => s.id !== currentSessionId)
+                    .sort((a, b) => Number(b.id) - Number(a.id))
+                    .slice(0, 3)
+                    .map(session => (
+                      <span
+                        key={session.id}
+                        className="inline-recent-session-item"
+                        onClick={() => setCurrentSessionId(session.id)}
+                        title={session.title}
+                      >
+                        <span className="session-bar" />
+                        {session.title.length > 10 ? session.title.slice(0, 10) + '...' : session.title}
+                      </span>
+                    ))}
+                </div>
               </div>
             )}
           </div>
