@@ -179,8 +179,8 @@ def update_index_and_get_embeddings(nodes: List[Dict], brain_id: str) -> Dict[st
 def search_similar_nodes(
     embedding: List[float],
     brain_id: str,
-    limit: int = 3,
-    threshold: float = 0.1,
+    limit: int = 5,
+    threshold: float = 0.5,
     high_score_threshold: float = 0.8
 ) -> List[Dict]:
     """
