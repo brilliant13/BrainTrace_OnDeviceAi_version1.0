@@ -46,7 +46,8 @@ export default function SourcePanel({
   setIsPDFOpen,
   onBackFromPDF,
   onGraphRefresh,
-  onFocusNodeNamesUpdate
+  onFocusNodeNamesUpdate,
+  focusSource
 }) {
   const panelRef = useRef();
   const [panelWidth, setPanelWidth] = useState(0);
@@ -63,7 +64,64 @@ export default function SourcePanel({
   const [searchText, setSearchText] = useState('');
   const [filteredSourceIds, setFilteredSourceIds] = useState(null); // null이면 전체 표시
   const searchInputRef = useRef(null);  // 검색 input 포커싱용
+  const [allFiles, setAllFiles] = useState([]);
+  const [localFocusSource, setLocalFocusSource] = useState(null);
 
+  useEffect(() => {
+    if (activeProject) {
+      loadAllFiles();
+    }
+  }, [activeProject]);
+
+  useEffect(() => {
+    if (focusSource) {
+      setLocalFocusSource(focusSource); // 최신 클릭 반영
+    }
+  }, [focusSource]);
+
+  const loadAllFiles = async () => {
+    try {
+      const [pdfs, txts] = await Promise.all([
+        getPdfsByBrain(activeProject),
+        getTextfilesByBrain(activeProject)
+      ]);
+      const merged = [
+        ...pdfs.map(pdf => ({ ...pdf, title: pdf.pdf_title })),
+        ...txts.map(txt => ({ ...txt, title: txt.txt_title }))
+      ];
+      setAllFiles(merged);
+    } catch (e) {
+      console.error('파일 목록 로딩 실패', e);
+      setAllFiles([]);
+    }
+  };
+
+  useEffect(() => {
+    //console.log("focusSourceId 1111: ", focusSource.id)
+    if (focusSource) {
+
+      console.log("focusSourceId : ", focusSource.id)
+      console.log("allFiles : ", allFiles)
+      const targetFile = allFiles.find(file => {
+        if (file.type === 'pdf') return file.pdf_id == focusSource.id;
+        if (file.type === 'txt') return file.txt_id == focusSource.id;
+        return false;
+      });
+      console.log("targetFile : ", targetFile)
+
+      if (targetFile) {
+        if (targetFile.type === 'pdf') {
+          setOpenedPDF(targetFile);
+          setIsPDFOpen(true);
+        } else if (targetFile.type === 'txt') {
+          setOpenedTXT(targetFile);
+          setIsPDFOpen(true);
+        }
+
+        setLocalFocusSource(null);
+      }
+    }
+  }, [localFocusSource]);
 
   useEffect(() => {
     if (!panelRef.current) return;

@@ -46,6 +46,7 @@ function MainLayout() {
   const [referencedNodes, setReferencedNodes] = useState([]);
   const [allNodeNames, setAllNodeNames] = useState([]);
   const [focusNodeNames, setFocusNodeNames] = useState([]);
+  const [focusSourceId, setFocusSourceId] = useState(null);
 
   // 그래프 Refresh 용도
   const [graphRefreshTrigger, setGraphRefreshTrigger] = useState(0);
@@ -59,7 +60,6 @@ function MainLayout() {
     const nodeNames = graphData?.nodes?.map(n => n.name) || [];
     setAllNodeNames(nodeNames); // ✅ allNodeNames state 업데이트
   };
-
 
   const sourcePanelRef = useRef(null);
   const chatPanelRef = useRef(null);  // 추가된 채팅 패널 ref
@@ -100,7 +100,6 @@ function MainLayout() {
     setReferencedNodes([]);
   };
 
-
   // 패널 리사이즈 핸들러들
   const handleSourceResize = (size) => {
     if (!sourceCollapsed) { setSourcePanelSize(size); }
@@ -139,12 +138,15 @@ function MainLayout() {
     localStorage.setItem(`sessions-${activeProject}`, JSON.stringify(updated));
     // ✅ 삭제한 세션이 현재 열려 있던 세션이라면
     if (id === currentSessionId) {
-      // 기존에는 다음 세션으로 이동 + showChatPanel(true) → ❌ 문제
       setCurrentSessionId(null);
       setShowChatPanel(false); // ✅ 무조건 리스트로 이동
     }
   };
 
+  const handleOpenSource = (sourceId) => {
+    console.log("sourceId : ", sourceId)
+    setFocusSourceId({ id: sourceId, timestamp: Date.now() }); // 무조건 새로운 객체
+  };
 
   useEffect(() => {
     setActiveProject(projectId);
@@ -293,6 +295,7 @@ function MainLayout() {
               onBackFromPDF={handleBackFromPDF}
               onGraphRefresh={handleGraphRefresh} // 그래프 refresh 용도
               onFocusNodeNamesUpdate={handleFocusNodeNames}
+              focusSource={focusSourceId}
             />
           </div>
         </Panel>
@@ -330,7 +333,7 @@ function MainLayout() {
                     setShowChatPanel(true);
                     setNewlyCreatedSessionId(null);
                   }, 1200);
-                  return newSession; // ✅ 추가: ChatSidebar에서 이 값을 기대함
+                  return newSession;
                 }}
                 onRenameSession={onRenameSession}
                 onDeleteSession={onDeleteSession}
@@ -347,8 +350,8 @@ function MainLayout() {
                 setCurrentSessionId={setCurrentSessionId}
                 showChatPanel={showChatPanel}
                 setShowChatPanel={setShowChatPanel}
-
                 allNodeNames={allNodeNames}
+                onOpenSource={handleOpenSource}
               />
             )}
           </div>
