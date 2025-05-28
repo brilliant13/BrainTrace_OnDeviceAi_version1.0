@@ -9,8 +9,9 @@ import { TbPencil } from "react-icons/tb";
 import { MdOutlineFormatListBulleted } from "react-icons/md";
 import { FaProjectDiagram } from 'react-icons/fa'; // 아이콘 추가
 import { HiOutlineBars4 } from "react-icons/hi2";
-
-import { getReferencedNodes } from '../../../../backend/services/backend';
+import { getReferencedNodes, getSourceIdsByNodeName } from '../../../../backend/services/backend';
+import FileIcon from './FileIcon';
+import { IoDocumentTextOutline } from "react-icons/io5";
 
 function ChatPanel({
   activeProject,
@@ -21,7 +22,8 @@ function ChatPanel({
   setCurrentSessionId,
   showChatPanel,
   setShowChatPanel,
-  allNodeNames = []
+  allNodeNames = [],
+  onOpenSource
 }) {
 
   const [inputText, setInputText] = useState('');
@@ -29,19 +31,34 @@ function ChatPanel({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editingTitle, setEditingTitle] = useState('');
   const titleInputRef = useRef(null);
-
   const messagesEndRef = useRef(null);
-
-  //const project = projectData.find(p => p.id === activeProject) || projectData[0];
-  //const { title } = project.chat || { title: '' };
   const [hoveredMessageIndex, setHoveredMessageIndex] = useState(null);
-  // 🔁 상태값 추가
   const [hoveredChatId, setHoveredChatId] = useState(null); // 현재 hover 중인 메시지의 chatId
-
-
+  const [openSourceNodes, setOpenSourceNodes] = useState({})
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  const toggleSourceList = async (nodeName) => {
+    if (openSourceNodes[nodeName]) {
+      setOpenSourceNodes(prev => {
+        const copy = { ...prev };
+        delete copy[nodeName];
+        return copy;
+      });
+    } else {
+      try {
+        const res = await getSourceIdsByNodeName(nodeName, activeProject);
+        setOpenSourceNodes(prev => ({
+          ...prev,
+          [nodeName]: res.sources
+        }));
+      } catch (err) {
+        console.error('소스 조회 실패:', err);
+      }
+    }
+  };
+
   useEffect(scrollToBottom, [sessions, currentSessionId]);
 
   useEffect(() => {
@@ -119,7 +136,7 @@ function ChatPanel({
     try {
       const response = await requestAnswer(inputText, activeProject.toString());
       const { answer = '', referenced_nodes = [] } = response;
-
+      console.log("answer", answer)
       if (referenced_nodes && onReferencedNodesUpdate) {
         onReferencedNodesUpdate(referenced_nodes);
       }
@@ -169,9 +186,22 @@ function ChatPanel({
     setIsEditingTitle(false);
   };
 
+  // ChatPanel 내에서
+  const handleReferencedClick = async (sourceName) => {
+    // 백엔드에서 이름으로 PDF/TXT 조회
+    const allFiles = [...pdfFiles, ...txtFiles]; // 이미 있다면 이걸 사용
+    const target = allFiles.find(f => f.pdf_title === sourceName || f.txt_title === sourceName);
+    if (target) {
+      const type = target.pdf_title ? 'pdf' : 'txt';
+      setForceOpenFile({ type, data: target });
+    } else {
+      alert("해당 소스를 찾을 수 없습니다");
+    }
+  };
 
   const messages = getCurrentMessages();
   const hasChatStarted = messages.some(msg => msg.text.trim() !== '');
+
 
   return (
     <div className="panel-container">
@@ -182,7 +212,6 @@ function ChatPanel({
         </button>
       </div>
 
-
       {hasChatStarted ? (
         <div className="panel-content chat-content">
           <div
@@ -190,7 +219,6 @@ function ChatPanel({
           >
             {isEditingTitle ? (
               <input
-
                 ref={titleInputRef} // 추가
                 className="chat-title-input"
                 value={editingTitle}
@@ -259,21 +287,58 @@ function ChatPanel({
 
                   <div className="message">
                     {/* 그래프 아이콘: bot 메시지이면서 참고된 노드가 있을 경우만 */}
-
                     <div className="message-body">
-                      {m.text.split(' ').map((word, i) =>
-                        allNodeNames.includes(word) ? (
-                          <span
-                            key={i}
-                            className="referenced-node"
-                            onClick={() => onReferencedNodesUpdate([word])}
-                          >
-                            {word}{' '}
-                          </span>
-                        ) : (
-                          <span key={i}>{word} </span>
-                        )
-                      )}
+                      {m.text.split('\n').map((line, i) => {
+                        const trimmed = line.trim();
+                        const isReferenced = trimmed.startsWith('-');
+                        const cleanWord = isReferenced ? trimmed.replace(/^-\s*/, '') : trimmed;
+
+                        return (
+                          <div key={i} className="referenced-line">
+                            {allNodeNames.includes(cleanWord) && isReferenced ? (
+                              <>
+                                <span style={{ color: 'inherit', textDecoration: 'none' }}>- </span>
+                                <span
+                                  className="referenced-node-text"
+                                  onClick={() => {
+                                    console.log('📌 클릭한 노드 이름:', cleanWord);
+                                    onReferencedNodesUpdate([cleanWord]);
+                                  }}
+                                >
+                                  {cleanWord}
+                                </span>
+
+                                <button
+                                  className={`source-toggle-button ${openSourceNodes[cleanWord] ? 'active' : ''}`}
+                                  onClick={() => toggleSourceList(cleanWord)}
+                                  style={{ marginLeft: '8px' }}
+                                >
+                                  <IoDocumentTextOutline />
+                                </button>
+
+                                {/* ⬇️ 소스 타이틀 목록 표시 */}
+                                {openSourceNodes[cleanWord] && (
+                                  <ul className="source-title-list">
+                                    {openSourceNodes[cleanWord].map((src, idx) => (
+                                      <li key={idx} className="source-title-item">
+                                        <span
+                                          className="source-title-content"
+                                          onClick={() => onOpenSource(src.id)}
+                                          style={{ cursor: 'pointer' }}
+                                        >
+                                          <span>{src.title}</span>
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </>
+                            ) : (
+                              trimmed
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
 
                     <div className="message-actions">
