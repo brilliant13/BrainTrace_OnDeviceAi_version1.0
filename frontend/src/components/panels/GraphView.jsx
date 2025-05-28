@@ -172,6 +172,33 @@ function GraphView({
     }
   };
 
+  //예찬 더블 클릭했을 때 줌인되게
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !fgRef.current) return;
+
+    const handleDoubleClick = (e) => {
+      // 노드가 아닌 곳에서 더블클릭 시 줌인
+      // 예외적으로 마우스 커서가 노드 위가 아니었는지 확인하는 조건 필요
+      if (!document.body.style.cursor.includes('pointer')) {
+        const fg = fgRef.current;
+        const boundingRect = container.getBoundingClientRect();
+        const mouseX = e.clientX - boundingRect.left;
+        const mouseY = e.clientY - boundingRect.top;
+
+        const graphCoords = fg.screen2GraphCoords(mouseX, mouseY);
+        fg.centerAt(graphCoords.x, graphCoords.y, 800);
+        fg.zoom(fg.zoom() * 2, 800); // 현재 줌에서 1.5배 확대
+      }
+    };
+
+    container.addEventListener('dblclick', handleDoubleClick);
+
+    return () => {
+      container.removeEventListener('dblclick', handleDoubleClick);
+    };
+  }, [dimensions]);
+  //
   useEffect(() => {
     if (clearTrigger > 0) {
       console.log('🧹 GraphView에서 하이라이팅 해제 트리거 감지:', clearTrigger);
