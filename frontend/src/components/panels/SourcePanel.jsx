@@ -200,7 +200,7 @@ export default function SourcePanel({
               });
             }}
           >
-            <IoMdSearch size={20} style={{ cursor: 'pointer' }} />
+            <IoMdSearch size={19} style={{ cursor: 'pointer' }} />
           </div>
 
           <img

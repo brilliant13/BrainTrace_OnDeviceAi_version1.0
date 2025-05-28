@@ -16,21 +16,21 @@ class SearchRequest(BaseModel):
     brain_id: str
 
 class SearchResponse(BaseModel):
-    sources: List[Dict[str, str]]  # source_id와 title을 포함하는 객체 리스트
+    source_ids: List[str]  # 중복 제거된 source_id 목록
 
 @router.post("/getSimilarSourceIds",
     summary="유사도 기반 소스 검색",
-    description="입력된 설명이나 키워드와 유사한 문장을 벡터DB에서 찾아 해당 source_id들과 제목을 반환합니다.",
+    description="입력된 설명이나 키워드와 유사한 문장을 벡터DB에서 찾아 해당 source_id들을 반환합니다.",
     response_model=SearchResponse)
 async def search_similar_descriptions(request: SearchRequest):
     """
-    설명이나 키워드로 유사한 문장을 검색하고 source_id와 제목을 반환합니다:
+    설명이나 키워드로 유사한 문장을 검색하고 source_id를 반환합니다:
     
     - **query**: 검색할 설명이나 키워드
     - **brain_id**: 브레인 ID
     
     반환값:
-    - **sources**: 유사도 순으로 정렬된 source_id와 제목 목록 (중복 제거됨)
+    - **source_ids**: 유사도 순으로 정렬된 source_id 목록 (중복 제거됨)
     """
     logging.info(f"유사 문장 검색 시작 - query: {request.query}, brain_id: {request.brain_id}")
     
@@ -39,18 +39,15 @@ async def search_similar_descriptions(request: SearchRequest):
         db = SQLiteHandler()
         title_results = db.search_titles_by_query(request.query, int(request.brain_id))
         
-        # 제목 검색 결과의 source_id와 title 추출
-        title_sources = []
+        # 제목 검색 결과의 source_id 추출 (숫자만)
+        title_source_ids = []
         seen_ids = set()  # 중복 체크를 위한 set
         
         for result in title_results:
             id_num = str(result['id'])
             if id_num not in seen_ids:
                 seen_ids.add(id_num)
-                title_sources.append({
-                    "id": id_num,
-                    "title": result['title']
-                })
+                title_source_ids.append(id_num)
         
         # 2. 벡터 DB 검색
         if not embedding_service.is_index_ready(request.brain_id):
@@ -65,35 +62,20 @@ async def search_similar_descriptions(request: SearchRequest):
             limit=10
         )
         
-        # 벡터 검색 결과의 source_id와 title 추출
-        vector_sources = []
+        # 벡터 검색 결과의 source_id 추출 (숫자만)
+        vector_source_ids = []
         for desc in similar_descriptions:
-            source_id = desc["source_id"]
-            
-            if source_id and source_id not in seen_ids:
-                seen_ids.add(source_id)
-                
-                # PDF와 TextFile 테이블에서 모두 조회
-                pdf = db.get_pdf(int(source_id))
-                textfile = db.get_textfile(int(source_id))
-                
-                title = None
-                if pdf:
-                    title = pdf['pdf_title']
-                elif textfile:
-                    title = textfile['txt_title']
-                
-                if title:
-                    vector_sources.append({
-                        "id": source_id,
-                        "title": title
-                    })
+            # source_id에서 숫자만 추출 (예: "pdf_123" -> "123")
+            # id_num = ''.join(filter(str.isdigit, desc["source_id"]))
+            if id_num and id_num not in seen_ids:
+                seen_ids.add(id_num)
+                vector_source_ids.append(id_num)
         
         # 3. 결과 병합 (제목 검색 결과를 우선)
-        final_sources = title_sources + vector_sources
+        final_source_ids = title_source_ids + vector_source_ids
         
-        logging.info(f"검색 결과: {len(final_sources)}개의 고유 source_id 발견")
-        return {"sources": final_sources}
+        logging.info(f"검색 결과: {len(final_source_ids)}개의 고유 source_id 발견")
+        return {"source_ids": final_source_ids}
         
     except Exception as e:
         logging.error("검색 오류: %s", str(e))

@@ -182,7 +182,7 @@ function GraphView({
 
         const graphCoords = fg.screen2GraphCoords(mouseX, mouseY);
         fg.centerAt(graphCoords.x, graphCoords.y, 800);
-        fg.zoom(fg.zoom() * 2, 800); // 현재 줌에서 1.5배 확대
+        fg.zoom(fg.zoom() * 2, 800); // 현재 줌에서 2배 확대
       }
     };
 

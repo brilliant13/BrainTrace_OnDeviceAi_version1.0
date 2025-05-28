@@ -474,7 +474,7 @@
   margin-bottom: 5px;
   vertical-align: middle;
   font-size: 13px;
-  color: #8f8f8f;
+  color: #434040;
 }
 
 .inline-recent-session-item {
@@ -496,7 +496,7 @@
 .inline-recent-session-item .session-bar {
   width: 1.6px;
   height: 14px;
-  background-color: #ccc;
+  background-color: #434040;
   margin-right: 6px;
   border-radius: 2px;
 }
