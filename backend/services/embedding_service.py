@@ -179,9 +179,9 @@ def update_index_and_get_embeddings(nodes: List[Dict], brain_id: str) -> Dict[st
 def search_similar_nodes(
     embedding: List[float],
     brain_id: str,
-    limit: int = 5,
+    limit: int = 3,
     threshold: float = 0.5,
-    high_score_threshold: float = 0.8
+    high_score_threshold: float = 0.75
 ) -> List[Dict]:
     """
     Qdrant에서 유사 벡터 검색 후 source_id별 필터링

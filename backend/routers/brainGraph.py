@@ -162,7 +162,7 @@ async def answer_endpoint(request_data: AnswerRequest):
         if not result:
             raise Exception("스키마 조회 결과가 없습니다.")
             
-        logging.info("### Neo4j 조회 결과 전체: %s", result)
+        # logging.info("### Neo4j 조회 결과 전체: %s", result)
         
         # 결과를 즉시 처리
         nodes_result = result.get("nodes", [])
