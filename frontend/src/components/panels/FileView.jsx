@@ -534,7 +534,6 @@ export default function FileView({
             ) : (
               <span className="file-name">{f.name}</span>
             )}
-
             <div
               className="file-menu-button"
               onClick={e => {
@@ -545,19 +544,6 @@ export default function FileView({
               ⋮
               {menuOpenId === f.id && (
                 <div className="file-menu-popup" onClick={e => e.stopPropagation()}>
-                  <div
-                    className="popup-item"
-                    onClick={() => {
-                      setEditingId(f.id);
-                      setTempName(f.name);
-                      setMenuOpenId(null);
-                    }}
-                  >
-                    <GoPencil size={14} style={{ marginRight: 4 }} /> 소스 이름 바꾸기
-                  </div>
-                  <div className="popup-item" onClick={() => openDeleteConfirm(f)}>
-                    <RiDeleteBinLine size={14} style={{ marginRight: 4 }} /> 소스 삭제
-                  </div>
                   <div
                     className="popup-item"
                     onClick={async () => {
@@ -576,7 +562,19 @@ export default function FileView({
                     <AiOutlineNodeIndex size={17} style={{ marginRight: 1 }} />
                     노드 보기
                   </div>
-
+                  <div
+                    className="popup-item"
+                    onClick={() => {
+                      setEditingId(f.id);
+                      setTempName(f.name);
+                      setMenuOpenId(null);
+                    }}
+                  >
+                    <GoPencil size={14} style={{ marginRight: 4 }} /> 소스 이름 바꾸기
+                  </div>
+                  <div className="popup-item" onClick={() => openDeleteConfirm(f)}>
+                    <RiDeleteBinLine size={14} style={{ marginRight: 4 }} /> 소스 삭제
+                  </div>
                 </div>
               )}
             </div>
