@@ -35,7 +35,6 @@ export const getFolderVoices = folderId => api.get(`/voices/folder/${folderId}`)
 export const deleteFolderWithMemos = (folderId, brainId) =>
     api.delete(`/folders/deleteAll/${folderId}`, { params: { brain_id: brainId } }).then(r => r.data);
 
-
 /* ───────── MEMOS ───────── */
 export const createMemo = body => api.post('/memos', body).then(r => r.data);
 export const getMemo = id => api.get(`/memos/${id}`).then(r => r.data);
@@ -64,7 +63,6 @@ export const getPdfsByBrain = (brainId, folderId = null) => {
     return api.get(url, { params }).then(r => r.data);
 };
 
-
 /**
  * files: File[] 드래그·드롭 혹은 파일 선택으로 받은 File 객체 배열
  * folderId, brainId: (선택) 기존 createFolder 등에서 쓰던 ID
@@ -82,7 +80,6 @@ export const uploadPdfs = (files, folderId = null, brainId = null) => {
         { headers: { 'Content-Type': 'multipart/form-data' } }
     ).then(res => res.data);
 };
-
 
 /* ───────── TEXT FILES ───────── */
 export const createTextFile = body => api.post('/textfiles', body).then(r => r.data);
@@ -128,7 +125,6 @@ export const uploadTextfiles = (files, folderId = null, brainId = null) => {
         { headers: { 'Content-Type': 'multipart/form-data' } }
     ).then(res => res.data);
 };
-
 
 /* ───────── VOICE FILES ───────── */
 export const createVoice = body => api.post('/voices', body).then(r => r.data);

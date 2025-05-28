@@ -204,7 +204,6 @@ def generate_answer(schema_text: str, question: str) -> str:
     '  "referenced_nodes": ["노드 이름1", "노드 이름2", ...]\n'
     "}\n"
     "※ 참고한 노드 이름만 정확히 JSON 배열로 나열하고, 도메인 정보, 노드 간 관계, 설명은 포함하지 마."
-)
 
 
     try:

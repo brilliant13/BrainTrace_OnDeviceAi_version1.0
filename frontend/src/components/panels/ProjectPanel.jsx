@@ -5,9 +5,6 @@ import { useNavigate } from 'react-router-dom';
 /* API ─ backend */
 import { listUserBrains } from '../../../../backend/services/backend';
 
-/* 아이콘 매핑 */
-import { iconByKey } from '../iconMap';
-
 /* style */
 import './styles/Common.css';
 import './styles/ProjectPanel.css';
