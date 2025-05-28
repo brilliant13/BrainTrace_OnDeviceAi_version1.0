@@ -90,7 +90,6 @@
 /* 홈 아이콘 스타일 - 다크톤 */
 .sidebar-icon.home-icon {
   margin: 4px;
-  border-radius: var(--sidebar-radius);
   cursor: pointer;
   justify-content: flex-start;
   align-items: center;
@@ -102,6 +101,7 @@
   background-color: #444;
   border-color: #444;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+
 }
 
 .sidebar-icon img,
