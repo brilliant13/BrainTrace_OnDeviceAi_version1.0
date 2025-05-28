@@ -192,19 +192,22 @@ def generate_answer(schema_text: str, question: str) -> str:
     스키마 텍스트와 질문을 기반으로 AI를 호출하여 최종 답변을 생성합니다.
     """
     prompt = (
-    "다음 스키마와 질문을 바탕으로 AI를 호출하여 자연어 답변을 작성한 뒤, "
-    "마지막에 참고한 지식 그래프의 노드 이름만 JSON 배열 형식으로 EOF 뒤에 출력해줘.\n\n"
+    "다음 스키마와 질문을 바탕으로, 스키마에 명시된 정보나 연결된 관계를 통해 추론 가능한 범위 내에서만 자연어로 답변해줘. "
+    "정보가 일부라도 있다면 해당 범위 내에서 최대한 설명하고, 스키마와 완전히 무관한 경우에만 '스키마에 해당 정보가 없습니다.'라고 출력해. "
+    "절대 상식을 기반으로 추측하지 마. \n\n"
     "스키마:\n" + schema_text + "\n\n"
     "질문: " + question + "\n\n"
     "출력 형식:\n"
-    "[여기에 질문에 대한 상세 답변 작성]\n\n"
+    "[여기에 질문에 대한 상세 답변 작성 또는 '스키마에 해당 정보가 없습니다.' 출력]\n\n"
     "EOF\n"
     "{\n"
     '  "referenced_nodes": ["노드 이름1", "노드 이름2", ...]\n'
     "}\n"
-    "반드시 노드 이름만 배열로 나열하고, 도메인 정보, 노드간 관계, 설명은 포함하지 마. 정확한 JSON만 출력해줘."
-    # "스키마를 기반으로 추론을 하여도 답변할 수 없는 질문이면, 이렇게 말해: '현재 지식그래프에서는 해당 질문에 답할 수 없습니다.'\n"
+    "※ 참고한 노드 이름만 정확히 JSON 배열로 나열하고, 도메인 정보, 노드 간 관계, 설명은 포함하지 마."
+
 )
+
+
     try:
     
         response = client.chat.completions.create(
@@ -391,16 +394,40 @@ def generate_schema_text(nodes, related_nodes, relationships) -> str:
             except Exception as e:
                 logging.error("노드 정보 생성 오류: %s", str(e))
                 continue
-        
-        # 최종 스키마 텍스트 생성: 만약 관계가 있다면 관계들만 node-관계-노드 형식으로 출력합니다.
-        if simplified_relationships:
-            raw_schema_text = "\n".join(simplified_relationships)
+
+        # ✅ 관계에 등장한 노드 이름 수집
+        connected_node_names = set()
+        if isinstance(relationships, list):
+            for rel in relationships:
+                try:
+                    if rel is None: continue
+                    start_name = dict(rel.start_node.items()).get("name", "")
+                    end_name = dict(rel.end_node.items()).get("name", "")
+                    connected_node_names.update([start_name, end_name])
+                except Exception:
+                    continue
+
+        # ✅ 관계에 등장하지 않은 노드만 따로 분리
+        standalone_node_info_list = [
+            n for n in node_info_list
+            if all(name not in n for name in connected_node_names)
+        ]
+
+        relationship_text = "\n".join(simplified_relationships) if simplified_relationships else ""
+        standalone_node_text = "\n".join(standalone_node_info_list) if standalone_node_info_list else ""
+
+        if relationship_text and standalone_node_text:
+            raw_schema_text = relationship_text + "\n" + standalone_node_text
+        elif relationship_text:
+            raw_schema_text = relationship_text
+        elif node_info_list:
+            raw_schema_text = "\n".join(node_info_list)
         else:
-            # 관계 정보가 없을 경우 노드 정보만 출력합니다.
-            raw_schema_text = "\n".join(node_info_list) if node_info_list else "스키마 정보를 찾을 수 없습니다."
-        
+            raw_schema_text = "스키마 정보를 찾을 수 없습니다."
+
         logging.info("스키마 텍스트 생성 완료 (%d자)\n%s", len(raw_schema_text), raw_schema_text)
         return raw_schema_text
+        
         
     except Exception as e:
         logging.error("스키마 생성 오류: %s", str(e))
