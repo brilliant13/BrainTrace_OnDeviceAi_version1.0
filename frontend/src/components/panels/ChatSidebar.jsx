@@ -59,7 +59,11 @@ function ChatSidebar({
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (menuRef.current && !menuRef.current.contains(event.target)) {
+            // 드롭다운 메뉴나 세션 항목 내부가 아닌 경우에만 메뉴 닫기
+            const isInsideSessionItem = event.target.closest('.session-item');
+            const isInsideDropdown = event.target.closest('.dropdown-menu');
+
+            if (!isInsideSessionItem && !isInsideDropdown) {
                 setOpenMenuId(null);
             }
         };
@@ -69,6 +73,7 @@ function ChatSidebar({
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
 
     useEffect(() => {
         if (!isSessionsLoaded && sessions.length >= 0) {
@@ -140,7 +145,9 @@ function ChatSidebar({
                                             <GoPencil size={15} style={{ marginRight: 6 }} />
                                             채팅 이름 바꾸기
                                         </div>
-                                        <div className="popup-item" onClick={() => onDeleteSession(session.id)}>
+                                        <div className="popup-item" onClick={(e) => {
+                                            onDeleteSession(session.id);
+                                        }}>
                                             <RiDeleteBinLine size={15} style={{ marginRight: 6 }} />
                                             채팅 삭제
                                         </div>
