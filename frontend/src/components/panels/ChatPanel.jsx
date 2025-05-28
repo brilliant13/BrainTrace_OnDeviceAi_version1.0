@@ -10,7 +10,7 @@ import { MdOutlineFormatListBulleted } from "react-icons/md";
 import { FaProjectDiagram } from 'react-icons/fa'; // 아이콘 추가
 import { HiOutlineBars4 } from "react-icons/hi2";
 
-import { getReferencedNodes } from '../../../../backend/services/backend';
+import { getReferencedNodes, getSourceIdsByNodeName } from '../../../../backend/services/backend';
 
 function ChatPanel({
   activeProject,
@@ -38,9 +38,28 @@ function ChatPanel({
   // 🔁 상태값 추가
   const [hoveredChatId, setHoveredChatId] = useState(null); // 현재 hover 중인 메시지의 chatId
 
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const toggleSourceList = async (nodeName) => {
+    if (openSourceNodes[nodeName]) {
+      setOpenSourceNodes(prev => {
+        const copy = { ...prev };
+        delete copy[nodeName];
+        return copy;
+      });
+    } else {
+      try {
+        const res = await getSourceIdsByNodeName(nodeName, brainId);
+        setOpenSourceNodes(prev => ({
+          ...prev,
+          [nodeName]: res.sources
+        }));
+      } catch (err) {
+        console.error('소스 조회 실패:', err);
+      }
+    }
   };
   useEffect(scrollToBottom, [sessions, currentSessionId]);
 
@@ -119,7 +138,7 @@ function ChatPanel({
     try {
       const response = await requestAnswer(inputText, activeProject.toString());
       const { answer = '', referenced_nodes = [] } = response;
-
+      console.log("answer", answer)
       if (referenced_nodes && onReferencedNodesUpdate) {
         onReferencedNodesUpdate(referenced_nodes);
       }
@@ -169,21 +188,6 @@ function ChatPanel({
     setIsEditingTitle(false);
   };
 
-  const handleDeleteSession = (sessionId) => {
-    const updated = sessions.filter(s => s.id !== sessionId);
-    setSessions(updated);
-    localStorage.setItem(`sessions-${activeProject}`, JSON.stringify(updated));
-
-    // 선택 중인 세션이 삭제되면 첫 번째 세션으로 이동
-    if (sessionId === currentSessionId && updated.length > 0) {
-      setCurrentSessionId(updated[0].id);
-    } else if (updated.length === 0) {
-      setCurrentSessionId(null);
-    }
-  };
-
-
-
   const messages = getCurrentMessages();
   const hasChatStarted = messages.some(msg => msg.text.trim() !== '');
 
@@ -196,7 +200,6 @@ function ChatPanel({
         </button>
       </div>
 
-
       {hasChatStarted ? (
         <div className="panel-content chat-content">
           <div
@@ -204,7 +207,6 @@ function ChatPanel({
           >
             {isEditingTitle ? (
               <input
-
                 ref={titleInputRef} // 추가
                 className="chat-title-input"
                 value={editingTitle}
@@ -275,20 +277,35 @@ function ChatPanel({
                     {/* 그래프 아이콘: bot 메시지이면서 참고된 노드가 있을 경우만 */}
 
                     <div className="message-body">
-                      {m.text.split(' ').map((word, i) =>
-                        allNodeNames.includes(word) ? (
-                          <span
-                            key={i}
-                            className="referenced-node"
-                            onClick={() => onReferencedNodesUpdate([word])}
-                          >
-                            {word}{' '}
-                          </span>
-                        ) : (
-                          <span key={i}>{word} </span>
-                        )
-                      )}
+                      {m.text.split('\n').map((line, i) => {
+                        const trimmed = line.trim();
+                        const isReferenced = trimmed.startsWith('-');
+                        const cleanWord = isReferenced ? trimmed.replace(/^-\s*/, '') : trimmed;
+
+                        return (
+                          <div key={i}>
+                            {allNodeNames.includes(cleanWord) && isReferenced ? (
+                              <>
+                                <span style={{ color: 'inherit', textDecoration: 'none' }}>- </span>
+                                <span
+                                  className="referenced-node-text"
+                                  onClick={() => {
+                                    console.log('📌 클릭한 노드 이름:', cleanWord);
+                                    onReferencedNodesUpdate([cleanWord]);
+                                  }}
+                                >
+                                  {cleanWord}
+                                </span>
+                              </>
+                            ) : (
+                              trimmed
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
+
+
 
                     <div className="message-actions">
                       <button className="copy-button" title="복사" onClick={() => copyToClipboard(m.text)}>

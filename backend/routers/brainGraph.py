@@ -199,58 +199,37 @@ async def answer_endpoint(request_data: AnswerRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/getSourceIds",
-    summary="노드의 모든 source_id와 제목을 조회",
+    summary="노드의 모든 source_id 조회",
     description="특정 노드의 descriptions 배열에서 모든 source_id를 추출하여 반환합니다.",
-    response_description="source_id와 title을 포함하는 객체 리스트를 반환합니다.")
+    response_description="source_id 목록을 반환합니다.")
 async def get_source_ids(node_name: str, brain_id: str):
     """
-    노드의 모든 source_id와 제목을 반환합니다:
+    노드의 모든 source_id를 반환합니다:
     
     - **node_name**: 조회할 노드의 이름
     - **brain_id**: 브레인 ID
     
     반환값:
-    - **sources**: source_id와 title을 포함하는 객체 리스트
+    - **source_ids**: source_id 목록
     """
     logging.info(f"getSourceIds 엔드포인트 호출됨 - node_name: {node_name}, brain_id: {brain_id}")
     try:
         neo4j_handler = Neo4jHandler()
-        db = SQLiteHandler()
         logging.info("Neo4j 핸들러 생성됨")
         
         # Neo4j에서 노드의 descriptions 배열 조회
         descriptions = neo4j_handler.get_node_descriptions(node_name, brain_id)
         if not descriptions:
-            return {"sources": []}
+            return {"source_ids": []}
             
         # descriptions 배열에서 모든 source_id 추출
-        seen_ids = set()  # 중복 제거를 위해 set 사용
-        sources = []
-        
+        source_ids = set()  # 중복 제거를 위해 set 사용
         for desc in descriptions:
             if "source_id" in desc:
-                source_id = desc["source_id"]
-                if source_id not in seen_ids:
-                    seen_ids.add(source_id)
-                    
-                    # PDF와 TextFile 테이블에서 모두 조회
-                    pdf = db.get_pdf(int(source_id))
-                    textfile = db.get_textfile(int(source_id))
-                    
-                    title = None
-                    if pdf:
-                        title = pdf['pdf_title']
-                    elif textfile:
-                        title = textfile['txt_title']
-                    
-                    if title:
-                        sources.append({
-                            "id": source_id,
-                            "title": title
-                        })
+                source_ids.add(desc["source_id"])
         
-        logging.info(f"추출된 sources: {sources}")
-        return {"sources": sources}
+        logging.info(f"추출된 source_ids: {source_ids}")
+        return {"source_ids": list(source_ids)}
         
     except Exception as e:
         logging.error("source_id 조회 오류: %s", str(e))
