@@ -37,8 +37,6 @@ function GraphView({
   const lastClickRef = useRef({ node: null, time: 0 });
   const clickTimeoutRef = useRef();
 
-
-
   // 앱 디자인에 맞는 모노크로매틱 + 포인트 색상 팔레트
   const colorPalette = [
     '#444444', // 진한 회색 (주요 노드)
@@ -66,7 +64,6 @@ function GraphView({
 
     setDimensions({ width, height: calcHeight });
   };
-
 
   const getInitialZoomScale = (nodeCount) => {
     if (nodeCount >= 1000) return 0.045;
@@ -169,6 +166,33 @@ function GraphView({
       }, 300);
     }
   };
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !fgRef.current) return;
+
+    const handleDoubleClick = (e) => {
+      // 노드가 아닌 곳에서 더블클릭 시 줌인
+      // 예외적으로 마우스 커서가 노드 위가 아니었는지 확인하는 조건 필요
+      if (!document.body.style.cursor.includes('pointer')) {
+        const fg = fgRef.current;
+        const boundingRect = container.getBoundingClientRect();
+        const mouseX = e.clientX - boundingRect.left;
+        const mouseY = e.clientY - boundingRect.top;
+
+        const graphCoords = fg.screen2GraphCoords(mouseX, mouseY);
+        fg.centerAt(graphCoords.x, graphCoords.y, 800);
+        fg.zoom(fg.zoom() * 2, 800); // 현재 줌에서 1.5배 확대
+      }
+    };
+
+    container.addEventListener('dblclick', handleDoubleClick);
+
+    return () => {
+      container.removeEventListener('dblclick', handleDoubleClick);
+    };
+  }, [dimensions]);
+
 
   useEffect(() => {
     updateDimensions();
