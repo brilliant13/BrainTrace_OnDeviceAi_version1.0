@@ -120,13 +120,13 @@ export default function ProjectListView() {
             <AppHeader />
 
             <div className="project-list-view" style={{ flex: 1 }}>
-{/* 페이지 헤더 */}
-<div className="project-header" style={{
-    textAlign: 'center',
-    margin: '35px 0 16px',
-    transform: animationComplete ? 'translateY(0)' : 'translateY(25vh)',
-    transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
-}}>
+                {/* 페이지 헤더 */}
+                <div className="project-header" style={{
+                    textAlign: 'center',
+                    margin: '35px 0 16px',
+                    transform: animationComplete ? 'translateY(0)' : 'translateY(25vh)',
+                    transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}>
 
                     <h1
                         className={`page-highlight ${animationComplete ? 'animation-complete' : ''}`}
@@ -145,7 +145,7 @@ export default function ProjectListView() {
                 </div>
 
                 {/* 정렬 드롭다운 */}
-                <div
+                {/* <div
                     className={`project-header-controls ${showSortButton ? 'visible' : ''}`}
                     style={{
                         display: 'flex',
@@ -173,8 +173,47 @@ export default function ProjectListView() {
                             ))}
                         </div>
                     </div>
+                </div> */}
+                {/* 정렬 드롭다운 */}
+                <div
+                    className={`project-header-controls ${showSortButton ? 'visible' : ''}`}
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        marginBottom: 20,
+                        paddingRight: 20,
+                        opacity: showSortButton ? 1 : 0,
+                        transform: showSortButton ? 'translateY(0)' : 'translateY(-10px)',
+                        transition: 'all 0.5s ease',
+                        position: 'relative',
+                        zIndex: 1000
+                    }}
+                >
+                    <div className="sort-dropdown">
+                        <button className="sort-button">
+                            {sortOption}
+                            <img
+                                src="/src/assets/icons/arrow-down.png"
+                                alt="dropdown"
+                                className="dropdown-arrow"
+                                width={12}
+                                height={12}
+                                style={{ marginLeft: '8px' }}
+                            />
+                        </button>
+                        <div className="sort-menu">
+                            {['최신 항목', '제목', '공유 문서함'].map(option => (
+                                <div
+                                    key={option}
+                                    className="sort-menu-item"
+                                    onClick={() => setSortOption(option)}
+                                >
+                                    {option}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-
                 {/* 프로젝트 카드 그리드 */}
                 <div className={`project-grid ${showCards ? 'cards-visible' : ''}`}>
                     {sorted.map((p, index) => {
