@@ -25,7 +25,9 @@ function GraphView({
   isDarkMode = false,
   customNodeSize = 5,
   customLinkWidth = 1,
-  textDisplayZoomThreshold = 0.5,
+  // textDisplayZoomThreshold = 0.5,
+  textDisplayZoomThreshold = isFullscreen ? 0.05 : 0.1, // ✅ Modal에서는 더 낮은 임계값
+
   // ✅ 3개 물리 설정만 (0-100 범위)
   repelStrength = 50,     // 반발력
   linkDistance = 50,      // 링크 거리  
@@ -84,19 +86,36 @@ function GraphView({
     setDimensions({ width, height: calcHeight });
   };
 
+  // const getInitialZoomScale = (nodeCount) => {
+  //   if (nodeCount >= 1000) return 0.045;
+  //   else if (nodeCount >= 500) return 0.05;
+  //   else if (nodeCount >= 100) return 0.07;
+  //   else if (nodeCount >= 50) return 0.15;
+  //   else if (nodeCount >= 40) return 0.2;
+  //   else if (nodeCount >= 30) return 0.25;
+  //   else if (nodeCount >= 20) return 0.3;
+  //   else if (nodeCount >= 10) return 0.4;
+  //   else if (nodeCount >= 5) return 0.8;
+  //   return 1;
+  // };
   const getInitialZoomScale = (nodeCount) => {
-    if (nodeCount >= 1000) return 0.045;
-    else if (nodeCount >= 500) return 0.05;
-    else if (nodeCount >= 100) return 0.07;
-    else if (nodeCount >= 50) return 0.15;
-    else if (nodeCount >= 40) return 0.2;
-    else if (nodeCount >= 30) return 0.25;
-    else if (nodeCount >= 20) return 0.3;
-    else if (nodeCount >= 10) return 0.4;
-    else if (nodeCount >= 5) return 0.8;
-    return 1;
+    // ✅ Modal용 줌 배율 (더 확대)
+    const modalMultiplier = isFullscreen ? 5 : 1.5; // Modal일 때 1.5배 더 확대
+    
+    let baseZoom;
+    if (nodeCount >= 1000) baseZoom = 0.045;
+    else if (nodeCount >= 500) baseZoom = 0.05;
+    else if (nodeCount >= 100) baseZoom = 0.07;
+    else if (nodeCount >= 50) baseZoom = 0.15;
+    else if (nodeCount >= 40) baseZoom = 0.2;
+    else if (nodeCount >= 30) baseZoom = 0.25;
+    else if (nodeCount >= 20) baseZoom = 0.3;
+    else if (nodeCount >= 10) baseZoom = 0.4;
+    else if (nodeCount >= 5) baseZoom = 0.8;
+    else baseZoom = 1;
+    
+    return Math.min(baseZoom * modalMultiplier, 5); // 최대 줌 제한
   };
-
   // 타임랩스 함수
   const startTimelapse = () => {
     const nodes = [...graphData.nodes];
@@ -781,6 +800,7 @@ useEffect(() => {
             // ctx.fillStyle = textColor;
             // ctx.fillText(label, node.x, node.y + nodeRadius + 1);
             // ✅ 이렇게 수정:
+
             // 줌 레벨이 임계값 이상일 때만 텍스트 표시
             if (globalScale >= textDisplayZoomThreshold) {
               ctx.textAlign = 'center';
