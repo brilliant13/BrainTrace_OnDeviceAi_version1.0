@@ -179,7 +179,7 @@ def update_index_and_get_embeddings(nodes: List[Dict], brain_id: str) -> Dict[st
 def search_similar_nodes(
     embedding: List[float],
     brain_id: str,
-    limit: int = 10,
+    limit: int = 5,
     threshold: float = 0.5,
     high_score_threshold: float = 0.8
 ) -> List[Dict]:
@@ -319,7 +319,7 @@ def search_similar_descriptions(
     embedding: List[float],
     brain_id: str,
     limit: int = 10,
-    threshold: float = 0.1
+    threshold: float = 0.5
 ) -> List[Dict[str, str]]:
     """
     입력된 임베딩과 유사한 문장들을 검색합니다.
