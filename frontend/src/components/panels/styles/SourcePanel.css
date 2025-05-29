@@ -318,11 +318,9 @@ button.add-button.icon-only:active {
   border-radius: 50%;
   padding: 4px;
   transition: box-shadow 0.3s ease, background-color 0.3s ease;
+  background-color: white;
 }
 
-.search-icon-container {
-  background-color: black;
-}
 
 .search-icon-container.active {
   background-color: #e7e7e7;
