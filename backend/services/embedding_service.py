@@ -319,7 +319,7 @@ def search_similar_descriptions(
     embedding: List[float],
     brain_id: str,
     limit: int = 10,
-    threshold: float = 0.1
+    threshold: float = 0.5
 ) -> List[Dict[str, str]]:
     """
     입력된 임베딩과 유사한 문장들을 검색합니다.
