@@ -3,16 +3,14 @@ import React, { useState, useRef } from 'react';
 import './styles/MemoList.css';
 import { CiMemoPad } from 'react-icons/ci';
 import { MdOutlineRestore } from "react-icons/md";
-import { FaRegTrashAlt } from "react-icons/fa";
-import { MdOutlineDeleteForever } from "react-icons/md"; // 휴지통
-import { MdKeyboardBackspace } from "react-icons/md";
 import { BsTrash } from "react-icons/bs";
 import micOff from '../../assets/icons/mic_off.png'
 import micOn from '../../assets/icons/mic_on.png'
-import { TbTrashX } from "react-icons/tb";
 import { IoTrashBinOutline } from "react-icons/io5";
 import { CgNotes } from "react-icons/cg";
 import { LuTrash } from "react-icons/lu";
+
+import { transcribeAudio } from '../../../../backend/services/backend';
 
 function formatTime(seconds) {
     const min = String(Math.floor(seconds / 60)).padStart(2, '0');
@@ -32,32 +30,116 @@ function MemoListPanel({
 }) {
     const [isRecording, setIsRecording] = useState(false);
     const [showTrash, setShowTrash] = useState(false);
-
     const [elapsedTime, setElapsedTime] = useState(0);
     const [showOnIcon, setShowOnIcon] = useState(true);
-    const intervalRef = useRef(null);
-    const blinkRef = useRef(null);
 
-    const handleMicClick = () => {
-        if (!isRecording) {
-            // 녹음 시작
-            setElapsedTime(0);
-            intervalRef.current = setInterval(() => {
-                setElapsedTime(prev => prev + 1);
-            }, 1000);
-            blinkRef.current = setInterval(() => {
-                setShowOnIcon(prev => !prev);
-            }, 1000);
-        } else {
-            // 녹음 중지
-            clearInterval(intervalRef.current);
-            clearInterval(blinkRef.current);
-        }
-        setIsRecording(prev => !prev);
-    };
+    const [volume, setVolume] = useState(0);  // 0 ~ 1 사이
+    const [isTranscribing, setIsTranscribing] = useState(false);
 
     const isTrash = showTrash;
     const displayedMemos = isTrash ? deletedMemos : memos;
+
+    const intervalRef = useRef(null);
+    const blinkRef = useRef(null);
+
+    const mediaRecorderRef = useRef(null);
+    const recordedChunksRef = useRef([]);
+    const audioContextRef = useRef(null);
+    const analyserRef = useRef(null);
+    const dataArrayRef = useRef(null);
+    const sourceRef = useRef(null);
+    const volumeIntervalRef = useRef(null);
+
+    const handleMicClick = async () => {
+        if (isTranscribing) {
+            return; // 변환 중에는 녹음 시작/중지 막기
+        }
+        if (!isRecording) {
+            // 🎤 녹음 시작
+            recordedChunksRef.current = [];
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+
+            // ▶ 오디오 볼륨 측정용 AudioContext 설정
+            audioContextRef.current = new AudioContext();
+            sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
+            analyserRef.current = audioContextRef.current.createAnalyser();
+            analyserRef.current.fftSize = 256;
+
+            const bufferLength = analyserRef.current.frequencyBinCount;
+            dataArrayRef.current = new Uint8Array(bufferLength);
+
+            sourceRef.current.connect(analyserRef.current);
+
+            // 🎚️ 볼륨 측정 루프
+            volumeIntervalRef.current = setInterval(() => {
+                analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+                const avg = dataArrayRef.current.reduce((a, b) => a + b, 0) / bufferLength;
+                setVolume(avg / 255); // 0~1 정규화
+            }, 100);
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    recordedChunksRef.current.push(e.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                clearInterval(volumeIntervalRef.current);
+                try {
+                    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+                        await audioContextRef.current.close();
+                    }
+                } catch (e) {
+                    console.warn("AudioContext 종료 오류:", e);
+                }
+
+                const recordedChunks = recordedChunksRef.current;
+                if (recordedChunks.length === 0) {
+                    alert("녹음된 오디오가 없습니다.");
+                    return;
+                }
+
+                const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                const file = new File([blob], `recording-${Date.now()}.webm`, { type: 'audio/webm' });
+
+                setIsTranscribing(true); // 🔸 로딩 시작
+                try {
+                    const result = await transcribeAudio(file);
+                    const transcribedText = result.text || '';
+                    if (transcribedText.trim().length > 0) {
+                        await onAdd(transcribedText);
+                    } else {
+                        alert("🎤 텍스트를 추출하지 못했습니다.");
+                    }
+                } catch (err) {
+                    console.error('변환 오류:', err);
+                    alert('음성 텍스트 변환에 실패했습니다.');
+                } finally {
+                    setIsTranscribing(false); // 🔸 로딩 종료
+                }
+            };
+            mediaRecorder.start();
+            setElapsedTime(0);
+            intervalRef.current = setInterval(() => setElapsedTime(prev => prev + 1), 1000);
+            blinkRef.current = setInterval(() => setShowOnIcon(prev => !prev), 1000);
+        } else {
+            // ⏹️ 녹음 중지
+            clearInterval(intervalRef.current);
+            clearInterval(blinkRef.current);
+            clearInterval(volumeIntervalRef.current);
+            audioContextRef.current?.close();
+
+            if (mediaRecorderRef.current?.state === 'recording') {
+                mediaRecorderRef.current.stop();
+            }
+        }
+
+        setIsRecording(prev => !prev);
+    };
+
 
     return (
         <div className="memo-list-wrapper notebook-style">
@@ -93,26 +175,34 @@ function MemoListPanel({
                         <>
                             <div className="mic-wrapper">
                                 {isRecording && (
-                                    <div className="recording-indicator-timer">
-                                        {formatTime(elapsedTime)}
+                                    <div className="volume-bar-wrapper">
+                                        <div className="recording-indicator-timer">{formatTime(elapsedTime)}</div>
+                                        <div className="volume-bar-bg">
+                                            <div className="volume-bar-fill" style={{ width: `${volume * 100}%` }} />
+                                        </div>
                                     </div>
+
                                 )}
                                 <img
                                     src={isRecording ? (showOnIcon ? micOn : micOff) : micOff}
                                     alt="mic"
-                                    className={`mic-icon ${isRecording ? 'recording' : ''}`}
+                                    className={`mic-icon ${isRecording ? 'recording' : ''} ${isTranscribing ? 'disabled' : ''}`}
                                     onClick={handleMicClick}
                                 />
+
+                                {isTranscribing && (
+                                    <div className="transcribing-indicator" style={{ marginTop: '8px', color: '#666', fontSize: '13px' }}>
+                                        텍스트 변환 중...
+                                    </div>
+                                )}
+
                             </div>
 
-                            <button className="add-memo-button" onClick={onAdd}>+ 새 메모</button>
+                            <button className="add-memo-button" onClick={() => onAdd('')}>+ 새 메모</button>
                         </>
                     )}
                 </div>
-
-
             </div>
-
             <div className="memo-list">
                 {displayedMemos.length === 0 && (
                     <div className="memo-empty-state">

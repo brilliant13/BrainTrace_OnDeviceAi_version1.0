@@ -511,3 +511,158 @@
 .dark-mode ::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.5);
 }
+
+
+/* GraphViewForFullscreen.css - 슬라이더 스타일 추가 */
+
+/* ✅ 슬라이더 컨테이너 */
+.fullscreen-slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fullscreen-slider-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fullscreen-slider-label {
+  min-width: 80px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  transition: color 0.3s ease;
+}
+
+.dark-mode .fullscreen-slider-label {
+  color: #e2e8f0;
+}
+
+/* ✅ 슬라이더 스타일 */
+.fullscreen-slider {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  outline: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.dark-mode .fullscreen-slider {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 슬라이더 트랙 */
+.fullscreen-slider::-webkit-slider-track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  transition: background 0.3s ease;
+}
+
+.dark-mode .fullscreen-slider::-webkit-slider-track {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.fullscreen-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  transition: background 0.3s ease;
+}
+
+.dark-mode .fullscreen-slider::-moz-range-track {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 슬라이더 썸 (핸들) */
+.fullscreen-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.2s ease;
+  border: 2px solid white;
+}
+
+.fullscreen-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.fullscreen-slider::-webkit-slider-thumb:active {
+  transform: scale(0.95);
+}
+
+.dark-mode .fullscreen-slider::-webkit-slider-thumb {
+  border-color: #0f172a;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
+}
+
+.fullscreen-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.2s ease;
+  border: 2px solid white;
+  appearance: none;
+}
+
+.fullscreen-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.dark-mode .fullscreen-slider::-moz-range-thumb {
+  border-color: #0f172a;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
+}
+
+/* 슬라이더 값 표시 */
+.fullscreen-slider-value {
+  min-width: 32px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .fullscreen-slider-value {
+  color: #a5b4fc;
+  background: rgba(165, 180, 252, 0.15);
+}
+
+/* 슬라이더 호버 효과 */
+.fullscreen-slider:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.dark-mode .fullscreen-slider:hover {
+  background: rgba(165, 180, 252, 0.2);
+}
+
+/* 슬라이더 포커스 효과 */
+.fullscreen-slider:focus {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.dark-mode .fullscreen-slider:focus {
+  box-shadow: 0 0 0 3px rgba(165, 180, 252, 0.3);
+}

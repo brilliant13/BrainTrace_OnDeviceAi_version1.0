@@ -6,12 +6,9 @@ import { requestAnswer } from '../../api/tmpAPI';
 import copyIcon from '../../assets/icons/copy.png';
 import graphIcon from '../../assets/icons/graph-off.png';
 import { TbPencil } from "react-icons/tb";
-import { MdOutlineFormatListBulleted } from "react-icons/md";
-import { FaProjectDiagram } from 'react-icons/fa'; // 아이콘 추가
 import { HiOutlineBars4 } from "react-icons/hi2";
 import { getReferencedNodes, getSourceIdsByNodeName } from '../../../../backend/services/backend';
 import FileIcon from './FileIcon';
-import { IoDocumentTextOutline } from "react-icons/io5";
 
 function ChatPanel({
   activeProject,
@@ -23,7 +20,8 @@ function ChatPanel({
   showChatPanel,
   setShowChatPanel,
   allNodeNames = [],
-  onOpenSource
+  onOpenSource,
+  sourceCount = 0, // 소스 개수
 }) {
 
   const [inputText, setInputText] = useState('');
@@ -296,47 +294,47 @@ function ChatPanel({
                         return (
                           <div key={i} className="referenced-line">
                             {allNodeNames.includes(cleanWord) && isReferenced ? (
-                              <>
-                                <span style={{ color: 'inherit', textDecoration: 'none' }}>- </span>
-                                <span
-                                  className="referenced-node-text"
-                                  onClick={() => {
-                                    console.log('📌 클릭한 노드 이름:', cleanWord);
-                                    onReferencedNodesUpdate([cleanWord]);
-                                  }}
-                                >
-                                  {cleanWord}
-                                </span>
+                              <div className="referenced-block">
+                                <div className="referenced-header">
+                                  <span style={{ color: 'inherit' }}>-</span>
+                                  <span
+                                    className="referenced-node-text"
+                                    onClick={() => {
+                                      console.log('📌 클릭한 노드 이름:', cleanWord);
+                                      onReferencedNodesUpdate([cleanWord]);
+                                    }}
+                                  >
+                                    {cleanWord}
+                                  </span>
+                                  <button
+                                    className={`source-toggle-button ${openSourceNodes[cleanWord] ? 'active' : ''}`}
+                                    onClick={() => toggleSourceList(cleanWord)}
+                                    style={{ marginLeft: '3px' }}
+                                  >
+                                    {openSourceNodes[cleanWord] ? '(출처닫기)' : '(출처보기)'}
+                                  </button>
+                                </div>
 
-                                <button
-                                  className={`source-toggle-button ${openSourceNodes[cleanWord] ? 'active' : ''}`}
-                                  onClick={() => toggleSourceList(cleanWord)}
-                                  style={{ marginLeft: '8px' }}
-                                >
-                                  <IoDocumentTextOutline />
-                                </button>
-
-                                {/* ⬇️ 소스 타이틀 목록 표시 */}
-                                {openSourceNodes[cleanWord] && (
+                                {Array.isArray(openSourceNodes[cleanWord]) && openSourceNodes[cleanWord].length > 0 && (
                                   <ul className="source-title-list">
                                     {openSourceNodes[cleanWord].map((src, idx) => (
                                       <li key={idx} className="source-title-item">
                                         <span
                                           className="source-title-content"
                                           onClick={() => onOpenSource(src.id)}
-                                          style={{ cursor: 'pointer' }}
                                         >
-                                          <span>{src.title}</span>
+                                          {src.title}
                                         </span>
                                       </li>
                                     ))}
                                   </ul>
                                 )}
-                              </>
+                              </div>
                             ) : (
                               trimmed
                             )}
                           </div>
+
                         );
                       })}
                     </div>
@@ -402,13 +400,14 @@ function ChatPanel({
                 onKeyPress={handleKeyPress}
                 disabled={isLoading}
               />
+              <div className="source-count-text">소스 {sourceCount}개</div>
               <button
                 type="submit"
                 className="submit-circle-button"
                 aria-label="메시지 전송"
                 disabled={!inputText.trim() || isLoading}
               >
-                <span className="send-icon">➤</span>
+                {isLoading ? <span className="stop-icon">■</span> : <span className="send-icon">➤</span>}
               </button>
             </div>
           </form>
@@ -480,6 +479,7 @@ function ChatPanel({
                   onChange={e => setInputText(e.target.value)}
                   onKeyPress={handleKeyPress}
                 />
+                <div className="source-count-text">소스 {sourceCount}개</div>
                 <button type="submit" className="submit-circle-button" aria-label="메시지 전송">
                   <span className="send-icon">➤</span>
                 </button>
