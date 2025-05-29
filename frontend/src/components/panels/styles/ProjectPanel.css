@@ -108,3 +108,13 @@
 .sidebar-icon svg {
   flex-shrink: 0;
 }
+
+.brain-name-ellipsis {
+  max-width: 150px;
+  /* 적절한 너비 설정 (화면 크기에 따라 조절 가능) */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: middle;
+}
