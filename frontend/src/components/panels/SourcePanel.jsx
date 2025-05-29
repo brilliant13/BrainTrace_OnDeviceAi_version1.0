@@ -299,6 +299,13 @@ export default function SourcePanel({
               }}
               style={{ padding: '10px 16px' }}
             >
+              <style>
+                {`
+                  input::placeholder {
+                    color: #888; /* 원하는 색상 */
+                  }
+                `}
+              </style>
               <input
                 ref={searchInputRef}
                 type="text"
