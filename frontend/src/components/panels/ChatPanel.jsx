@@ -12,7 +12,9 @@ import { HiOutlineBars4 } from "react-icons/hi2";
 import { getReferencedNodes, getSourceIdsByNodeName } from '../../../../backend/services/backend';
 import FileIcon from './FileIcon';
 import { IoDocumentTextOutline } from "react-icons/io5";
-
+import { CgBorderStyleDotted } from "react-icons/cg";
+import { MdOutlineSource } from "react-icons/md";
+import { MdSource } from "react-icons/md";
 function ChatPanel({
   activeProject,
   onReferencedNodesUpdate,
@@ -296,47 +298,47 @@ function ChatPanel({
                         return (
                           <div key={i} className="referenced-line">
                             {allNodeNames.includes(cleanWord) && isReferenced ? (
-                              <>
-                                <span style={{ color: 'inherit', textDecoration: 'none' }}>- </span>
-                                <span
-                                  className="referenced-node-text"
-                                  onClick={() => {
-                                    console.log('📌 클릭한 노드 이름:', cleanWord);
-                                    onReferencedNodesUpdate([cleanWord]);
-                                  }}
-                                >
-                                  {cleanWord}
-                                </span>
+                              <div className="referenced-block">
+                                <div className="referenced-header">
+                                  <span style={{ color: 'inherit' }}>-</span>
+                                  <span
+                                    className="referenced-node-text"
+                                    onClick={() => {
+                                      console.log('📌 클릭한 노드 이름:', cleanWord);
+                                      onReferencedNodesUpdate([cleanWord]);
+                                    }}
+                                  >
+                                    {cleanWord}
+                                  </span>
+                                  <button
+                                    className={`source-toggle-button ${openSourceNodes[cleanWord] ? 'active' : ''}`}
+                                    onClick={() => toggleSourceList(cleanWord)}
+                                    style={{ marginLeft: '3px' }}
+                                  >
+                                    (출처보기)
+                                  </button>
+                                </div>
 
-                                <button
-                                  className={`source-toggle-button ${openSourceNodes[cleanWord] ? 'active' : ''}`}
-                                  onClick={() => toggleSourceList(cleanWord)}
-                                  style={{ marginLeft: '8px' }}
-                                >
-                                  <IoDocumentTextOutline />
-                                </button>
-
-                                {/* ⬇️ 소스 타이틀 목록 표시 */}
-                                {openSourceNodes[cleanWord] && (
+                                {Array.isArray(openSourceNodes[cleanWord]) && openSourceNodes[cleanWord].length > 0 && (
                                   <ul className="source-title-list">
                                     {openSourceNodes[cleanWord].map((src, idx) => (
                                       <li key={idx} className="source-title-item">
                                         <span
                                           className="source-title-content"
                                           onClick={() => onOpenSource(src.id)}
-                                          style={{ cursor: 'pointer' }}
                                         >
-                                          <span>{src.title}</span>
+                                          {src.title}
                                         </span>
                                       </li>
                                     ))}
                                   </ul>
                                 )}
-                              </>
+                              </div>
                             ) : (
                               trimmed
                             )}
                           </div>
+
                         );
                       })}
                     </div>
