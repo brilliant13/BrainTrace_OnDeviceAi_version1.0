@@ -12,6 +12,7 @@ import { GoPencil } from 'react-icons/go';
 import { RiDeleteBinLine } from 'react-icons/ri';
 import ConfirmDialog from '../ConfirmDialog';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { AiOutlineNodeIndex } from 'react-icons/ai';
 import {
     getFolderTextfiles,
     getFolderPdfs,
@@ -23,7 +24,8 @@ import {
     updateTextFile,
     updateVoice,
     deleteFolderWithMemos,  // ✅ 폴더 삭제 추가
-    updateFolder            // ✅ 폴더 이름 수정 추가
+    updateFolder,            // ✅ 폴더 이름 수정 추가
+    getNodesBySourceId
 } from '../../../../backend/services/backend';
 import { filter } from 'd3';
 
@@ -41,7 +43,8 @@ export default function FolderView({
     refreshKey,
     brainId,
     onGraphRefresh,
-    filteredSourceIds
+    filteredSourceIds,
+    onFocusNodeNamesUpdate
 }) {
     const [isOpen, setIsOpen] = useState(depth === 1);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -374,6 +377,24 @@ export default function FolderView({
                                 ⋮
                                 {menuOpenId === child.id && (
                                     <div className="file-menu-popup" onClick={e => e.stopPropagation()}>
+                                        <div
+                                            className="popup-item"
+                                            onClick={async () => {
+                                                try {
+                                                    const names = await getNodesBySourceId(child.id, brainId);
+                                                    if (onFocusNodeNamesUpdate) {
+                                                        onFocusNodeNamesUpdate(names);
+                                                    }
+                                                } catch (err) {
+                                                    console.error('노드 조회 실패:', err);
+                                                    alert('해당 소스에서 생성된 노드를 가져오지 못했습니다.');
+                                                }
+                                                setMenuOpenId(null);
+                                            }}
+                                        >
+                                            <AiOutlineNodeIndex size={17} style={{ marginRight: 1 }} />
+                                            노드 보기
+                                        </div>
                                         <div className="popup-item" onClick={() => { setEditingId(child.id); setTempName(child.name); setMenuOpenId(null); }}>
                                             <GoPencil size={14} style={{ marginRight: 4 }} /> 이름 바꾸기
                                         </div>

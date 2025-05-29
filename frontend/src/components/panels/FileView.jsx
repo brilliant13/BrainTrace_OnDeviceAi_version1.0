@@ -493,6 +493,7 @@ export default function FileView({
             brainId={brainId}
             onGraphRefresh={onGraphRefresh}
             filteredSourceIds={filteredSourceIds}
+            onFocusNodeNamesUpdate={onFocusNodeNamesUpdate}
           />
         ) : null
       )}
