@@ -524,7 +524,7 @@
   margin-top: 6px;
   padding-left: 20px;
   font-size: 14px;
-  list-style-type: disc;
+  list-style-type: circle;
 }
 
 .source-title-item {
@@ -554,7 +554,8 @@
   outline: none;
   cursor: pointer;
   transition: color 0.2s, transform 0.1s;
-  padding: 4px;
+  padding: 1px;
+  font-size: 12px;
   align-items: center;
   justify-content: center;
 }
@@ -567,7 +568,35 @@
 
 .source-toggle-button.active {
   color: #000000;
-  transform: scale(0.9);
-  border: none;
-  outline: none;
+}
+
+.referenced-line {
+  padding: 4px 0;
+}
+
+.referenced-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.referenced-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.node-graph-button {
+  width: 15px;
+  height: 15px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease-in-out;
+}
+
+.referenced-content {
+  display: flex;
+  flex-direction: column;
 }
