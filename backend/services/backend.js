@@ -180,3 +180,25 @@ export const getSimilarSourceIds = (query, brainId) =>
         query: query,
         brain_id: String(brainId)
     }).then(res => res.data);
+
+
+/* ───────── VOICE TRANSCRIPTION ───────── */
+/**
+ * MP3 파일을 텍스트로 변환합니다.
+ * @param {File} file - 업로드할 MP3 파일 객체
+ * @returns {Promise<{ text: string }>} - 변환된 텍스트 반환
+ */
+export const transcribeAudio = (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return api.post(
+        '/voices/transcribe',
+        formData,
+        {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        }
+    ).then(res => res.data);
+};

@@ -61,9 +61,27 @@ function MemoPanel({ activeProject, collapsed, setCollapsed, referencedNodes = [
 
   const selectedMemo = memos.find(m => m.id === selectedMemoId);
 
-  const handleAddMemo = () => {
+  const handleAddMemo = async (content) => {
     const newId = Date.now();
-    const newMemo = { id: newId, title: '', content: '' };
+
+    // 현재 시간 포맷
+    const now = new Date();
+    const timeString = now.toLocaleString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    // 메모 구성
+    const isEmpty = !content || content.trim().length === 0;
+    const newMemo = {
+      id: newId,
+      title: isEmpty ? '' : `녹음 메모 (${timeString})`,
+      content: isEmpty ? '' : content
+    };
+
     const updated = [newMemo, ...memos];
     setMemos(updated);
     localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(updated));
@@ -73,7 +91,10 @@ function MemoPanel({ activeProject, collapsed, setCollapsed, referencedNodes = [
       setSelectedMemoId(newId);
       setHighlightedMemoId(null);
     }, 1000);
+
+    return newId;  // ✅ onAdd가 메모 ID를 반환하도록!
   };
+
 
   const handleDeleteMemo = (id) => {
     const target = memos.find(m => m.id === id);
