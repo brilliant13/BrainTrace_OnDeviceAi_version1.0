@@ -316,7 +316,8 @@ export default function SourcePanel({
                   padding: '6px 10px',
                   fontSize: '14px',
                   borderRadius: '6px',
-                  border: '1px solid #ccc'
+                  border: '1px solid #ccc',
+                  backgroundColor: '#f9f9f9'
                 }}
               />
             </form>
@@ -330,6 +331,7 @@ export default function SourcePanel({
                 placeholder="새 폴더 이름"
                 value={newFolderName}
                 onChange={e => setNewFolderName(e.target.value)}
+
               />
               <div className="form-buttons">
                 <button type="submit" className="primary">추가</button>
