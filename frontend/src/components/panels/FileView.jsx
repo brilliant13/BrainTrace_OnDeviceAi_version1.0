@@ -120,9 +120,25 @@ export default function FileView({
     })
     : files;
 
-  const filteredRootFiles = filteredSourceIds
-    ? rootFiles.filter(f => filteredSourceIds.includes(String(f.id)))
+  const allFilesFlat = [
+    ...rootFiles,
+    ...files.flatMap(folder =>
+      folder.type === 'folder'
+        ? folder.children.map(child => ({
+          ...child,
+          filetype: child.filetype,
+          id: child.id,
+          name: child.name,
+          meta: fileMap[child.id] || {}, // fileMap에서 meta 추출
+        }))
+        : []
+    ),
+  ];
+
+  const filteredAllFiles = filteredSourceIds
+    ? allFilesFlat.filter(f => filteredSourceIds.includes(String(f.id)))
     : rootFiles;
+
 
   useEffect(() => {
     refresh()
@@ -275,7 +291,6 @@ export default function FileView({
       if (onGraphRefresh) {
         onGraphRefresh();
       }
-
 
       await refresh()
 
@@ -477,6 +492,7 @@ export default function FileView({
             refreshParent={refresh}
             brainId={brainId}
             onGraphRefresh={onGraphRefresh}
+            filteredSourceIds={filteredSourceIds}
           />
         ) : null
       )}
@@ -497,7 +513,7 @@ export default function FileView({
       ))}
 
       {/* ── 루트 레벨 파일들 ── */}
-      {filteredRootFiles.map(f => {
+      {filteredAllFiles.map(f => {
         return (
           <div
             key={`${f.filetype}-${f.id}`}
@@ -588,7 +604,7 @@ export default function FileView({
         </div>
       )}
 
-      {filteredSourceIds && visibleFiles.length === 0 && filteredRootFiles.length === 0 && (
+      {filteredSourceIds && visibleFiles.length === 0 && filteredAllFiles.length === 0 && (
         <div className="empty-state">
           <p className="empty-sub">검색 결과가 없습니다.</p>
         </div>

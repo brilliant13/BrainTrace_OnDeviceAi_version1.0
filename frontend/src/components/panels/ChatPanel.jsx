@@ -407,11 +407,7 @@ function ChatPanel({
                 aria-label="메시지 전송"
                 disabled={!inputText.trim() || isLoading}
               >
-                {isLoading ? (
-                  <span className="stop-icon">■</span>
-                ) : (
-                  <span className="send-icon">➤</span>
-                )}
+                {isLoading ? <span className="stop-icon">■</span> : <span className="send-icon">➤</span>}
               </button>
             </div>
           </form>

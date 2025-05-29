@@ -25,6 +25,7 @@ import {
     deleteFolderWithMemos,  // ✅ 폴더 삭제 추가
     updateFolder            // ✅ 폴더 이름 수정 추가
 } from '../../../../backend/services/backend';
+import { filter } from 'd3';
 
 export default function FolderView({
     item,
@@ -39,7 +40,8 @@ export default function FolderView({
     refreshParent, // 부모 FileView의 전체 트리 갱신 함수
     refreshKey,
     brainId,
-    onGraphRefresh
+    onGraphRefresh,
+    filteredSourceIds
 }) {
     const [isOpen, setIsOpen] = useState(depth === 1);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -50,7 +52,6 @@ export default function FolderView({
     const [tempName, setTempName] = useState('');
     const [fileToDelete, setFileToDelete] = useState(null);
     const [uploadQueue, setUploadQueue] = useState([]);
-
     // 폴더 열 때, 자식 파일들 API 호출
     const fetchFolderFiles = async () => {
         if (!item.folder_id) return;
