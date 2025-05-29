@@ -20,7 +20,8 @@ function ChatPanel({
   showChatPanel,
   setShowChatPanel,
   allNodeNames = [],
-  onOpenSource
+  onOpenSource,
+  sourceCount = 0, // 소스 개수
 }) {
 
   const [inputText, setInputText] = useState('');
@@ -399,13 +400,18 @@ function ChatPanel({
                 onKeyPress={handleKeyPress}
                 disabled={isLoading}
               />
+              <div className="source-count-text">소스 {sourceCount}개</div>
               <button
                 type="submit"
                 className="submit-circle-button"
                 aria-label="메시지 전송"
                 disabled={!inputText.trim() || isLoading}
               >
-                <span className="send-icon">➤</span>
+                {isLoading ? (
+                  <span className="stop-icon">■</span>
+                ) : (
+                  <span className="send-icon">➤</span>
+                )}
               </button>
             </div>
           </form>
@@ -477,6 +483,7 @@ function ChatPanel({
                   onChange={e => setInputText(e.target.value)}
                   onKeyPress={handleKeyPress}
                 />
+                <div className="source-count-text">소스 {sourceCount}개</div>
                 <button type="submit" className="submit-circle-button" aria-label="메시지 전송">
                   <span className="send-icon">➤</span>
                 </button>

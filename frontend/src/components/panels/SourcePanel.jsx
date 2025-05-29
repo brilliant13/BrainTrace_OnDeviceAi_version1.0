@@ -47,7 +47,8 @@ export default function SourcePanel({
   onBackFromPDF,
   onGraphRefresh,
   onFocusNodeNamesUpdate,
-  focusSource
+  focusSource,
+  onSourceCountChange
 }) {
   const panelRef = useRef();
   const [panelWidth, setPanelWidth] = useState(0);
@@ -173,6 +174,7 @@ export default function SourcePanel({
         voiceRoot.length + voiceNested.length;
 
       setSourceCount(totalCount);
+      onSourceCountChange?.(totalCount); // ✅ MainLayout로 전달
     } catch (e) {
       console.error('소스 카운트 오류', e);
       setSourceCount(0);
