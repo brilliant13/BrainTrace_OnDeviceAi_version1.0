@@ -1,4 +1,3 @@
-// src/components/panels/ProjectListView.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -30,6 +29,14 @@ export default function ProjectListView() {
     const [confirmId, setConfirmId] = useState(null);
     const [highlightId, setHighlightId] = useState(null);
 
+    /* ───────── 애니메이션 상태 ───────── */
+    const [displayText, setDisplayText] = useState('');
+    const [showCards, setShowCards] = useState(false);
+    const [showSortButton, setShowSortButton] = useState(false);
+    const [animationComplete, setAnimationComplete] = useState(false);
+
+    const fullText = '당신만의 세컨드 브레인을 만들어보세요.';
+
     /* ───────── DB 요청 ───────── */
     const fetchBrains = () => {
         const uid = Number(localStorage.getItem('userId'));
@@ -37,6 +44,40 @@ export default function ProjectListView() {
         listUserBrains(uid).then(setBrains).catch(console.error);
     };
     useEffect(fetchBrains, []);
+
+    /* ───────── 타이핑 애니메이션 ───────── */
+    useEffect(() => {
+        let timeoutId;
+        let currentIndex = 0;
+
+        const typeText = () => {
+            if (currentIndex <= fullText.length) {
+                setDisplayText(fullText.slice(0, currentIndex));
+                currentIndex++;
+                timeoutId = setTimeout(typeText, 80); // 타이핑 속도
+            } else {
+                // 타이핑 완료 후 1초 대기 후 제목을 위로 이동
+                setTimeout(() => {
+                    setAnimationComplete(true); // 먼저 제목을 위로 이동
+                    setTimeout(() => {
+                        setShowCards(true);
+                        // 카드들이 나타난 후 0.3초 후에 정렬 버튼 나타내기
+                        setTimeout(() => {
+                            setShowSortButton(true);
+                        }, 300);
+                    }, 800); // 제목 이동 후 0.8초 대기
+                }, 1000);
+            }
+        };
+
+        // 초기 로딩 시 0.5초 후 타이핑 시작
+        const initialDelay = setTimeout(typeText, 500);
+
+        return () => {
+            clearTimeout(timeoutId);
+            clearTimeout(initialDelay);
+        };
+    }, []);
 
     /* 팝업 외부 클릭 시 자동 닫기 */
     useEffect(() => {
@@ -79,18 +120,43 @@ export default function ProjectListView() {
             <AppHeader />
 
             <div className="project-list-view" style={{ flex: 1 }}>
-                {/* 페이지 헤더 */}
-                <div className="project-header" style={{ textAlign: 'center', margin: '35px 0 16px' }}>
-                    <h1 className="page-highlight" style={{
-                        fontSize: '40px', lineHeight: '1.4'
-                    }}>
-                        당신만의 세컨드 브레인을 만들어보세요.
+{/* 페이지 헤더 */}
+<div className="project-header" style={{
+    textAlign: 'center',
+    margin: '35px 0 16px',
+    transform: animationComplete ? 'translateY(0)' : 'translateY(25vh)',
+    transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+}}>
+
+                    <h1
+                        className={`page-highlight ${animationComplete ? 'animation-complete' : ''}`}
+                        style={{
+                            fontSize: '40px',
+                            lineHeight: '1.4',
+                            minHeight: '56px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        {displayText}
+                        <span className="typing-cursor">|</span>
                     </h1>
                 </div>
 
-
                 {/* 정렬 드롭다운 */}
-                <div className="project-header-controls" style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20, paddingRight: 20 }}>
+                <div
+                    className={`project-header-controls ${showSortButton ? 'visible' : ''}`}
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        marginBottom: 20,
+                        paddingRight: 20,
+                        opacity: showSortButton ? 1 : 0,
+                        transform: showSortButton ? 'translateY(0)' : 'translateY(-10px)',
+                        transition: 'all 0.5s ease'
+                    }}
+                >
                     <div className="sort-dropdown">
                         <button className="sort-button">
                             {sortOption} ▼
@@ -110,14 +176,19 @@ export default function ProjectListView() {
                 </div>
 
                 {/* 프로젝트 카드 그리드 */}
-                <div className="project-grid">
-                    {sorted.map(p => {
+                <div className={`project-grid ${showCards ? 'cards-visible' : ''}`}>
+                    {sorted.map((p, index) => {
                         const Icon = iconByKey[p.icon_key] ?? iconByKey.BsGraphUp;
                         return (
                             <div
                                 key={p.brain_id}
                                 className={`project-card ${highlightId === p.brain_id ? 'highlighted' : ''}`}
                                 data-id={p.brain_id}
+                                style={{
+                                    opacity: showCards ? 1 : 0,
+                                    transform: showCards ? 'translateY(0)' : 'translateY(20px)',
+                                    transition: `all 0.6s ease ${index * 0.1}s`,
+                                }}
                                 onClick={e => {
                                     if (e.target.closest('.card-menu')) return;
                                     if (editingId === p.brain_id || e.target.closest('.project-name')) return;
@@ -209,6 +280,11 @@ export default function ProjectListView() {
 
                     <div
                         className="project-card add-card"
+                        style={{
+                            opacity: showCards ? 1 : 0,
+                            transform: showCards ? 'translateY(0)' : 'translateY(20px)',
+                            transition: `all 0.6s ease ${sorted.length * 0.1}s`,
+                        }}
                         onClick={async () => {
                             const uid = Number(localStorage.getItem('userId'));
                             if (!uid) return alert('로그인이 필요합니다');
@@ -220,12 +296,12 @@ export default function ProjectListView() {
                                     icon_key: 'BsGraphUp'
                                 });
 
-                                setBrains(prev => [newBrain, ...prev]); // 먼저 리스트에 반영
-                                setHighlightId(newBrain.brain_id);      // 깜빡임용 설정
+                                setBrains(prev => [newBrain, ...prev]);
+                                setHighlightId(newBrain.brain_id);
 
                                 setTimeout(() => {
                                     nav(`/project/${newBrain.brain_id}`);
-                                }, 1800); // 1.8초 후 이동
+                                }, 1800);
                             } catch (err) {
                                 alert(err.response?.data?.detail ?? '생성 실패');
                             }
@@ -236,7 +312,6 @@ export default function ProjectListView() {
                             <span>새 프로젝트</span>
                         </div>
                     </div>
-
                 </div>
             </div>
 

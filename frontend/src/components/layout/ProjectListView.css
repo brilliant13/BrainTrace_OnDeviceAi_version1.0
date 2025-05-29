@@ -23,6 +23,14 @@
     display: grid;
     gap: 22px;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease;
+}
+
+.project-grid.cards-visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .project-card {
@@ -30,13 +38,16 @@
     border-radius: 15px;
     padding: 22px;
     cursor: pointer;
-    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.15);
-    transition: transform 0.2s ease;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
+    opacity: 0;
+    transform: translateY(20px);
 }
 
 .project-card:hover {
     transform: translateY(-4px);
+    box-shadow: 12px 12px 24px rgba(0, 0, 0, 0.2);
 }
 
 .project-card.add-card {
@@ -62,7 +73,6 @@
     font-weight: 600;
 }
 
-/* 제목 인라인 편집 시 테두리 표시 */
 .project-name[contenteditable="true"] {
     border-bottom: 1px dashed #666;
     outline: none;
@@ -73,29 +83,21 @@
     font-size: 13px;
 }
 
-/* ProjectListView.css (추가·수정) */
-
-/* 고정 위치 및 기본 스타일은 그대로 두고, 내부 타이포·링크만 다듬기 */
 .project-footer {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
     padding: 18px 10px;
-
     background: #fafafa;
-    /* 밝은 톤 */
     border-top: 1px solid #e0e0e0;
     font-family: "Noto Sans KR", sans-serif;
     font-size: 13px;
-    /* 실제 사이트처럼 작게 */
     line-height: 1.4;
     color: #6b6b6b;
-    /* 중간 회색 */
     z-index: 100;
 }
 
-/* 중앙 정렬 & 반응형 간격 */
 .footer-inner {
     max-width: 1280px;
     margin: 0 auto;
@@ -106,19 +108,16 @@
     gap: 6px;
 }
 
-/* ‑ 브랜드 / © 표기 */
 .footer-inner .brand {
     font-weight: 600;
     color: #333;
 }
 
-/* ‑ 구분점(·) */
 .footer-inner .divider {
     color: #c0c0c0;
     font-size: 12px;
 }
 
-/* 링크 모양 */
 .footer-inner a {
     text-decoration: none;
     color: #6b6b6b;
@@ -127,7 +126,6 @@
 
 .footer-inner a:hover {
     color: #111;
-    /* hover 시 진해짐 */
 }
 
 .add-card {
@@ -140,11 +138,13 @@
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.1);
 }
 
 .add-card:hover {
     background-color: #ebebeb;
     cursor: pointer;
+    box-shadow: 12px 12px 24px rgba(0, 0, 0, 0.15);
 }
 
 .project-date {
@@ -163,6 +163,13 @@
     justify-content: flex-end;
     margin-bottom: 20px;
     padding-right: 20px;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.project-header-controls.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .page-highlight {
@@ -171,6 +178,28 @@
     margin: 0;
     color: #222;
     letter-spacing: -0.5px;
+    position: relative;
+}
+
+/* ───────── 타이핑 애니메이션 스타일 ───────── */
+.typing-cursor {
+    display: inline-block;
+    margin-left: 2px;
+    animation: blink 1s infinite;
+    font-weight: 300;
+}
+
+.page-highlight.animation-complete .typing-cursor {
+    display: none;
+}
+
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0;
+    }
 }
 
 .sort-dropdown {
@@ -191,7 +220,7 @@
 
 .sort-button:hover {
     background-color: #f5f5f5;
-    border: 1px solid black
+    border: 1px solid black;
 }
 
 .sort-menu {
@@ -209,7 +238,6 @@
 
 .sort-dropdown:hover .sort-menu {
     display: block;
-
 }
 
 .sort-menu-item {
@@ -236,7 +264,7 @@
 
 .card-menu:hover {
     background: rgba(0, 0, 0, .08);
-    border: 1px solid black
+    border: 1px solid black;
 }
 
 .card-menu-popup {
@@ -273,19 +301,15 @@
     0% {
         opacity: 1;
     }
-
     25% {
         opacity: 0.6;
     }
-
     50% {
         opacity: 1;
     }
-
     75% {
         opacity: 0.6;
     }
-
     100% {
         opacity: 1;
     }
