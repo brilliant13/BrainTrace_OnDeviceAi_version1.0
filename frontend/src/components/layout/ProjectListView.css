@@ -23,6 +23,14 @@
     display: grid;
     gap: 22px;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease;
+}
+
+.project-grid.cards-visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .project-card {
@@ -30,13 +38,16 @@
     border-radius: 15px;
     padding: 22px;
     cursor: pointer;
-    box-shadow: 0 5px 5px rgba(0, 0, 0, 0.15);
-    transition: transform 0.2s ease;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
+    opacity: 0;
+    transform: translateY(20px);
 }
 
 .project-card:hover {
     transform: translateY(-4px);
+    box-shadow: 12px 12px 24px rgba(0, 0, 0, 0.2);
 }
 
 .project-card.add-card {
@@ -62,7 +73,6 @@
     font-weight: 600;
 }
 
-/* 제목 인라인 편집 시 테두리 표시 */
 .project-name[contenteditable="true"] {
     border-bottom: 1px dashed #666;
     outline: none;
@@ -73,29 +83,21 @@
     font-size: 13px;
 }
 
-/* ProjectListView.css (추가·수정) */
-
-/* 고정 위치 및 기본 스타일은 그대로 두고, 내부 타이포·링크만 다듬기 */
 .project-footer {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
     padding: 18px 10px;
-
     background: #fafafa;
-    /* 밝은 톤 */
     border-top: 1px solid #e0e0e0;
     font-family: "Noto Sans KR", sans-serif;
     font-size: 13px;
-    /* 실제 사이트처럼 작게 */
     line-height: 1.4;
     color: #6b6b6b;
-    /* 중간 회색 */
     z-index: 100;
 }
 
-/* 중앙 정렬 & 반응형 간격 */
 .footer-inner {
     max-width: 1280px;
     margin: 0 auto;
@@ -106,19 +108,16 @@
     gap: 6px;
 }
 
-/* ‑ 브랜드 / © 표기 */
 .footer-inner .brand {
     font-weight: 600;
     color: #333;
 }
 
-/* ‑ 구분점(·) */
 .footer-inner .divider {
     color: #c0c0c0;
     font-size: 12px;
 }
 
-/* 링크 모양 */
 .footer-inner a {
     text-decoration: none;
     color: #6b6b6b;
@@ -127,7 +126,6 @@
 
 .footer-inner a:hover {
     color: #111;
-    /* hover 시 진해짐 */
 }
 
 .add-card {
@@ -140,11 +138,13 @@
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.1);
 }
 
 .add-card:hover {
     background-color: #ebebeb;
     cursor: pointer;
+    box-shadow: 12px 12px 24px rgba(0, 0, 0, 0.15);
 }
 
 .project-date {
@@ -163,6 +163,14 @@
     justify-content: flex-end;
     margin-bottom: 20px;
     padding-right: 20px;
+    opacity: 0;
+    transform: translateY(-10px);
+    z-index: 1000; /* 매우 높은 z-index */
+}
+
+.project-header-controls.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .page-highlight {
@@ -171,27 +179,57 @@
     margin: 0;
     color: #222;
     letter-spacing: -0.5px;
+    position: relative;
+}
+
+/* ───────── 타이핑 애니메이션 스타일 ───────── */
+.typing-cursor {
+    display: inline-block;
+    margin-left: 2px;
+    animation: blink 1s infinite;
+    font-weight: 300;
+}
+
+.page-highlight.animation-complete .typing-cursor {
+    display: none;
+}
+
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0;
+    }
 }
 
 .sort-dropdown {
     position: relative;
     display: inline-block;
-    z-index: 20;
+    /* z-index: 100;  */
+    /* 카드들보다 위에 표시되도록 z-index 증가 */
+    z-index: 1001; /* 더 높게 */
 }
 
 .sort-button {
     background-color: white;
     border: 1px solid #ddd;
-    border-radius: 9999px;
-    padding: 12px 16px;
+    border-radius: 25px; /* 더 둥글게 */
+    padding: 12px 20px; /* 좌우 패딩 약간 증가 */
     font-size: 14px;
     color: #111;
     cursor: pointer;
+    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    min-width: 120px; /* 최소 너비 설정 */
 }
 
 .sort-button:hover {
     background-color: #f5f5f5;
-    border: 1px solid black
+    border: 1px solid black;
+    /* 호버 시 더 강한 45도 사선 그림자 */
+    box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
 }
 
 .sort-menu {
@@ -200,26 +238,46 @@
     right: 0;
     background-color: white;
     border: 1px solid #ddd;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-    width: 160px;
+    border-radius: 16px; /* 더 둥글게 */
+    box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.12);
+    width: 100%; /* 버튼과 같은 너비로 설정 */
+    min-width: 120px; /* 최소 너비 보장 */
     display: none;
-    z-index: 50;
+    /* z-index: 200; */
+    overflow: hidden; /* 모서리 깔끔하게 */
+    z-index: 1002; /* 가장 높게 */
 }
 
 .sort-dropdown:hover .sort-menu {
     display: block;
-
 }
 
 .sort-menu-item {
-    padding: 10px 16px;
+    padding: 12px 20px; /* 버튼과 동일한 패딩 */
     font-size: 14px;
     cursor: pointer;
+    transition: background-color 0.15s ease;
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
 }
 
 .sort-menu-item:hover {
-    background-color: #f0f0f0;
+    background-color: #f5f5f5; /* 버튼 호버와 동일한 색상 */
+}
+/* 첫 번째와 마지막 아이템 모서리 처리 */
+.sort-menu-item:first-child {
+    border-radius: 12px 12px 0 0;
+}
+
+.sort-menu-item:last-child {
+    border-radius: 0 0 12px 12px;
+}
+.dropdown-arrow {
+    transition: transform 0.2s ease;
+    margin-left: 8px;
+}
+/* 또는 다른 아이콘으로 바꾸고 싶다면 */
+.sort-button:hover .dropdown-arrow {
+    content: url('/src/assets/icons/arrow-up.png'); /* 호버 시 다른 아이콘 */
 }
 
 .card-menu {
@@ -236,7 +294,7 @@
 
 .card-menu:hover {
     background: rgba(0, 0, 0, .08);
-    border: 1px solid black
+    border: 1px solid black;
 }
 
 .card-menu-popup {
@@ -273,19 +331,15 @@
     0% {
         opacity: 1;
     }
-
     25% {
         opacity: 0.6;
     }
-
     50% {
         opacity: 1;
     }
-
     75% {
         opacity: 0.6;
     }
-
     100% {
         opacity: 1;
     }
