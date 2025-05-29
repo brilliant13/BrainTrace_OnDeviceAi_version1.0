@@ -139,8 +139,13 @@
 }
 
 .send-icon {
-  font-size: 16px;
+  font-size: 19px;
   padding-left: 2px;
+}
+
+.stop-icon {
+  font-size: 19px;
+  padding-left: 1px;
 }
 
 .chat-header {
@@ -425,6 +430,7 @@
   outline: none;
   border-radius: 4px;
   background-color: white;
+  color: black;
 }
 
 .edit-icon-button {
@@ -564,6 +570,7 @@
   border: none;
   outline: none;
   color: #1a1a1a;
+  transform: scale(1.02);
 }
 
 .source-toggle-button.active {
@@ -599,4 +606,11 @@
 .referenced-content {
   display: flex;
   flex-direction: column;
+}
+
+.source-count-text {
+  font-size: 12px;
+  margin-right: 50px;
+  align-self: center;
+  color: rgb(84, 84, 84)
 }

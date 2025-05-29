@@ -6,15 +6,10 @@ import { requestAnswer } from '../../api/tmpAPI';
 import copyIcon from '../../assets/icons/copy.png';
 import graphIcon from '../../assets/icons/graph-off.png';
 import { TbPencil } from "react-icons/tb";
-import { MdOutlineFormatListBulleted } from "react-icons/md";
-import { FaProjectDiagram } from 'react-icons/fa'; // 아이콘 추가
 import { HiOutlineBars4 } from "react-icons/hi2";
 import { getReferencedNodes, getSourceIdsByNodeName } from '../../../../backend/services/backend';
 import FileIcon from './FileIcon';
-import { IoDocumentTextOutline } from "react-icons/io5";
-import { CgBorderStyleDotted } from "react-icons/cg";
-import { MdOutlineSource } from "react-icons/md";
-import { MdSource } from "react-icons/md";
+
 function ChatPanel({
   activeProject,
   onReferencedNodesUpdate,
@@ -25,7 +20,8 @@ function ChatPanel({
   showChatPanel,
   setShowChatPanel,
   allNodeNames = [],
-  onOpenSource
+  onOpenSource,
+  sourceCount = 0, // 소스 개수
 }) {
 
   const [inputText, setInputText] = useState('');
@@ -315,7 +311,7 @@ function ChatPanel({
                                     onClick={() => toggleSourceList(cleanWord)}
                                     style={{ marginLeft: '3px' }}
                                   >
-                                    (출처보기)
+                                    {openSourceNodes[cleanWord] ? '(출처닫기)' : '(출처보기)'}
                                   </button>
                                 </div>
 
@@ -404,13 +400,14 @@ function ChatPanel({
                 onKeyPress={handleKeyPress}
                 disabled={isLoading}
               />
+              <div className="source-count-text">소스 {sourceCount}개</div>
               <button
                 type="submit"
                 className="submit-circle-button"
                 aria-label="메시지 전송"
                 disabled={!inputText.trim() || isLoading}
               >
-                <span className="send-icon">➤</span>
+                {isLoading ? <span className="stop-icon">■</span> : <span className="send-icon">➤</span>}
               </button>
             </div>
           </form>
@@ -482,6 +479,7 @@ function ChatPanel({
                   onChange={e => setInputText(e.target.value)}
                   onKeyPress={handleKeyPress}
                 />
+                <div className="source-count-text">소스 {sourceCount}개</div>
                 <button type="submit" className="submit-circle-button" aria-label="메시지 전송">
                   <span className="send-icon">➤</span>
                 </button>

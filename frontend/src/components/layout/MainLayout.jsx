@@ -70,6 +70,7 @@ function MainLayout() {
   const [chatPanelSize, setChatPanelSize] = useState(DEFAULT_CHAT_PANEL_SIZE);  // 추가된 채팅 패널 크기 상태
   const [memoPanelSize, setMemoPanelSize] = useState(DEFAULT_MEMO_PANEL_SIZE);
   const [isPDFOpen, setIsPDFOpen] = useState(false);
+  const [sourceCount, setSourceCount] = useState(0);
 
   const syncToStandaloneWindow = (data) => {
     localStorage.setItem('graphStateSync', JSON.stringify({
@@ -302,6 +303,7 @@ function MainLayout() {
               onGraphRefresh={handleGraphRefresh} // 그래프 refresh 용도
               onFocusNodeNamesUpdate={handleFocusNodeNames}
               focusSource={focusSourceId}
+              onSourceCountChange={setSourceCount}
             />
           </div>
         </Panel>
@@ -358,6 +360,7 @@ function MainLayout() {
                 setShowChatPanel={setShowChatPanel}
                 allNodeNames={allNodeNames}
                 onOpenSource={handleOpenSource}
+                sourceCount={sourceCount}
               />
             )}
           </div>

@@ -47,7 +47,8 @@ export default function SourcePanel({
   onBackFromPDF,
   onGraphRefresh,
   onFocusNodeNamesUpdate,
-  focusSource
+  focusSource,
+  onSourceCountChange
 }) {
   const panelRef = useRef();
   const [panelWidth, setPanelWidth] = useState(0);
@@ -173,6 +174,7 @@ export default function SourcePanel({
         voiceRoot.length + voiceNested.length;
 
       setSourceCount(totalCount);
+      onSourceCountChange?.(totalCount); // ✅ MainLayout로 전달
     } catch (e) {
       console.error('소스 카운트 오류', e);
       setSourceCount(0);
@@ -204,28 +206,6 @@ export default function SourcePanel({
     setOpenedTXT(null);
     setIsPDFOpen(false);
     onBackFromPDF?.();
-  };
-
-  // 확장자별 루트 저장 헬퍼
-  const createAtRoot = f => {
-    const ext = f.name.split('.').pop().toLowerCase();
-    if (ext === 'pdf') {
-      return createPdf({ pdf_title: f.name, pdf_path: f.name, folder_id: null, type: ext });
-    }
-    if (ext === 'txt') {
-      return createTextFile({ txt_title: f.name, txt_path: f.name, folder_id: null, type: ext });
-    }
-    if (['mp3', 'wav', 'm4a'].includes(ext)) {
-      return createVoice({ voice_title: f.name, voice_path: f.name, folder_id: null, type: ext });
-    }
-    return createMemo({
-      memo_title: f.name,
-      memo_text: '',
-      folder_id: null,
-      is_source: false,
-      brain_id: activeProject,
-      type: ext
-    });
   };
 
   return (
@@ -310,6 +290,7 @@ export default function SourcePanel({
                 try {
                   const res = await getSimilarSourceIds(searchText, activeProject);
                   const ids = (res.source_ids || []).map(id => String(id)); // 문자열로 강제 변환
+                  console.log("ids : ", ids);
                   setFilteredSourceIds(ids);
                 } catch (err) {
                   console.error('검색 실패:', err);

@@ -6,6 +6,8 @@ from services.voiceService import transcribe
 import logging
 import os
 import tempfile
+from pathlib import Path
+
 
 sqlite_handler = SQLiteHandler()
 router = APIRouter(
@@ -226,35 +228,30 @@ async def get_voices_by_brain(
 
 @router.post("/transcribe",
     summary="음성 파일 텍스트 변환",
-    description="MP3 파일을 텍스트로 변환합니다.",
+    description="오디오 파일을 텍스트로 변환합니다.",
     response_model=dict)
 async def transcribe_audio(file: UploadFile = File(...)):
     """
-    MP3 파일을 텍스트로 변환합니다:
-    
-    - **file**: MP3 파일 (multipart/form-data)
-    
-    반환값:
-    - **text**: 변환된 텍스트
+    다양한 오디오 파일(webm, mp3, wav 등)을 텍스트로 변환합니다.
     """
     try:
-        # 임시 파일 생성
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
-            # 업로드된 파일 내용을 임시 파일에 저장
+        ext = Path(file.filename).suffix or ".mp3"
+        logging.info(f"[변환 요청] 파일명: {file.filename}, 확장자: {ext}")
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp_file:
             content = await file.read()
             temp_file.write(content)
             temp_file_path = temp_file.name
+            logging.info(f"[파일 저장] 임시 경로: {temp_file_path}")
 
-        # 음성 파일 텍스트 변환
         text = transcribe(temp_file_path)
-        
-        # 임시 파일 삭제
+        logging.info(f"[변환 완료] 추출 텍스트: {text[:30]}...")
+
         os.unlink(temp_file_path)
-        
         return {"text": text}
-        
+
     except Exception as e:
-        logging.error("음성 변환 오류: %s", str(e))
+        logging.exception("음성 변환 중 예외 발생")  # ← traceback 포함 전체 로그 기록
         raise HTTPException(
             status_code=500,
             detail=f"음성 변환 중 오류가 발생했습니다: {str(e)}"
