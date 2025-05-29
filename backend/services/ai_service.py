@@ -34,15 +34,18 @@ def extract_referenced_nodes(llm_response: str) -> List[str]:
     json_part = parts[-1].strip()
     try:
         payload = json.loads(json_part)
+        # payload가 리스트인 경우 빈 리스트 반환
+        if isinstance(payload, list):
+            return []
+        # payload가 딕셔너리인 경우에만 get() 호출
+        raw_nodes = payload.get("referenced_nodes", [])
+        cleaned = [
+            node.split("-", 1)[1] if "-" in node else node
+            for node in raw_nodes
+        ]
+        return cleaned
     except json.JSONDecodeError:
         return []
-
-    raw_nodes = payload.get("referenced_nodes", [])
-    cleaned = [
-        node.split("-", 1)[1] if "-" in node else node
-        for node in raw_nodes
-    ]
-    return cleaned
 
 def extract_graph_components(text: str, source_id: str):
     """
@@ -203,7 +206,7 @@ def generate_answer(schema_text: str, question: str) -> str:
     '  "referenced_nodes": ["노드 이름1", "노드 이름2", ...]\n'
     "}\n"
     "※ 참고한 노드 이름만 정확히 JSON 배열로 나열하고, 도메인 정보, 노드 간 관계, 설명은 포함하지 마."
-
+    "※ 반드시 EOF를 출력해"
     )
 
 

@@ -122,25 +122,25 @@ class Neo4jHandler:
                 '''
                     
                 # 2단계: 중간 노드(m)와 간접 연결된 노드(p) 및 관계(r2)
-                query2 = '''
-                MATCH (n:Node)-[r1]-(m:Node)-[r2]-(p:Node)
-                WHERE n.name IN $names 
-                AND n.brain_id = $brain_id 
-                AND m.brain_id = $brain_id 
-                AND p.brain_id = $brain_id 
-                AND p <> n
-                RETURN 
-                collect(DISTINCT m) AS intermediate_nodes,
-                collect(DISTINCT p) AS indirect_nodes,
-                collect(DISTINCT r2) AS indirect_relationships
-                '''
+                # query2 = '''
+                # MATCH (n:Node)-[r1]-(m:Node)-[r2]-(p:Node)
+                # WHERE n.name IN $names 
+                # AND n.brain_id = $brain_id 
+                # AND m.brain_id = $brain_id 
+                # AND p.brain_id = $brain_id 
+                # AND p <> n
+                # RETURN 
+                # collect(DISTINCT m) AS intermediate_nodes,
+                # collect(DISTINCT p) AS indirect_nodes,
+                # collect(DISTINCT r2) AS indirect_relationships
+                # '''
                 
                 # 쿼리 실행
                 result1 = session.run(query1, names=node_names, brain_id=brain_id)
                 record1 = result1.single()
                 
-                result2 = session.run(query2, names=node_names, brain_id=brain_id)
-                record2 = result2.single()
+                # result2 = session.run(query2, names=node_names, brain_id=brain_id)
+                # record2 = result2.single()
                 
                 if not record1:
                     logging.warning("Neo4j 조회 결과가 없습니다.")
@@ -152,24 +152,24 @@ class Neo4jHandler:
                 relationships = record1.get("direct_relationships", [])
                 
                 # 2단계 결과 추가
-                if record2:
-                    # 중간 노드(m)도 related_nodes에 추가
-                    intermediate = record2.get("intermediate_nodes", []) or []
-                    for node in intermediate:
-                        if node is not None:
-                            related_nodes.append(node)
+                # if record2:
+                #     # 중간 노드(m)도 related_nodes에 추가
+                #     intermediate = record2.get("intermediate_nodes", []) or []
+                #     for node in intermediate:
+                #         if node is not None:
+                #             related_nodes.append(node)
 
-                    # 간접 노드(p) 추가
-                    indirect = record2.get("indirect_nodes", []) or []
-                    for node in indirect:
-                        if node is not None:
-                            related_nodes.append(node)
+                #     # 간접 노드(p) 추가
+                #     indirect = record2.get("indirect_nodes", []) or []
+                #     for node in indirect:
+                #         if node is not None:
+                #             related_nodes.append(node)
 
-                    # 간접 관계(r2) 추가
-                    rels2 = record2.get("indirect_relationships", []) or []
-                    for rel in rels2:
-                        if rel is not None:
-                            relationships.append(rel)
+                #     # 간접 관계(r2) 추가
+                #     rels2 = record2.get("indirect_relationships", []) or []
+                #     for rel in rels2:
+                #         if rel is not None:
+                #             relationships.append(rel)
                 
                 # 중복 제거는 Neo4j 쿼리 내에서 DISTINCT로 처리되었으므로 여기서는 생략
                 logging.info("Neo4j 스키마 조회 결과: 노드=%d개, 관련 노드=%d개, 관계=%d개", 
