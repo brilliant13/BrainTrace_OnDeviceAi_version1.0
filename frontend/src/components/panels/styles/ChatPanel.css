@@ -564,6 +564,7 @@
   font-size: 12px;
   align-items: center;
   justify-content: center;
+  background-color: white;
 }
 
 .source-toggle-button:hover {
@@ -571,9 +572,11 @@
   outline: none;
   color: #1a1a1a;
   transform: scale(1.02);
+  background-color: white;
 }
 
 .source-toggle-button.active {
+  background-color: white;
   color: #000000;
 }
 
