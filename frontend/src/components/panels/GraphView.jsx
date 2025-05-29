@@ -19,11 +19,18 @@ function GraphView({
   onNewlyAddedNodes,
   onGraphViewReady,
   externalShowReferenced,
-  externalShowFocus, 
+  externalShowFocus,
   externalShowNewlyAdded,
-  clearTrigger, // ✅ 추가
-  isDarkMode = false // ✅ 추가
-}) {
+  clearTrigger,
+  isDarkMode = false,
+  customNodeSize = 5,
+  customLinkWidth = 1,
+  textDisplayZoomThreshold = 0.5,
+  // ✅ 3개 물리 설정만 (0-100 범위)
+  repelStrength = 50,     // 반발력
+  linkDistance = 50,      // 링크 거리  
+  linkStrength = 50,      // 링크 장력
+})  {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
@@ -59,8 +66,8 @@ function GraphView({
     '#e2e8f0', '#cbd5e1', '#94a3b8', '#64748b', '#60a5fa',
     '#f1f5f9', '#d1d5db', '#9ca3af', '#3b82f6', '#e5e7eb',
   ];
-   // ✅ 현재 팔레트 선택
-   const colorPalette = isDarkMode ? darkColorPalette : lightColorPalette;
+  // ✅ 현재 팔레트 선택
+  const colorPalette = isDarkMode ? darkColorPalette : lightColorPalette;
 
 
   // 컨테이너 사이즈 계산
@@ -172,6 +179,25 @@ function GraphView({
     }
   };
 
+  //슬라이더 물리 효과 조절
+// ✅ 3개 물리 설정만 처리하는 useEffect
+useEffect(() => {
+  if (fgRef.current) {
+    const fg = fgRef.current;
+    
+      // ✅ 올바른 반발력 공식 (0% = 가까이 모임, 100% = 멀리 퍼짐)
+      const repelForce = -10 - (repelStrength / 100) * 290;    // 0% = -10, 100% = -300
+      const linkDist = 50 + (linkDistance / 100) * 250;        // 50 to 300
+      const linkForce = 0.1 + (linkStrength / 100) * 0.9;      // 0.1 to 1.0
+    
+    // 해당 force만 업데이트
+    fg.d3Force("charge", d3.forceManyBody().strength(repelForce));
+    fg.d3Force("link", d3.forceLink().id(d => d.id).distance(linkDist).strength(linkForce));
+
+    // 시뮬레이션 재시작
+    fg.d3ReheatSimulation();
+  }
+}, [repelStrength, linkDistance, linkStrength]);
   //예찬 더블 클릭했을 때 줌인되게
   useEffect(() => {
     const container = containerRef.current;
@@ -202,19 +228,19 @@ function GraphView({
   useEffect(() => {
     if (clearTrigger > 0) {
       console.log('🧹 GraphView에서 하이라이팅 해제 트리거 감지:', clearTrigger);
-      
+
       // 모든 하이라이팅 상태 해제
       setShowReferenced(false);
       setShowFocus(false);
       setShowNewlyAdded(false);
       setNewlyAddedNodeNames([]);
-      
+
       // 펄스 애니메이션도 중지
       setPulseStartTime(null);
       setRefPulseStartTime(null);
     }
   }, [clearTrigger]);
-  
+
 
   // ✅ 외부에서 제어되는 상태들과 동기화
   useEffect(() => {
@@ -239,7 +265,7 @@ function GraphView({
   useEffect(() => {
     if (onGraphViewReady && !callbacksRegisteredRef.current) {
       console.log('📡 GraphView 콜백 등록 (최초 1회만)');
-      
+
       // setState 함수들을 직접 전달하지 않고 래퍼 함수로 전달
       const callbacks = {
         setShowReferenced: (value) => {
@@ -259,7 +285,7 @@ function GraphView({
           setNewlyAddedNodeNames(value);
         }
       };
-      
+
       onGraphViewReady(callbacks);
       callbacksRegisteredRef.current = true;
     }
@@ -268,11 +294,11 @@ function GraphView({
   // ✅ 새로 추가된 노드 알림 - 중복 방지 로직 추가
   useEffect(() => {
     if (!onNewlyAddedNodes || newlyAddedNodeNames.length === 0) return;
-    
+
     // 이전 값과 비교해서 실제로 변경된 경우만 알림
     const prevNodes = prevNewlyAddedRef.current;
     const isChanged = JSON.stringify(prevNodes) !== JSON.stringify(newlyAddedNodeNames);
-    
+
     if (isChanged) {
       console.log('🆕 새로 추가된 노드 외부 알림:', newlyAddedNodeNames);
       onNewlyAddedNodes(newlyAddedNodeNames);
@@ -584,9 +610,9 @@ function GraphView({
     };
   }, []);
 
-    return (
-    <div 
-      className={`graph-area ${isDarkMode ? 'dark-mode' : ''}`} 
+  return (
+    <div
+      className={`graph-area ${isDarkMode ? 'dark-mode' : ''}`}
       ref={containerRef}
       style={{
         backgroundColor: isDarkMode ? '#0f172a' : '#fafafa'
@@ -598,7 +624,7 @@ function GraphView({
           backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.8)',
           color: isDarkMode ? '#f1f5f9' : '#000'
         }}>
-          <div 
+          <div
             className="graph-loading-spinner"
             style={{
               borderColor: isDarkMode ? '#475569' : '#adadad',
@@ -609,7 +635,7 @@ function GraphView({
         </div>
       )}
       {error && (
-        <div 
+        <div
           className="graph-error"
           style={{
             backgroundColor: isDarkMode ? '#0f172a' : '#fafafa',
@@ -636,113 +662,28 @@ function GraphView({
             return isReferenced ? `${baseLabel} - 참고됨` : baseLabel;
           }}
           linkLabel={link => link.relation}
-          nodeRelSize={6}
-          // ✅ 다크모드에 따른 링크 색상 변경
+          nodeRelSize={customNodeSize}
           linkColor={() => isDarkMode ? "#64748b" : "#dedede"}
-          linkWidth={1}
+          linkWidth={customLinkWidth}
           linkDirectionalArrowLength={6.5}
           linkDirectionalArrowRelPos={1}
           cooldownTime={5000}
           d3VelocityDecay={0.2}
+          // ✅ 옵시디언 스타일 d3Force 설정
           d3Force={fg => {
+            // 기본 설정
             fg.force("center", d3.forceCenter(dimensions.width / 2, dimensions.height / 2));
-            fg.force("charge", d3.forceManyBody().strength(-80));
-            fg.force("link", d3.forceLink().id(d => d.id).distance(200).strength(0.2));
             fg.force("collide", d3.forceCollide(50));
+            
+            // ✅ 3개 설정만 적용
+            // const repelForce = -10 - (repelStrength / 100) * 290;
+            const repelForce = -10 - (repelStrength / 100) * 290;  // 0% = -10, 100% = -300
+            const linkDist = 50 + (linkDistance / 100) * 250;
+            const linkForce = 0.1 + (linkStrength / 100) * 0.9;
+            
+            fg.force("charge", d3.forceManyBody().strength(repelForce));
+            fg.force("link", d3.forceLink().id(d => d.id).distance(linkDist).strength(linkForce));
           }}
-
-          
-          // nodeCanvasObject={(node, ctx, globalScale) => {
-          //   ctx.save();
-          //   ctx.globalAlpha = node.__opacity ?? 1;
-          //   const label = node.name || node.id;
-          //   const isReferenced = showReferenced && referencedSet.has(node.name);
-          //   const isImportantNode = node.linkCount >= 3;
-          //   const isNewlyAdded = newlyAddedNodeNames.includes(node.name);
-          //   const isFocus = showFocus && focusNodeNames?.includes(node.name);
-          //   const isRef = showReferenced && referencedSet.has(label);
-          //   const r = (5 + Math.min(node.linkCount * 0.5, 3)) / globalScale;
-            
-          //   const baseSize = 5;
-          //   const sizeFactor = Math.min(node.linkCount * 0.5, 3);
-          //   const nodeSize = baseSize + sizeFactor;
-          //   const nodeRadius = nodeSize / globalScale;
-          //   const pulseScale = 1.8;
-          //   const pulseDuration = 1000;
-            
-          //   ctx.beginPath();
-          //   ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI, false);
-          //   ctx.fillStyle = node.color;
-          //   ctx.fill();
-
-          //   const fontSize = (isReferenced || isNewlyAdded || isFocus) ? 13 / globalScale : 9 / globalScale;
-
-          //   ctx.font = (isReferenced || isNewlyAdded || isFocus)
-          //     ? `bold ${fontSize}px Sans-Serif`
-          //     : `${fontSize}px Sans-Serif`;
-
-          //   // 포커스 노드와 새로 추가된 노드 파란색 펄스
-          //   if ((isNewlyAdded || isFocus) && pulseStartTime) {
-          //     const elapsed = (Date.now() - pulseStartTime) % pulseDuration;
-          //     const t = elapsed / pulseDuration;
-          //     const ringR = r * (1 + t * (pulseScale - 1));
-          //     ctx.beginPath();
-          //     ctx.arc(node.x, node.y, ringR, 0, 2 * Math.PI);
-          //     // ✅ 다크모드에서 더 밝은 파란색 사용
-          //     ctx.strokeStyle = isDarkMode 
-          //       ? `rgba(96, 165, 250, ${1 - t})` 
-          //       : `rgba(33,150,243,${1 - t})`;
-          //     ctx.lineWidth = 2 / globalScale;
-          //     ctx.stroke();
-          //   }
-            
-          //   if (isRef && refPulseStartTime) {
-          //     const elapsed2 = (Date.now() - refPulseStartTime) % pulseDuration;
-          //     const t2 = elapsed2 / pulseDuration;
-          //     const ringR2 = r * (1 + t2 * (pulseScale - 1));
-          //     ctx.beginPath();
-          //     ctx.arc(node.x, node.y, ringR2, 0, 2 * Math.PI);
-          //     // ✅ 다크모드에서 더 밝은 주황색 사용
-          //     ctx.strokeStyle = isDarkMode 
-          //       ? `rgba(251, 146, 60, ${1 - t2})` 
-          //       : `rgba(217,130,15,${1 - t2})`;
-          //     ctx.lineWidth = 2 / globalScale;
-          //     ctx.stroke();
-          //   }
-
-          //   if (isNewlyAdded || isFocus) {
-          //     ctx.strokeStyle = isDarkMode ? '#60a5fa' : '#2196f3';
-          //     ctx.lineWidth = 4 / globalScale;
-          //     ctx.shadowColor = isDarkMode ? '#3b82f6' : '#90caf9';
-          //     ctx.shadowBlur = 10;
-          //   } else if (isReferenced) {
-          //     ctx.strokeStyle = isDarkMode ? '#fb923c' : '#d9820f';
-          //     ctx.lineWidth = 3 / globalScale;
-          //     ctx.shadowColor = isDarkMode ? '#f97316' : '#ffc107';
-          //     ctx.shadowBlur = 6;
-          //   } else {
-          //     ctx.strokeStyle = isImportantNode 
-          //       ? (isDarkMode ? '#e2e8f0' : 'white') 
-          //       : (isDarkMode ? '#64748b' : '#f0f0f0');
-          //     ctx.lineWidth = 0.5 / globalScale;
-          //     ctx.shadowBlur = 0;
-          //   }
-          //   ctx.stroke();
-
-          //   // ✅ 다크모드에서 텍스트 색상 조정
-          //   const textColor = isDarkMode 
-          //     ? ((isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#f1f5f9' : '#cbd5e1')
-          //     : ((isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#222' : '#555');
-
-          //   ctx.textAlign = 'center';
-          //   ctx.textBaseline = 'top';
-          //   ctx.fillStyle = textColor;
-          //   ctx.fillText(label, node.x, node.y + nodeRadius + 1);
-
-          //   node.__bckgDimensions = [nodeRadius * 2, fontSize].map(n => n + fontSize * 0.2);
-
-          //   ctx.restore();
-          // }
           nodeCanvasObject={(node, ctx, globalScale) => {
             ctx.save();
             ctx.globalAlpha = node.__opacity ?? 1;
@@ -753,100 +694,108 @@ function GraphView({
             const isFocus = showFocus && focusNodeNames?.includes(node.name);
             const isRef = showReferenced && referencedSet.has(label);
             const r = (5 + Math.min(node.linkCount * 0.5, 3)) / globalScale;
-            
-            const baseSize = 5;
+
+            // const baseSize = 5;
+            const baseSize = customNodeSize; // ✅ 기존: const baseSize = 5;
             const sizeFactor = Math.min(node.linkCount * 0.5, 3);
             const nodeSize = baseSize + sizeFactor;
             const nodeRadius = nodeSize / globalScale;
             const pulseScale = 1.8;
             const pulseDuration = 1000;
-            
+
             // ✅ 다크모드에 따라 실시간으로 노드 색상 결정
             let nodeColor;
             if (node.linkCount >= 3) {
-                nodeColor = isDarkMode ? '#60a5fa' : '#3366bb';
+              nodeColor = isDarkMode ? '#60a5fa' : '#3366bb';
             } else if (node.linkCount == 2) {
-                nodeColor = isDarkMode ? '#e2e8f0' : '#444444';
+              nodeColor = isDarkMode ? '#e2e8f0' : '#444444';
             } else {
-                nodeColor = isDarkMode ? '#94a3b8' : '#888888';
+              nodeColor = isDarkMode ? '#94a3b8' : '#888888';
             }
-            
+
             ctx.beginPath();
             ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI, false);
             ctx.fillStyle = nodeColor; // ✅ 계산된 색상 사용
             ctx.fill();
-        
+
             const fontSize = (isReferenced || isNewlyAdded || isFocus) ? 13 / globalScale : 9 / globalScale;
-        
+
             ctx.font = (isReferenced || isNewlyAdded || isFocus)
-                ? `bold ${fontSize}px Sans-Serif`
-                : `${fontSize}px Sans-Serif`;
-        
+              ? `bold ${fontSize}px Sans-Serif`
+              : `${fontSize}px Sans-Serif`;
+
             // 펄스 효과들...
             if ((isNewlyAdded || isFocus) && pulseStartTime) {
-                const elapsed = (Date.now() - pulseStartTime) % pulseDuration;
-                const t = elapsed / pulseDuration;
-                const ringR = r * (1 + t * (pulseScale - 1));
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, ringR, 0, 2 * Math.PI);
-                ctx.strokeStyle = isDarkMode 
-                    ? `rgba(96, 165, 250, ${1 - t})` 
-                    : `rgba(33,150,243,${1 - t})`;
-                ctx.lineWidth = 2 / globalScale;
-                ctx.stroke();
+              const elapsed = (Date.now() - pulseStartTime) % pulseDuration;
+              const t = elapsed / pulseDuration;
+              const ringR = r * (1 + t * (pulseScale - 1));
+              ctx.beginPath();
+              ctx.arc(node.x, node.y, ringR, 0, 2 * Math.PI);
+              ctx.strokeStyle = isDarkMode
+                ? `rgba(96, 165, 250, ${1 - t})`
+                : `rgba(33,150,243,${1 - t})`;
+              ctx.lineWidth = 2 / globalScale;
+              ctx.stroke();
             }
-            
+
             if (isRef && refPulseStartTime) {
-                const elapsed2 = (Date.now() - refPulseStartTime) % pulseDuration;
-                const t2 = elapsed2 / pulseDuration;
-                const ringR2 = r * (1 + t2 * (pulseScale - 1));
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, ringR2, 0, 2 * Math.PI);
-                ctx.strokeStyle = isDarkMode 
-                    ? `rgba(251, 146, 60, ${1 - t2})` 
-                    : `rgba(217,130,15,${1 - t2})`;
-                ctx.lineWidth = 2 / globalScale;
-                ctx.stroke();
+              const elapsed2 = (Date.now() - refPulseStartTime) % pulseDuration;
+              const t2 = elapsed2 / pulseDuration;
+              const ringR2 = r * (1 + t2 * (pulseScale - 1));
+              ctx.beginPath();
+              ctx.arc(node.x, node.y, ringR2, 0, 2 * Math.PI);
+              ctx.strokeStyle = isDarkMode
+                ? `rgba(251, 146, 60, ${1 - t2})`
+                : `rgba(217,130,15,${1 - t2})`;
+              ctx.lineWidth = 2 / globalScale;
+              ctx.stroke();
             }
-        
+
             // 테두리 색상
             if (isNewlyAdded || isFocus) {
-                ctx.strokeStyle = isDarkMode ? '#60a5fa' : '#2196f3';
-                ctx.lineWidth = 4 / globalScale;
-                ctx.shadowColor = isDarkMode ? '#3b82f6' : '#90caf9';
-                ctx.shadowBlur = 10;
+              ctx.strokeStyle = isDarkMode ? '#60a5fa' : '#2196f3';
+              ctx.lineWidth = 4 / globalScale;
+              ctx.shadowColor = isDarkMode ? '#3b82f6' : '#90caf9';
+              ctx.shadowBlur = 10;
             } else if (isReferenced) {
-                ctx.strokeStyle = isDarkMode ? '#fb923c' : '#d9820f';
-                ctx.lineWidth = 3 / globalScale;
-                ctx.shadowColor = isDarkMode ? '#f97316' : '#ffc107';
-                ctx.shadowBlur = 6;
+              ctx.strokeStyle = isDarkMode ? '#fb923c' : '#d9820f';
+              ctx.lineWidth = 3 / globalScale;
+              ctx.shadowColor = isDarkMode ? '#f97316' : '#ffc107';
+              ctx.shadowBlur = 6;
             } else {
-                ctx.strokeStyle = isImportantNode 
-                    ? (isDarkMode ? '#e2e8f0' : 'white') 
-                    : (isDarkMode ? '#64748b' : '#f0f0f0');
-                ctx.lineWidth = 0.5 / globalScale;
-                ctx.shadowBlur = 0;
+              ctx.strokeStyle = isImportantNode
+                ? (isDarkMode ? '#e2e8f0' : 'white')
+                : (isDarkMode ? '#64748b' : '#f0f0f0');
+              ctx.lineWidth = 0.5 / globalScale;
+              ctx.shadowBlur = 0;
             }
             ctx.stroke();
-        
+
             // 텍스트 색상
-            const textColor = isDarkMode 
-                ? ((isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#f1f5f9' : '#cbd5e1')
-                : ((isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#222' : '#555');
-        
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            ctx.fillStyle = textColor;
-            ctx.fillText(label, node.x, node.y + nodeRadius + 1);
-        
+            const textColor = isDarkMode
+              ? ((isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#f1f5f9' : '#cbd5e1')
+              : ((isImportantNode || isReferenced || isNewlyAdded || isFocus) ? '#222' : '#555');
+
+            // ctx.textAlign = 'center';
+            // ctx.textBaseline = 'top';
+            // ctx.fillStyle = textColor;
+            // ctx.fillText(label, node.x, node.y + nodeRadius + 1);
+            // ✅ 이렇게 수정:
+            // 줌 레벨이 임계값 이상일 때만 텍스트 표시
+            if (globalScale >= textDisplayZoomThreshold) {
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'top';
+              ctx.fillStyle = textColor;
+              ctx.fillText(label, node.x, node.y + nodeRadius + 1);
+            }
             node.__bckgDimensions = [nodeRadius * 2, fontSize].map(n => n + fontSize * 0.2);
-        
+
             ctx.restore();
-        }
-        
-        
-        
-        }
+          }
+
+
+
+          }
 
 
           enableNodeDrag={true}
