@@ -34,15 +34,18 @@ def extract_referenced_nodes(llm_response: str) -> List[str]:
     json_part = parts[-1].strip()
     try:
         payload = json.loads(json_part)
+        # payload가 리스트인 경우 빈 리스트 반환
+        if isinstance(payload, list):
+            return []
+        # payload가 딕셔너리인 경우에만 get() 호출
+        raw_nodes = payload.get("referenced_nodes", [])
+        cleaned = [
+            node.split("-", 1)[1] if "-" in node else node
+            for node in raw_nodes
+        ]
+        return cleaned
     except json.JSONDecodeError:
         return []
-
-    raw_nodes = payload.get("referenced_nodes", [])
-    cleaned = [
-        node.split("-", 1)[1] if "-" in node else node
-        for node in raw_nodes
-    ]
-    return cleaned
 
 def extract_graph_components(text: str, source_id: str):
     """
@@ -194,7 +197,6 @@ def generate_answer(schema_text: str, question: str) -> str:
     prompt = (
     "다음 스키마와 질문을 바탕으로, 스키마에 명시된 정보나 연결된 관계를 통해 추론 가능한 범위 내에서만 자연어로 답변해줘. "
     "정보가 일부라도 있다면 해당 범위 내에서 최대한 설명하고, 스키마와 완전히 무관한 경우에만 '스키마에 해당 정보가 없습니다.'라고 출력해. "
-    "절대 상식을 기반으로 추측하지 마. \n\n"
     "스키마:\n" + schema_text + "\n\n"
     "질문: " + question + "\n\n"
     "출력 형식:\n"
@@ -204,8 +206,8 @@ def generate_answer(schema_text: str, question: str) -> str:
     '  "referenced_nodes": ["노드 이름1", "노드 이름2", ...]\n'
     "}\n"
     "※ 참고한 노드 이름만 정확히 JSON 배열로 나열하고, 도메인 정보, 노드 간 관계, 설명은 포함하지 마."
-
-)
+    "※ 반드시 EOF를 출력해"
+    )
 
 
     try:
