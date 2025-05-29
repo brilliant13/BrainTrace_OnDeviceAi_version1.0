@@ -58,7 +58,7 @@ export default function ProjectPanel({ activeProject, onProjectChange }) {
                     src={activeProject === b.brain_id ? '/brainbanzzak.png' : '/brain.png'}
                     style={{ flexShrink: 0 }}
                   />
-                  <span>{b.brain_name}</span>
+                  <span className="brain-name-ellipsis">{b.brain_name}</span>
                 </div>
               );
             })}
