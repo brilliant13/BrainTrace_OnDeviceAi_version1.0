@@ -564,6 +564,7 @@
   border: none;
   outline: none;
   color: #1a1a1a;
+  transform: scale(1.02);
 }
 
 .source-toggle-button.active {

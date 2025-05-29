@@ -101,9 +101,9 @@ export default function ProjectListView() {
 
     /* ───────── 제목 저장 함수 ───────── */
     async function handleSaveTitle(brain) {
-        const newTitle = tempTitle.trim();
+        const newTitle = tempTitle.trim() || 'Untitled';
         setEditingId(null);
-        if (!newTitle || newTitle === brain.brain_name) return;
+        if (newTitle === brain.brain_name) return;
 
         try {
             const updated = await renameBrain(brain.brain_id, newTitle);
@@ -143,37 +143,6 @@ export default function ProjectListView() {
                         <span className="typing-cursor">|</span>
                     </h1>
                 </div>
-
-                {/* 정렬 드롭다운 */}
-                {/* <div
-                    className={`project-header-controls ${showSortButton ? 'visible' : ''}`}
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        marginBottom: 20,
-                        paddingRight: 20,
-                        opacity: showSortButton ? 1 : 0,
-                        transform: showSortButton ? 'translateY(0)' : 'translateY(-10px)',
-                        transition: 'all 0.5s ease'
-                    }}
-                >
-                    <div className="sort-dropdown">
-                        <button className="sort-button">
-                            {sortOption} ▼
-                        </button>
-                        <div className="sort-menu">
-                            {['최신 항목', '제목', '공유 문서함'].map(option => (
-                                <div
-                                    key={option}
-                                    className="sort-menu-item"
-                                    onClick={() => setSortOption(option)}
-                                >
-                                    {option}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div> */}
                 {/* 정렬 드롭다운 */}
                 <div
                     className={`project-header-controls ${showSortButton ? 'visible' : ''}`}
@@ -241,9 +210,10 @@ export default function ProjectListView() {
 
                                 {/* 제목 (인라인 편집) */}
                                 <div
-                                    className="project-name"
+                                    className={`project-name ${editingId === p.brain_id ? 'editing' : ''}`}
                                     contentEditable={editingId === p.brain_id}
                                     suppressContentEditableWarning
+                                    data-placeholder="Untitled"
                                     onInput={e => setTempTitle(e.currentTarget.textContent)}
                                     onKeyDown={e => {
                                         if (e.key === 'Escape') {
@@ -256,10 +226,22 @@ export default function ProjectListView() {
                                         }
                                     }}
                                     onBlur={() => editingId === p.brain_id && handleSaveTitle(p)}
-                                    style={{ cursor: editingId ? 'text' : 'pointer' }}
+                                    style={{
+                                        cursor: editingId ? 'text' : 'pointer'
+                                    }}
                                 >
-                                    {p.brain_name}
+                                    {editingId === p.brain_id
+                                        ? null // editing 중일 땐 내부를 비워두고 placeholder만 표시
+                                        : (p.brain_name || '')}
+
                                 </div>
+                                {
+                                    // placeholder
+                                    editingId === p.brain_id && !tempTitle && (
+                                        <div className="editable-placeholder">Untitled</div>
+                                    )
+                                }
+
 
                                 {/* 생성일자 */}
                                 <div className="project-date">
@@ -338,9 +320,32 @@ export default function ProjectListView() {
                                 setBrains(prev => [newBrain, ...prev]);
                                 setHighlightId(newBrain.brain_id);
 
+                                // setTimeout(() => {
+                                //     nav(`/project/${newBrain.brain_id}`);
+                                // }, 1800);
+                                // 👉 1초 뒤 하이라이팅 제거 및 수정 진입
                                 setTimeout(() => {
-                                    nav(`/project/${newBrain.brain_id}`);
-                                }, 1800);
+                                    setHighlightId(null);
+                                    setEditingId(newBrain.brain_id);
+                                    setTempTitle(newBrain.brain_name);
+
+                                    // 👉 DOM 렌더 후 포커싱
+                                    requestAnimationFrame(() => {
+                                        requestAnimationFrame(() => {
+                                            const el = document.querySelector(`.project-card[data-id="${newBrain.brain_id}"] .project-name`);
+                                            if (el) {
+                                                el.focus();
+                                                const sel = window.getSelection();
+                                                const range = document.createRange();
+                                                range.selectNodeContents(el);
+                                                range.collapse(false); // 끝으로 이동
+                                                sel.removeAllRanges();
+                                                sel.addRange(range);
+                                            }
+                                        });
+                                    });
+                                }, 1000); // 하이라이팅 유지 후
+
                             } catch (err) {
                                 alert(err.response?.data?.detail ?? '생성 실패');
                             }
