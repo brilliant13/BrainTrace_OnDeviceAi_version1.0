@@ -139,7 +139,7 @@ FastAPI 기반 REST API는 아래와 같은 Swagger UI 형태로 구성되어 �
 
 | 소개 영상 | Demo Video |
 |-----------|------------|
-| [![Brain-Trace 소개](https://img.youtube.com/vi/Q0w4S_sMEaQ/0.jpg)](https://www.youtube.com/watch?v=Q0w4S_sMEaQ) | [![Brain-Trace Demo](https://img.youtube.com/vi/r6AdiX7SZkw/0.jpg)](https://www.youtube.com/watch?v=r6AdiX7SZkw) |
+| [![Brain-Trace 소개](https://img.youtube.com/vi/wu7_yyd0TAI/0.jpg)](https://www.youtube.com/watch?v=wu7_yyd0TAI) | [![Brain-Trace Demo](https://img.youtube.com/vi/a6mMXmOi1NU/0.jpg)](https://www.youtube.com/watch?v=a6mMXmOi1NU&t=106s) |
 
 ---
 
@@ -202,4 +202,5 @@ negligence or otherwise) arising in any way out of the use of this software,
 even if advised of the possibility of such damage.
 
 ```
+
 
