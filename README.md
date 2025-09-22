@@ -155,7 +155,8 @@ FastAPI 기반 REST API는 아래와 같은 Swagger UI 형태로 구성되어 �
 <br>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/3c98fd2c-b38e-4ede-9704-d518111129e1" alt="시스템 구조 패널" width="80%"/>
+  <img src="https://raw.githubusercontent.com/brilliant13/portfolio/main/30%E1%84%8C%E1%85%A9_%E1%84%86%E1%85%AE%E1%84%86%E1%85%AE%20%E1%84%8B%E1%85%B5%E1%84%86%E1%85%B5%E1%84%8C%E1%85%B5.png" width="750" alt="mu_mu"/>
+  <!--<img src="https://github.com/user-attachments/assets/3c98fd2c-b38e-4ede-9704-d518111129e1" alt="시스템 구조 패널" width="80%"/>-->
 </p>
 
 </details>
@@ -208,6 +209,7 @@ negligence or otherwise) arising in any way out of the use of this software,
 even if advised of the possibility of such damage.
 
 ```
+
 
 
 
