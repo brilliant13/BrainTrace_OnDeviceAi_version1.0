@@ -10,7 +10,9 @@ AI가 학습 자료를 자동 분석하고
 
 ---
 ## 🧠 프로젝트 개요
-<img src="https://github.com/user-attachments/assets/3c98fd2c-b38e-4ede-9704-d518111129e1" width="750" alt="mumu"/>
+<img src="https://raw.githubusercontent.com/brilliant13/portfolio/main/30%E1%84%8C%E1%85%A9_%E1%84%86%E1%85%AE%E1%84%86%E1%85%AE%20%E1%84%8B%E1%85%B5%E1%84%86%E1%85%B5%E1%84%8C%E1%85%B5.png" width="750" alt="mu_mu"/>
+
+<!--<img src="https://github.com/user-attachments/assets/3c98fd2c-b38e-4ede-9704-d518111129e1" width="750" alt="mumu"/>-->
 
 <!-- <img src="https://github.com/user-attachments/assets/3c98fd2c-b38e-4ede-9704-d518111129e1" width="750" alt="best_dou"/> -->
 <br>
@@ -206,6 +208,7 @@ negligence or otherwise) arising in any way out of the use of this software,
 even if advised of the possibility of such damage.
 
 ```
+
 
 
 
